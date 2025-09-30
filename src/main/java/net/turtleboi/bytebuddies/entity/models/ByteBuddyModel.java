@@ -14,6 +14,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
 import net.turtleboi.bytebuddies.ByteBuddies;
+import net.turtleboi.bytebuddies.entity.animations.ByteBuddyAnimations;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,7 +68,25 @@ public class ByteBuddyModel <T extends Entity> extends HierarchicalModel<T> impl
         this.root().getAllParts().forEach(ModelPart::resetPose);
 
         ByteBuddyEntity byteBuddy = (ByteBuddyEntity) entity;
-        this.applyHeadRotation(netHeadYaw, headPitch);
+
+        if (!byteBuddy.isSleeping() && !byteBuddy.isWaking()) {
+            this.applyHeadRotation(netHeadYaw, headPitch);
+        }
+
+        if (!byteBuddy.isSleeping()) {
+            this.animateWalk(ByteBuddyAnimations.WALKING_ANIMATION, limbSwing, limbSwingAmount, 2f, 2.4f);
+            this.animate(byteBuddy.idleAnimationState, ByteBuddyAnimations.IDLE_ANIMATION, ageInTicks, 1f);
+        } else {
+            this.animate(byteBuddy.sleepPoseState, ByteBuddyAnimations.INACTIVE_ANIMATION, ageInTicks, 1f);
+        }
+
+        if (byteBuddy.isWaking()) {
+            this.animate(byteBuddy.wakeUpState, ByteBuddyAnimations.WAKE_UP_ANIMATION, ageInTicks, 1f);
+        }
+
+        if (byteBuddy.isWaving()) {
+            this.animate(byteBuddy.waveState, ByteBuddyAnimations.WAVING_ANIMATION, ageInTicks, 1f);
+        }
     }
 
     private void applyHeadRotation(float pNetHeadYaw, float pHeadPitch) {
