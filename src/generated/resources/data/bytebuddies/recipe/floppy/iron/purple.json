@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "D": {
+      "item": "minecraft:purple_dye"
+    },
+    "G": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "H": {
+      "item": "bytebuddies:chip"
+    },
+    "I": {
+      "item": "bytebuddies:iron_plating"
+    },
+    "K": {
+      "item": "bytebuddies:copper_purple_floppy"
+    },
+    "Q": {
+      "item": "minecraft:quartz"
+    }
+  },
+  "pattern": [
+    "IQI",
+    "KHK",
+    "GDG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:iron_purple_floppy"
+  }
+}

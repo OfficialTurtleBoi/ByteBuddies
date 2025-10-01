@@ -1,0 +1,68 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_bluestone_block": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bytebuddies:bluestone_block"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_carbon_paste": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bytebuddies:carbon_paste"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_gold": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:gold_ingot"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_plate": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "bytebuddies:aluminum_plating",
+              "bytebuddies:iron_plating"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "bytebuddies:advanced_battery"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_bluestone_block",
+      "has_gold",
+      "has_carbon_paste",
+      "has_plate"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "bytebuddies:advanced_battery"
+    ]
+  }
+}

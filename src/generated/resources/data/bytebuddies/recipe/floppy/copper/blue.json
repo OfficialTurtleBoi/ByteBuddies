@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "minecraft:lapis_lazuli"
+    },
+    "B": {
+      "item": "minecraft:compass"
+    },
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "D": {
+      "item": "minecraft:blue_dye"
+    },
+    "H": {
+      "item": "bytebuddies:chip"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "pattern": [
+    "DPD",
+    "AHB",
+    "RCR"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:copper_blue_floppy"
+  }
+}

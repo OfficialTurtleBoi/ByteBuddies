@@ -1,0 +1,76 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_blaze_rod": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:blaze_rod"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_bluestone_block": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bytebuddies:bluestone_block"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_charged_steel_plating": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bytebuddies:charged_steel_plating"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_ender_pearl": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:ender_pearl"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_nether_star": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:nether_star"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "bytebuddies:super_charged_battery"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_bluestone_block",
+      "has_charged_steel_plating",
+      "has_nether_star",
+      "has_ender_pearl",
+      "has_blaze_rod"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "bytebuddies:super_charged_battery"
+    ]
+  }
+}

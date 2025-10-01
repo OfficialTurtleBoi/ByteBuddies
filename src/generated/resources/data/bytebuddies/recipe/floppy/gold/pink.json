@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "D": {
+      "item": "minecraft:pink_dye"
+    },
+    "E": {
+      "item": "minecraft:ender_eye"
+    },
+    "H": {
+      "item": "bytebuddies:chip"
+    },
+    "K": {
+      "item": "bytebuddies:iron_pink_floppy"
+    },
+    "P": {
+      "item": "bytebuddies:gold_plating"
+    }
+  },
+  "pattern": [
+    "PEP",
+    "KHK",
+    "PDP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:gold_pink_floppy"
+  }
+}

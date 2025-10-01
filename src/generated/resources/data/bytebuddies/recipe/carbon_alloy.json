@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "item": "bytebuddies:carbon_paste"
+    }
+  ],
+  "result": {
+    "count": 2,
+    "id": "bytebuddies:carbon_alloy"
+  }
+}

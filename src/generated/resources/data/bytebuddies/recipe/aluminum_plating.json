@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "bytebuddies:aluminum_ingot"
+    }
+  },
+  "pattern": [
+    "AA"
+  ],
+  "result": {
+    "count": 3,
+    "id": "bytebuddies:aluminum_plating"
+  }
+}

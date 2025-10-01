@@ -1,0 +1,65 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_bluestone_block": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bytebuddies:bluestone_block"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_gold_plating": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bytebuddies:gold_plating"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_honeycomb": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:honeycomb"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_moss": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:moss_block"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "bytebuddies:biocell_battery"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_bluestone_block",
+      "has_gold_plating",
+      "has_honeycomb",
+      "has_moss"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "bytebuddies:biocell_battery"
+    ]
+  }
+}

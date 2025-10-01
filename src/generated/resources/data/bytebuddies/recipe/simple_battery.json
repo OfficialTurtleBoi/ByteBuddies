@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": {
+      "item": "bytebuddies:bluestone_block"
+    },
+    "C": {
+      "item": "bytebuddies:carbon_paste"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "bytebuddies:copper_plating"
+    },
+    "X": {
+      "item": "minecraft:copper_ingot"
+    }
+  },
+  "pattern": [
+    "PXP",
+    "IBI",
+    "PCP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:simple_battery"
+  }
+}

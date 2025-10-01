@@ -1,1 +1,13 @@
-// 1.21.1	2025-09-29T15:49:08.6442907	Block States: bytebuddies
+// 1.21.1	2025-09-30T20:30:59.1179165	Block States: bytebuddies
+8cd36bede060ef5a55802e63b6cf6194c268ed9c assets/bytebuddies/blockstates/aluminum_block.json
+2e123340b8b89cfd939bb123b7bd2f1b6ad7ac6f assets/bytebuddies/blockstates/bluestone_block.json
+6d3686ee3c7d2a474ae72fed45afb51db68b9ff3 assets/bytebuddies/blockstates/bluestone_ore.json
+3aa77d668f2b61b5d0262a63807071350e8b00db assets/bytebuddies/blockstates/deepslate_bluestone_ore.json
+db6f487346629b8c56d2566a8edd09d5bb324b16 assets/bytebuddies/models/block/aluminum_block.json
+365bedd8ce404c3ab398d4b0a1bd12d6c33c793d assets/bytebuddies/models/block/bluestone_block.json
+2a6d55bd333d77cab459c34ceaa170f937c22b89 assets/bytebuddies/models/block/bluestone_ore.json
+9019887bf22ec8b71bac6763096e30a17295980f assets/bytebuddies/models/block/deepslate_bluestone_ore.json
+0f5f14ef3bf5f2153aeeaa0f9bd312c8b11e7bcb assets/bytebuddies/models/item/aluminum_block.json
+592a4287d1e3b283ae0ee8863d4b001c088d49ce assets/bytebuddies/models/item/bluestone_block.json
+af99f3851f416dc1a26f4f4c3bb08a961f2a9194 assets/bytebuddies/models/item/bluestone_ore.json
+544ca12437206c84861bf1f9a28a98a1c936916d assets/bytebuddies/models/item/deepslate_bluestone_ore.json

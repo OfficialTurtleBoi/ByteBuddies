@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_carbon_alloy": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bytebuddies:carbon_alloy"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "bytebuddies:steel_ingot"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_carbon_alloy"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "bytebuddies:steel_ingot"
+    ]
+  }
+}

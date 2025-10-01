@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "bytebuddies:item/floppy/cyan_floppy_base",
+    "layer1": "bytebuddies:item/floppy/iron_floppy_tier"
+  }
+}

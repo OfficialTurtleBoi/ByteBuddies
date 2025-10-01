@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": {
+      "item": "bytebuddies:bluestone_block"
+    },
+    "H": {
+      "item": "minecraft:honeycomb"
+    },
+    "M": {
+      "item": "minecraft:moss_block"
+    },
+    "P": {
+      "item": "bytebuddies:gold_plating"
+    },
+    "V": {
+      "item": "minecraft:glass_bottle"
+    }
+  },
+  "pattern": [
+    "PVP",
+    "HBH",
+    "PMP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:biocell_battery"
+  }
+}

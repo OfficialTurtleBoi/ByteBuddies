@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "item": "bytebuddies:bluestone"
+    },
+    "C": {
+      "item": "bytebuddies:carbon_paste"
+    },
+    "G": {
+      "item": "minecraft:gold_nugget"
+    },
+    "Q": {
+      "item": "minecraft:quartz"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "pattern": [
+    "CGC",
+    "QBQ",
+    "RGR"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:chip"
+  }
+}

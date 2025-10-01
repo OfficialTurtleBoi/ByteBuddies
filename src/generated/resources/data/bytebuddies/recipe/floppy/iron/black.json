@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "D": {
+      "item": "minecraft:black_dye"
+    },
+    "G": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "H": {
+      "item": "bytebuddies:chip"
+    },
+    "I": {
+      "item": "bytebuddies:iron_plating"
+    },
+    "K": {
+      "item": "bytebuddies:copper_black_floppy"
+    },
+    "Q": {
+      "item": "minecraft:quartz"
+    }
+  },
+  "pattern": [
+    "IQI",
+    "KHK",
+    "GDG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:iron_black_floppy"
+  }
+}

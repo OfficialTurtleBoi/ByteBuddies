@@ -1,0 +1,54 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_chip": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bytebuddies:chip"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_copper_purple_floppy": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bytebuddies:copper_purple_floppy"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_iron_plating": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bytebuddies:iron_plating"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "bytebuddies:floppy/iron/purple"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_copper_purple_floppy",
+      "has_chip",
+      "has_iron_plating"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "bytebuddies:floppy/iron/purple"
+    ]
+  }
+}

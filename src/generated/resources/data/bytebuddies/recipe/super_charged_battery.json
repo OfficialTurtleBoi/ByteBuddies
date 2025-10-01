@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": {
+      "item": "bytebuddies:bluestone_block"
+    },
+    "E": {
+      "item": "minecraft:ender_pearl"
+    },
+    "N": {
+      "item": "minecraft:nether_star"
+    },
+    "P": {
+      "item": "bytebuddies:charged_steel_plating"
+    },
+    "Z": {
+      "item": "minecraft:blaze_rod"
+    }
+  },
+  "pattern": [
+    "PNP",
+    "ZBZ",
+    "PEP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:super_charged_battery"
+  }
+}
