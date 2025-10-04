@@ -9,6 +9,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.block.ModBlocks;
+import net.turtleboi.bytebuddies.item.custom.BatteryItem;
 
 import java.util.function.Supplier;
 
@@ -36,11 +37,21 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.ALUMINUM_PLATING);
                         pOutput.accept(ModItems.STEEL_PLATING);
                         pOutput.accept(ModItems.CHARGED_STEEL_PLATING);
-                        pOutput.accept(ModItems.SIMPLE_BATTERY);
-                        pOutput.accept(ModItems.ADVANCED_BATTERY);
-                        pOutput.accept(ModItems.BIOCELL_BATTERY);
-                        pOutput.accept(ModItems.REINFORCED_BATTERY);
-                        pOutput.accept(ModItems.SUPER_CHARGED_BATTERY);
+                        ItemStack chargedSimpleBattery = new ItemStack(ModItems.SIMPLE_BATTERY.get());
+                        ((BatteryItem) chargedSimpleBattery.getItem()).setEnergy(chargedSimpleBattery, ((BatteryItem) chargedSimpleBattery.getItem()).getCapacity());
+                        pOutput.accept(chargedSimpleBattery);
+                        ItemStack chargedAdvancedBattery = new ItemStack(ModItems.ADVANCED_BATTERY.get());
+                        ((BatteryItem) chargedAdvancedBattery.getItem()).setEnergy(chargedAdvancedBattery, ((BatteryItem) chargedAdvancedBattery.getItem()).getCapacity());
+                        pOutput.accept(chargedAdvancedBattery);
+                        ItemStack chargedBioCellBattery = new ItemStack(ModItems.BIOCELL_BATTERY.get());
+                        ((BatteryItem) chargedBioCellBattery.getItem()).setEnergy(chargedBioCellBattery, ((BatteryItem) chargedBioCellBattery.getItem()).getCapacity());
+                        pOutput.accept(chargedBioCellBattery);
+                        ItemStack chargedReinforcedBattery = new ItemStack(ModItems.REINFORCED_BATTERY.get());
+                        ((BatteryItem) chargedReinforcedBattery.getItem()).setEnergy(chargedReinforcedBattery, ((BatteryItem) chargedReinforcedBattery.getItem()).getCapacity());
+                        pOutput.accept(chargedReinforcedBattery);
+                        ItemStack chargedSuperChargedBattery = new ItemStack(ModItems.SUPER_CHARGED_BATTERY.get());
+                        ((BatteryItem) chargedSuperChargedBattery.getItem()).setEnergy(chargedSuperChargedBattery, ((BatteryItem) chargedSuperChargedBattery.getItem()).getCapacity());
+                        pOutput.accept(chargedSuperChargedBattery);
                         pOutput.accept(ModItems.CARBON_PASTE);
                         pOutput.accept(ModItems.CHIP);
                         pOutput.accept(ModItems.WRENCH);

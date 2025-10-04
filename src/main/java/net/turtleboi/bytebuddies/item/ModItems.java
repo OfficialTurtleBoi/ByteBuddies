@@ -7,7 +7,9 @@ import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.entity.ModEntities;
+import net.turtleboi.bytebuddies.item.custom.BatteryItem;
 import net.turtleboi.bytebuddies.item.custom.FloppyDiskItem;
+import net.turtleboi.bytebuddies.item.custom.WrenchItem;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -76,25 +78,25 @@ public class ModItems {
     }
 
     public static final DeferredItem<Item> SIMPLE_BATTERY = ITEMS.register("simple_battery",
-            () -> new Item(new Item.Properties()));
+            () -> new BatteryItem(new Item.Properties(), "simple", 50000, 2000));
 
     public static final DeferredItem<Item> ADVANCED_BATTERY = ITEMS.register("advanced_battery",
-            () -> new Item(new Item.Properties()));
+            () -> new BatteryItem(new Item.Properties(), "advanced",  150000,  4000));
 
     public static final DeferredItem<Item> BIOCELL_BATTERY = ITEMS.register("biocell_battery",
-            () -> new Item(new Item.Properties()));
+            () -> new BatteryItem(new Item.Properties(), "biocell",   200000,  4000));
 
     public static final DeferredItem<Item> REINFORCED_BATTERY = ITEMS.register("reinforced_battery",
-            () -> new Item(new Item.Properties()));
+            () -> new BatteryItem(new Item.Properties(), "reinforced", 350000, 6000));
 
     public static final DeferredItem<Item> SUPER_CHARGED_BATTERY = ITEMS.register("super_charged_battery",
-            () -> new Item(new Item.Properties()));
+            () -> new BatteryItem(new Item.Properties(), "supercharged", 500000, 8000));
 
     public static final DeferredItem<Item> CHIP = ITEMS.register("chip",
             () -> new Item(new Item.Properties()));
 
     public static final DeferredItem<Item> WRENCH = ITEMS.register("wrench",
-            () -> new Item(new Item.Properties()));
+            () -> new WrenchItem(new Item.Properties()));
 
     public static final DeferredItem<Item> BYTEBUDDY_SPAWN_EGG = ITEMS.register("byte_buddy_spawn_egg",
             ()-> new DeferredSpawnEggItem(ModEntities.BYTEBUDDY,0x70747d,0x34a0bf,new Item.Properties()));

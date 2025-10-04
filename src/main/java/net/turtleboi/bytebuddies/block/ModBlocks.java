@@ -13,6 +13,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.bytebuddies.block.custom.BluestoneOreBlock;
+import net.turtleboi.bytebuddies.block.custom.DockingStationBlock;
 import net.turtleboi.bytebuddies.item.ModItems;
 import net.turtleboi.bytebuddies.ByteBuddies;
 
@@ -49,6 +50,9 @@ public class ModBlocks {
 
     public static final DeferredBlock<Block> BLUESTONE_BLOCK = registerBlock("bluestone_block",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.REDSTONE_BLOCK)));
+
+    public static final DeferredBlock<Block> DOCKING_STATION = registerBlock("docking_station",
+            () -> new DockingStationBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)));
 
     private static <T extends Block> DeferredBlock<T> registerBlock(String name, Supplier<T> block){
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);

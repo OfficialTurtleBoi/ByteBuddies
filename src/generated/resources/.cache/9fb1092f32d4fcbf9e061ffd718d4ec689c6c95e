@@ -1,4 +1,4 @@
-// 1.21.1	2025-10-01T01:20:35.1662379	Recipes
+// 1.21.1	2025-10-01T01:35:27.3177082	Recipes
 694c767a47fd4b887b1da573e4eed9e79e6bd552 data/bytebuddies/advancement/recipes/building_blocks/aluminum_block.json
 e559d04442374c9963df6395142f62cb9518a209 data/bytebuddies/advancement/recipes/misc/aluminum_nugget.json
 16382708c2f0449abeee116d8b92eedee997368a data/bytebuddies/advancement/recipes/misc/aluminum_plating.json
@@ -7,14 +7,14 @@ e559d04442374c9963df6395142f62cb9518a209 data/bytebuddies/advancement/recipes/mi
 e8752aca5de7274b20777486c84b637fc0aff8df data/bytebuddies/advancement/recipes/misc/charged_steel_plating.json
 893b9475c3cd7d4c4bdc31fa42bb8927ae262f9b data/bytebuddies/advancement/recipes/misc/chip.json
 b69c456eeca697da39c5c67d9246c5827ab8aad5 data/bytebuddies/advancement/recipes/misc/copper_plating.json
-d2d05df305a91104ae91cc8f9ce18911bb9f5437 data/bytebuddies/advancement/recipes/misc/floppy/copper/black.json
-e6955ff27c3f5beb8431ab8968bb51a53cf9dd08 data/bytebuddies/advancement/recipes/misc/floppy/copper/blue.json
-0fffd89174f402cd6f70adcd3eea6488de1fbc39 data/bytebuddies/advancement/recipes/misc/floppy/copper/cyan.json
-4358b57625a16a662e32fe2c6bdaca0c12478c77 data/bytebuddies/advancement/recipes/misc/floppy/copper/green.json
-dff1d11f4f528a488df703308313ea5891794eb4 data/bytebuddies/advancement/recipes/misc/floppy/copper/pink.json
-c9e372b932b0092dc2515becc37527e6d084db38 data/bytebuddies/advancement/recipes/misc/floppy/copper/purple.json
-f14f705ad1b8c74c74de89f27b064fb18d3d1be1 data/bytebuddies/advancement/recipes/misc/floppy/copper/red.json
-fe8207f173e808da6ce6fd2d1dff059e4a05dabe data/bytebuddies/advancement/recipes/misc/floppy/copper/yellow.json
+6f1b17aa51a664a38a7e2d297ce54337a0a3bfa9 data/bytebuddies/advancement/recipes/misc/floppy/copper/black.json
+2c2b5f1ff1b76a18f927b8c0e05925df35ac2180 data/bytebuddies/advancement/recipes/misc/floppy/copper/blue.json
+5ecd5c232db7792785a9ff326ab2554c18b32cd2 data/bytebuddies/advancement/recipes/misc/floppy/copper/cyan.json
+018e6b0772eba6c08dde2eaeb78cc4fe31ee1def data/bytebuddies/advancement/recipes/misc/floppy/copper/green.json
+09bde0e1379cbb97b6cb987bf64a4cb0d1bd58c7 data/bytebuddies/advancement/recipes/misc/floppy/copper/pink.json
+d3d3eb18e10d5c161dc2ae743e9fa4be214aab9c data/bytebuddies/advancement/recipes/misc/floppy/copper/purple.json
+4ece95d29cd3164fdbaf79e4aa1b75eb6703667a data/bytebuddies/advancement/recipes/misc/floppy/copper/red.json
+b3283acadf5b69585224516f4cbdab9d924a3e9c data/bytebuddies/advancement/recipes/misc/floppy/copper/yellow.json
 4b8997fdaf80e3067aef8a8bfef1dccb3faccd10 data/bytebuddies/advancement/recipes/misc/floppy/gold/black.json
 04cc2d3387e45d8c8bcddbbfa25641d6d874c060 data/bytebuddies/advancement/recipes/misc/floppy/gold/blue.json
 082932a53ec858b21fe1c4581fe9cc2d7f78d795 data/bytebuddies/advancement/recipes/misc/floppy/gold/cyan.json

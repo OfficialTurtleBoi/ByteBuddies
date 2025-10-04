@@ -256,7 +256,8 @@ public class ModRecipeProvider extends RecipeProvider implements IConditionBuild
                     .define('R', Items.REDSTONE)
                     .define('C', Items.COPPER_INGOT)
                     .unlockedBy("has_dye_" + color, has(baseColor.dye()))
-                    .unlockedBy("has_core_" + color, has(baseColor.relatableItemA()))
+                    .unlockedBy("has_first_core_" + color, has(baseColor.relatableItemA()))
+                    .unlockedBy("has_second_core_" + color, has(baseColor.relatableItemB()))
                     .unlockedBy("has_redstone", has(Items.REDSTONE))
                     .save(recipeOutput, floppyId(copperKey));
 

@@ -2,7 +2,9 @@
   "required": true,
   "package": "net.turtleboi.bytebuddies.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [],
+  "mixins": [
+    "CropBlockAccessor"
+  ],
   "injectors": {
     "defaultRequire": 1
   },

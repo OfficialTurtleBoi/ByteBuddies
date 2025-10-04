@@ -13,7 +13,7 @@ import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.entity.models.ByteBuddyModel;
 import net.turtleboi.bytebuddies.entity.renderers.ByteBuddyRenderer;
 
-@EventBusSubscriber(modid = ByteBuddies.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = ByteBuddies.MOD_ID, value = Dist.CLIENT)
 public class ClientModBusEvents {
     @SubscribeEvent
     public static void onClientSetupEvent(FMLClientSetupEvent event) {
