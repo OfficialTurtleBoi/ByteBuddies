@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -30,7 +31,7 @@ import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.items.ItemStackHandler;
-import net.turtleboi.bytebuddies.entity.ai.FarmHarvesterGoal;
+import net.turtleboi.bytebuddies.entity.ai.FarmerGoal;
 import net.turtleboi.bytebuddies.entity.ai.RandomWaveAtFriendGoal;
 import net.turtleboi.bytebuddies.item.custom.FloppyDiskItem.*;
 import net.turtleboi.bytebuddies.util.EnergyHooks;
@@ -40,18 +41,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
-    public enum BotRole { FARMER, MINER, COMBAT, POTION, STORAGE, ANIMAL }
+    public enum BuddyRole {
+        FARMER, MINER, COMBAT, POTION, STORAGE, ANIMAL
+    }
     private final ItemStackHandler mainInv = new ItemStackHandler(27);
-    private final ItemStackHandler upgradeInv = new ItemStackHandler(3);
-
-    // --- Energy (Forge Energy-like) ---
-    private final EnergyStorage energy = new EnergyStorage(100_000, 400, 400);
-
-    // --- Identity & config ---
-    private BotRole role = BotRole.FARMER;
+    private final ItemStackHandler upgradeInv = new ItemStackHandler(4);
+    private final EnergyStorage energyStorage = new EnergyStorage(100_000, 400, 400);
+    private BuddyRole buddyRole = BuddyRole.FARMER;
     private final Set<Goal> roleGoals = new HashSet<>();
     @Nullable private BlockPos dockPos;
-    private int baseRadius = 8;
+    private final int baseRadius = 8;
     private final DiskEffects effects = new DiskEffects();
 
     private static final EntityDataAccessor<Boolean> DATA_SLEEPING =
@@ -79,7 +78,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new PanicGoal(this, 2.0D));
-        this.goalSelector.addGoal(2, new FarmHarvesterGoal(this));
+        this.goalSelector.addGoal(2, new FarmerGoal(this));
         this.goalSelector.addGoal(5, new RandomStrollGoal(this, 0.75D));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 3f));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
@@ -110,7 +109,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         builder.define(DATA_SLEEPING, true);
         builder.define(DATA_WAKING, false);
         builder.define(DATA_WAVING, false);
-        builder.define(DATA_ROLE, BotRole.FARMER.ordinal());
+        builder.define(DATA_ROLE, BuddyRole.FARMER.ordinal());
     }
 
     public boolean isSleeping() {
@@ -143,6 +142,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         SpawnGroupData spawnData = super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
         setSleeping(true);
         setNoAi(true);
+        setPersistenceRequired();
         return spawnData;
     }
 
@@ -188,9 +188,9 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         }
     }
 
-    public void onTaskSuccess(TaskType task, BlockPos blockPos) {
-        DiskHooks.tryGiveByproduct(this, task, blockPos);
-        DiskHooks.trySpawnHologram(this, task, blockPos);
+    public void onTaskSuccess(TaskType taskType, BlockPos blockPos) {
+        DiskHooks.tryGiveByproduct(this, taskType, blockPos);
+        DiskHooks.trySpawnHologram(this, taskType, blockPos);
     }
 
     private void setupAnimationStates(){
@@ -232,15 +232,20 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
-        tag.putInt("role", role.ordinal());
+    public void addAdditionalSaveData(CompoundTag nbtData) {
+        super.addAdditionalSaveData(nbtData);
+        nbtData.putInt("role", buddyRole.ordinal());
+        if (dockPos != null) {
+            nbtData.put("dockPos", NbtUtils.writeBlockPos(dockPos));
+        }
     }
+
     @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
-        setSleeping(tag.getBoolean("Sleeping"));
-        role = BotRole.values()[tag.getInt("role")];
+    public void readAdditionalSaveData(CompoundTag nbtData) {
+        super.readAdditionalSaveData(nbtData);
+        setSleeping(nbtData.getBoolean("Sleeping"));
+        buddyRole = BuddyRole.values()[nbtData.getInt("role")];
+        dockPos = NbtUtils.readBlockPos(nbtData, "dockPos").orElse(null);
         setNoAi(isSleeping());
     }
 
@@ -251,9 +256,9 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
                 awaken();
                 return InteractionResult.CONSUME;
             } else if (player.getItemInHand(interactionHand).getItem() == Items.WHEAT) {
-                setRole(BotRole.FARMER);
+                setBuddyRole(BuddyRole.FARMER);
                 player.getItemInHand(interactionHand).shrink(1);
-                player.displayClientMessage(Component.literal("Set bot role to " + role), true);
+                player.displayClientMessage(Component.literal("Set bot role to " + buddyRole), true);
                 return InteractionResult.SUCCESS;
             }
         }
@@ -276,47 +281,45 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         return upgradeInv;
     }
 
-    public IEnergyStorage getEnergy() {
-        return energy;
+    public IEnergyStorage getEnergyStorage() {
+        return energyStorage;
     }
 
-    public BotRole getRole() {
-        // prefer network value (authoritative)
-        int ord = this.entityData.get(DATA_ROLE);
-        return BotRole.values()[Mth.clamp(ord, 0, BotRole.values().length-1)];
+    public BuddyRole getBuddyRole() {
+        int roleData = entityData.get(DATA_ROLE);
+        return BuddyRole.values()[Mth.clamp(roleData, 0, BuddyRole.values().length-1)];
     }
 
-    public void setRole(BotRole newRole) {
+    public void setBuddyRole(BuddyRole newRole) {
         if (newRole == null) return;
-        this.role = newRole;
-        this.entityData.set(DATA_ROLE, newRole.ordinal());
-        rebuildGoalsForRole();   // swap the AI set immediately
-        refreshEffects();        // optional: some effects may depend on role
+        buddyRole = newRole;
+        entityData.set(DATA_ROLE, newRole.ordinal());
+        rebuildGoalsForRole();
+        refreshEffects();
     }
 
     public Optional<BlockPos> getDock() {
         return Optional.ofNullable(dockPos);
     }
 
-    public void setDock(BlockPos pos) {
-        this.dockPos = pos.immutable();
+    public void setDock(BlockPos blockPos) {
+        dockPos = blockPos.immutable();
         if (!level().isClientSide) {
-            LogUtils.getLogger().info("[ByteBuddies] bot id={} dock set to {}", this.getId(), pos);
+            LogUtils.getLogger().info("[ByteBuddies] bot id={} dock set to {}", this.getId(), blockPos);
         }
     }
 
 
     public void clearDock() {
-        this.dockPos = null;
+        dockPos = null;
     }
 
-    // --- Derived stats from floppy disks ---
     public void refreshEffects() {
         effects.recomputeFrom(upgradeInv);
     }
 
     public int effectiveRadius() {
-        return (int)Math.ceil(baseRadius * effects.radiusMultiplier()); // Blue
+        return (int)Math.ceil(baseRadius * effects.radiusMultiplier());
     }
 
     public float actionSpeedMultiplier() {
@@ -347,29 +350,31 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         return effects.hologramEnabled();
     }
 
-    public boolean consumeEnergy(int cost) {
-        int adj = Math.max(1, Math.round(cost * energyCostMultiplier()));
-        if (energy.getEnergyStored() >= adj) { energy.extractEnergy(adj, false); return true; }
+    public boolean consumeEnergy(int energyCost) {
+        int adjustedEnergyCost = Math.max(1, Math.round(energyCost * energyCostMultiplier()));
+        if (energyStorage.getEnergyStored() >= adjustedEnergyCost) {
+            energyStorage.extractEnergy(adjustedEnergyCost, false);
+            return true;
+        }
         return false;
     }
 
     private void rebuildGoalsForRole() {
-        // Remove old role-bound goals
         for (Goal goals : roleGoals) this.goalSelector.removeGoal(goals);
         roleGoals.clear();
 
-        // Install the new set
-        switch (getRole()) {
+        switch (getBuddyRole()) {
             case FARMER -> {
-                roleGoals.add(new FarmHarvesterGoal(this));
-                // add: new PlanterGoal(this), new ForesterGoal(this) as you implement
+                roleGoals.add(new FarmerGoal(this));
+                // roleGoals.add(new TillingGoal(this));
+                // roleGoals.add(new ForesterGoal(this));
             }
             case MINER -> {
-                //roleGoals.add(new MineFaceGoal(this));   // implement similar to farming
+                // roleGoals.add(new QuarryGoal(this));
                 // roleGoals.add(new VeinGoal(this));
             }
             case COMBAT -> {
-                //roleGoals.add(new GuardGoal(this));
+                // roleGoals.add(new GuardGoal(this));
                 // roleGoals.add(new SentryGoal(this));
             }
             case POTION -> {
@@ -383,7 +388,6 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
                 //roleGoals.add(new HusbandryGoal(this));
             }
         }
-        // Register them with the selector at a sensible priority
         int priority = 2;
         for (Goal goals : roleGoals) this.goalSelector.addGoal(priority, goals);
     }
@@ -419,27 +423,35 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     }
 
     public static final class SupportAuras {
-        public static void tickSupportLattice(ByteBuddyEntity bot) {
-            Level lvl = bot.level();
-            BlockPos center = bot.blockPosition();
-            int r = 5; // scale by tier if you want
+        public static void tickSupportLattice(ByteBuddyEntity byteBuddy) {
+            Level level = byteBuddy.level();
+            BlockPos buddyPos = byteBuddy.blockPosition();
+            int radius = 5;
 
-            // Nudge nearby crops forward rarely
-            if (lvl.random.nextFloat() < 0.10f) {
-                BlockPos.betweenClosedStream(center.offset(-r, -1, -r), center.offset(r, 2, r)).limit(24).forEach(p -> {
-                    BlockState st = lvl.getBlockState(p);
-                    if (st.getBlock() instanceof CropBlock crop && !crop.isMaxAge(st)) {
-                        if (lvl.random.nextFloat() < 0.05f) {
-                            lvl.setBlock(p, crop.getStateForAge(crop.getAge(st)+1), 3);
+            if (level.random.nextFloat() < 0.10f) {
+                BlockPos.betweenClosedStream(
+                        buddyPos.offset(-radius, -1, -radius),
+                        buddyPos.offset(radius, 2, radius))
+                        .limit(24).forEach(blockPos -> {
+                    BlockState blockState = level.getBlockState(blockPos);
+                    if (blockState.getBlock() instanceof CropBlock cropBlock && !cropBlock.isMaxAge(blockState)) {
+                        if (level.random.nextFloat() < 0.05f) {
+                            level.setBlock(blockPos, cropBlock.getStateForAge(cropBlock.getAge(blockState) + 1), 3);
                         }
                     }
                 });
             }
 
-            // Tiny buff to owner (if nearby)
-            List<Player> players = lvl.getEntitiesOfClass(Player.class, new AABB(center).inflate(5));
-            for (Player pl : players) {
-                pl.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, 40, 0, true, false)); // Haste I for 2s refreshed
+            List<Player> players = level.getEntitiesOfClass(Player.class, new AABB(buddyPos).inflate(5));
+            for (Player player : players) {
+                player.addEffect(
+                        new MobEffectInstance(
+                                MobEffects.MOVEMENT_SPEED,
+                                40,
+                                0,
+                                true,
+                                false)
+                );
             }
         }
     }

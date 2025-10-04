@@ -21,6 +21,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.TriState;
 import net.turtleboi.bytebuddies.api.SeedItemProvider;
+import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity.*;
 import net.turtleboi.bytebuddies.item.custom.FloppyDiskItem.DiskHooks;
@@ -36,7 +37,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
-public class FarmHarvesterGoal extends Goal {
+public class FarmerGoal extends Goal {
     private final ByteBuddyEntity byteBuddy;
     @Nullable private BlockPos targetCrop;
     @Nullable private BlockPos approachPos;
@@ -61,7 +62,6 @@ public class FarmHarvesterGoal extends Goal {
     private long phaseStartedTick = 0L;
     private long phaseProgressTick = 0L;
 
-
     private int repathRetries = 0;
     private int anchorRotateRetries = 0;
     private int targetReselectRetries = 0;
@@ -81,7 +81,11 @@ public class FarmHarvesterGoal extends Goal {
     private static final double microDistMin = 0.06;
     private static final double microDistMax = 0.14;
 
-    public FarmHarvesterGoal(ByteBuddyEntity byteBuddy) {
+    @Nullable private BlockPos claimedPos = null;
+    private static final int claimTimeOut = 120;
+    private long nextClaimRenew = 0L;
+
+    public FarmerGoal(ByteBuddyEntity byteBuddy) {
         this.byteBuddy = byteBuddy;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         byteBuddy.setPathfindingMalus(PathType.WATER, 8.0F);
@@ -90,8 +94,8 @@ public class FarmHarvesterGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (byteBuddy.getRole() != ByteBuddyEntity.BotRole.FARMER) {
-            failTask(FailReason.WRONG_ROLE, "role=" + byteBuddy.getRole());
+        if (byteBuddy.getBuddyRole() != BuddyRole.FARMER) {
+            failTask(FailReason.WRONG_ROLE, "role=" + byteBuddy.getBuddyRole());
             return false;
         }
 
@@ -123,8 +127,6 @@ public class FarmHarvesterGoal extends Goal {
         return queuedPlantPos != null || targetCrop != null;
     }
 
-
-
     @Override
     public void tick() {
         if (byteBuddy.level() instanceof ServerLevel serverLevel) {
@@ -152,6 +154,16 @@ public class FarmHarvesterGoal extends Goal {
 
             if (targetCrop == null || approachPos == null) return;
 
+            if (claimedPos != null && claimedPos.equals(targetCrop)) {
+                if (serverLevel.getGameTime() >= nextClaimRenew) {
+                    var dockingStation = dockBlockEntity();
+                    if (dockingStation != null) {
+                        dockingStation.renewClaim(
+                                serverLevel, TaskType.HARVEST, claimedPos, byteBuddy.getUUID(), claimTimeOut);
+                    }
+                    nextClaimRenew = serverLevel.getGameTime() + 5;
+                }
+            }
 
             BlockState cropBlockState = byteBuddy.level().getBlockState(targetCrop);
             if (!(cropBlockState.getBlock() instanceof CropBlock crop) || !crop.isMaxAge(cropBlockState)) {
@@ -276,6 +288,17 @@ public class FarmHarvesterGoal extends Goal {
                 if (!harvestReady(serverLevel)) {
                     return;
                 }
+
+                var dockingStation = dockBlockEntity();
+                if (dockingStation != null && claimedPos != null) {
+                    if (!dockingStation.isReservedBy(serverLevel, TaskType.HARVEST, claimedPos, byteBuddy.getUUID())) {
+                        BotDebug.log(byteBuddy, "lost claim for " + targetCrop.toShortString() + ", aborting");
+                        clearTarget();
+                        enterPhase(GoalPhase.IDLE, "claim lost; rescan");
+                        return;
+                    }
+                }
+
                 enterPhase(GoalPhase.ACTING, "harvesting at " + targetCrop.toShortString());
                 boolean hasHarvested = harvestAt(targetCrop, (CropBlock) cropBlockState.getBlock());
                 if (hasHarvested) {
@@ -297,29 +320,49 @@ public class FarmHarvesterGoal extends Goal {
         }
     }
 
+    @Nullable
+    private DockingStationBlockEntity dockBlockEntity() {
+        return (DockingStationBlockEntity) byteBuddy.getDock()
+                .map(blockPos -> byteBuddy.level().getBlockEntity(blockPos))
+                .filter(blockEntity -> blockEntity instanceof DockingStationBlockEntity)
+                .orElse(null);
+    }
+
     private record findTarget(BlockPos crop, BlockPos targetPos, Path path) {}
     private Optional<findTarget> findTargetWithApproach() {
         BlockPos dockPos = byteBuddy.getDock().orElse(null);
         if (dockPos == null) return Optional.empty();
         int effectiveRadius = byteBuddy.effectiveRadius();
         Level level = byteBuddy.level();
+        var dockingStation = dockBlockEntity();
 
-        MutableBlockPos potentialCandidate = new MutableBlockPos();
-        for (int y = -1; y <= 2; y++) {
-            for (int x = -effectiveRadius; x <= effectiveRadius; x++) {
-                for (int z = -effectiveRadius; z <= effectiveRadius; z++) {
-                    potentialCandidate.set(dockPos.getX()+x, dockPos.getY()+y, dockPos.getZ()+z);
-                    BlockState blockState = level.getBlockState(potentialCandidate);
-                    if (!(blockState.getBlock() instanceof CropBlock crop) || !crop.isMaxAge(blockState)) continue;
+        if (level instanceof ServerLevel serverLevel) {
+            MutableBlockPos potentialCandidate = new MutableBlockPos();
+            for (int y = -1; y <= 2; y++) {
+                for (int x = -effectiveRadius; x <= effectiveRadius; x++) {
+                    for (int z = -effectiveRadius; z <= effectiveRadius; z++) {
+                        potentialCandidate.set(dockPos.getX() + x, dockPos.getY() + y, dockPos.getZ() + z);
+                        BlockState blockState = level.getBlockState(potentialCandidate);
+                        if (!(blockState.getBlock() instanceof CropBlock crop) || !crop.isMaxAge(blockState)) continue;
+                        if (dockingStation != null && dockingStation.isReserved(serverLevel, TaskType.HARVEST, potentialCandidate)) continue;
 
-                    var approachPlans = buildApproachPlans(level, potentialCandidate.immutable());
-                    if (approachPlans.isEmpty()) continue;
+                        var approachPlans = buildApproachPlans(level, potentialCandidate.immutable());
+                        if (approachPlans.isEmpty()) continue;
 
-                    this.approachPlans = approachPlans;
-                    this.anchorIndex = 0;
-                    Approach approach = approachPlans.get(0);
-                    this.approachPos = approach.targetPos();
-                    return Optional.of(new findTarget(potentialCandidate.immutable(), approach.targetPos(), approach.path()));
+                        if (dockingStation != null) {
+                            boolean targetViable = dockingStation.tryClaim(serverLevel, TaskType.HARVEST,
+                                    potentialCandidate.immutable(), byteBuddy.getUUID(), claimTimeOut);
+                            if (!targetViable) continue;
+                            this.claimedPos = potentialCandidate.immutable();
+                            this.nextClaimRenew = serverLevel.getGameTime() + 5;
+                        }
+
+                        this.approachPlans = approachPlans;
+                        this.anchorIndex = 0;
+                        Approach approach = approachPlans.get(0);
+                        this.approachPos = approach.targetPos();
+                        return Optional.of(new findTarget(potentialCandidate.immutable(), approach.targetPos(), approach.path()));
+                    }
                 }
             }
         }
@@ -369,7 +412,7 @@ public class FarmHarvesterGoal extends Goal {
 
         playHarvestAnimation();
 
-        int energyCost = 25;
+        int energyCost = 0;
         if (!byteBuddy.consumeEnergy(energyCost)) {
             failTask(FailReason.OUT_OF_ENERGY, "need=" + energyCost);
             if (level instanceof ServerLevel serverLevel) {
@@ -574,7 +617,19 @@ public class FarmHarvesterGoal extends Goal {
         phaseStartedTick = phaseProgressTick = getCurrentTime();
     }
 
+    private void releaseClaim() {
+        if (claimedPos == null) return;
+        var dockingStation = dockBlockEntity();
+        if (dockingStation != null) {
+            dockingStation.releaseClaim(
+                    TaskType.HARVEST, claimedPos, byteBuddy.getUUID());
+        }
+        claimedPos = null;
+    }
+
+
     private void clearTarget() {
+        releaseClaim();
         targetCrop = null;
         approachPos = null;
         targetAnchor = null;
@@ -584,6 +639,12 @@ public class FarmHarvesterGoal extends Goal {
         anchorIndex = 0;
         lastMoveDistSq = Double.POSITIVE_INFINITY;
         lastAnchorDistSq = Double.POSITIVE_INFINITY;
+    }
+
+    @Override
+    public void stop() {
+        releaseClaim();
+        super.stop();
     }
 
     private int scaledSpeed(int baseSpeed) {

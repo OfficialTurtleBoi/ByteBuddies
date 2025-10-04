@@ -7,7 +7,7 @@ import net.turtleboi.bytebuddies.item.custom.BatteryItem;
 
 public final class EnergyHooks {
     public static void drainBatteries(ByteBuddyEntity byteBuddy) {
-        int missingEnergy = byteBuddy.getEnergy().getMaxEnergyStored() - byteBuddy.getEnergy().getEnergyStored();
+        int missingEnergy = byteBuddy.getEnergyStorage().getMaxEnergyStored() - byteBuddy.getEnergyStorage().getEnergyStored();
         if (missingEnergy <= 0) {
             for (int i = 0; i < byteBuddy.getMainInv().getSlots(); i++) {
                 ItemStack stackInSlot = byteBuddy.getMainInv().getStackInSlot(i);
@@ -15,12 +15,12 @@ public final class EnergyHooks {
                     int neededEnergy = Math.min(missingEnergy, batteryItem.getIoRate());
                     int pulledEnergy = batteryItem.extract(stackInSlot, neededEnergy, false);
                     if (pulledEnergy > 0) {
-                        int receivedEnergy = byteBuddy.getEnergy().receiveEnergy(pulledEnergy, false);
+                        int receivedEnergy = byteBuddy.getEnergyStorage().receiveEnergy(pulledEnergy, false);
                         if (receivedEnergy < pulledEnergy)
                             batteryItem.setEnergy(stackInSlot, batteryItem.getEnergy(stackInSlot) + (pulledEnergy - receivedEnergy));
 
                         ByteBuddies.LOGGER.debug("[ByteBuddies] bot drained battery: +{}FE (slot {}), bot={}/{}",
-                                receivedEnergy, i, byteBuddy.getEnergy().getEnergyStored(), byteBuddy.getEnergy().getMaxEnergyStored());
+                                receivedEnergy, i, byteBuddy.getEnergyStorage().getEnergyStored(), byteBuddy.getEnergyStorage().getMaxEnergyStored());
 
                         missingEnergy -= receivedEnergy;
                         if (missingEnergy <= 0) break;

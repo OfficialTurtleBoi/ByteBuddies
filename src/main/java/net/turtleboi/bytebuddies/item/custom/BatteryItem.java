@@ -83,7 +83,7 @@ public class BatteryItem extends Item {
                     return InteractionResult.CONSUME;
                 }
 
-                int missingEnergy = bot.getEnergy().getMaxEnergyStored() - bot.getEnergy().getEnergyStored();
+                int missingEnergy = bot.getEnergyStorage().getMaxEnergyStored() - bot.getEnergyStorage().getEnergyStored();
                 if (missingEnergy <= 0) {
                     player.displayClientMessage(Component.literal("Bot is already full").withStyle(ChatFormatting.YELLOW), true);
                     return InteractionResult.CONSUME;
@@ -91,7 +91,7 @@ public class BatteryItem extends Item {
 
                 int transferableEnergy = Math.min(ioRate, Math.min(batteryEnergy, missingEnergy));
                 int extractableEnergy = extract(batteryStack, transferableEnergy, false);
-                int receivableEnergy = bot.getEnergy().receiveEnergy(extractableEnergy, false);
+                int receivableEnergy = bot.getEnergyStorage().receiveEnergy(extractableEnergy, false);
 
                 if (receivableEnergy < extractableEnergy)
                     setEnergy(batteryStack, getEnergy(batteryStack) + (extractableEnergy - receivableEnergy));
@@ -99,7 +99,7 @@ public class BatteryItem extends Item {
                 player.displayClientMessage(Component.literal("Transferred " + receivableEnergy + " FE to bot"), true);
                 ByteBuddies.LOGGER.info("[ByteBuddies] battery→bot: tier={} gave={}FE remain={}FE bot={}/{}",
                         tierName, receivableEnergy, getEnergy(batteryStack),
-                        bot.getEnergy().getEnergyStored(), bot.getEnergy().getMaxEnergyStored());
+                        bot.getEnergyStorage().getEnergyStored(), bot.getEnergyStorage().getMaxEnergyStored());
 
                 return InteractionResult.CONSUME;
             }
