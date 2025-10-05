@@ -1,5 +1,6 @@
-// 1.21.1	2025-09-30T20:30:59.1174148	Loot Tables
+// 1.21.1	2025-10-05T00:59:36.2256718	Loot Tables
 6f6ed3108efff6f37fe5970973add1ddce3b8324 data/bytebuddies/loot_table/blocks/aluminum_block.json
 6116df8280949f0e8947796d5399d4a64e387ef2 data/bytebuddies/loot_table/blocks/bluestone_block.json
 97b72bea9d03a6e2b586d4120739823686669bb8 data/bytebuddies/loot_table/blocks/bluestone_ore.json
 e35770f82011f316ca3f8b430c9c60a263635ba0 data/bytebuddies/loot_table/blocks/deepslate_bluestone_ore.json
+ec06804fa154bccefb87c165d8cd55ef24bc752e data/bytebuddies/loot_table/blocks/docking_station.json

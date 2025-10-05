@@ -38,7 +38,7 @@ public final class BotDebug {
 
     public static boolean ENABLED = true;
     public static boolean NAMEPLATE = false;
-    public static boolean ACTIONBAR = true;
+    public static boolean ACTIONBAR = false;
     public static boolean PARTICLES = true;
 
     private BotDebug() {}
@@ -62,8 +62,8 @@ public final class BotDebug {
     public static void mark(Level level, BlockPos blockPos) {
         if (PARTICLES && !level.isClientSide) {
             if (level instanceof ServerLevel serverLevel) {
-                for (int i = 0; i < 8; i++) {
-                    double particleInterval = (Math.PI * 2 * i) / 8;
+                for (int i = 0; i < 12; i++) {
+                    double particleInterval = (Math.PI * 2 * i) / 12;
                     serverLevel.sendParticles(BluestoneOreBlock.BLUESTONE,
                             blockPos.getX() + 0.5 + Math.cos(particleInterval) * 0.5,
                             blockPos.getY() + 0.1,
@@ -84,5 +84,7 @@ public final class BotDebug {
         }
     }
 
-    private static String shorten(String s, int n) { return s.length() <= n ? s : s.substring(0, n); }
+    private static String shorten(String string, int letters) {
+        return string.length() <= letters ? string : string.substring(0, letters);
+    }
 }

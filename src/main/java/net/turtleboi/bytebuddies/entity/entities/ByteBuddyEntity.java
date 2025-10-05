@@ -53,11 +53,21 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     private final int baseRadius = 8;
     private final DiskEffects effects = new DiskEffects();
 
+    private long lastProgressGameTime = 0L;     // last time we *know* the bot made real progress
+    private long lastResetGameTime     = 0L;     // to avoid rapid-fire resets
+    private static final int STALL_RESET_TICKS   = 200;  // 10s @20tps (tune)
+    private static final int RESET_COOLDOWN_TICKS= 60;   // 3s between hard resets
+    private TaskType activeTask = TaskType.NONE;
+
     private static final EntityDataAccessor<Boolean> DATA_SLEEPING =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_WAKING =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_WAVING =
+            SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_WORKING =
+            SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SLAMMING =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Integer> DATA_ROLE =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.INT);
@@ -90,6 +100,8 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     public final AnimationState sleepPoseState = new AnimationState();
     public final AnimationState wakeUpState = new AnimationState();
     private int wakingAnimationTimeout = 0;
+    public final AnimationState workingState = new AnimationState();
+    public final AnimationState slamState = new AnimationState();
     public final AnimationState waveState = new AnimationState();
 
     @Override
@@ -109,6 +121,8 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         builder.define(DATA_SLEEPING, true);
         builder.define(DATA_WAKING, false);
         builder.define(DATA_WAVING, false);
+        builder.define(DATA_WORKING, false);
+        builder.define(DATA_SLAMMING, false);
         builder.define(DATA_ROLE, BuddyRole.FARMER.ordinal());
     }
 
@@ -134,6 +148,22 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
 
     public void setWaving(boolean waving) {
         this.entityData.set(DATA_WAVING, waving);
+    }
+
+    public boolean isWorking() {
+        return this.entityData.get(DATA_WORKING);
+    }
+
+    public void setWorking(boolean working) {
+        this.entityData.set(DATA_WORKING, working);
+    }
+
+    public boolean isSlamming() {
+        return this.entityData.get(DATA_SLAMMING);
+    }
+
+    public void setSlamming(boolean slamming) {
+        this.entityData.set(DATA_SLAMMING, slamming);
     }
 
     @Override
@@ -178,20 +208,18 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
                 }
             }
 
-            if (supportAuraEnabled() && tickCount % 10 == 0) {
-                SupportAuras.tickSupportLattice(this);
+            if (tickCount % 10 == 0) {
+                EnergyHooks.drainBatteries(this);
+                if (supportAuraEnabled()) {
+                    SupportAuras.tickSupportLattice(this);
+                }
             }
-
-            if ((tickCount % 10) == 0) EnergyHooks.drainBatteries(this);
         } else {
             setupAnimationStates();
         }
     }
 
-    public void onTaskSuccess(TaskType taskType, BlockPos blockPos) {
-        DiskHooks.tryGiveByproduct(this, taskType, blockPos);
-        DiskHooks.trySpawnHologram(this, taskType, blockPos);
-    }
+
 
     private void setupAnimationStates(){
         if (isSleeping()) {
@@ -229,6 +257,27 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         } else {
             if (waveState.isStarted()) waveState.stop();
         }
+
+        if (isWorking()) {
+            if (!workingState.isStarted()) {
+                workingState.start(this.tickCount);
+            }
+        } else {
+            if (workingState.isStarted()) workingState.stop();
+        }
+
+        if (isSlamming()) {
+            if (!slamState.isStarted()) {
+                slamState.start(this.tickCount);
+            }
+        } else {
+            if (slamState.isStarted()) slamState.stop();
+        }
+    }
+
+    public void onTaskSuccess(TaskType taskType, BlockPos blockPos) {
+        DiskHooks.tryGiveByproduct(this, taskType, blockPos);
+        DiskHooks.trySpawnHologram(this, taskType, blockPos);
     }
 
     @Override

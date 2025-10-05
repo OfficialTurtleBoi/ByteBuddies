@@ -84,6 +84,14 @@ public class ByteBuddyModel <T extends Entity> extends HierarchicalModel<T> impl
         if (byteBuddy.isWaving()) {
             this.animate(byteBuddy.waveState, ByteBuddyAnimations.WAVING_ANIMATION, ageInTicks, 1f);
         }
+
+        if (byteBuddy.isWorking()) {
+            this.animate(byteBuddy.workingState, ByteBuddyAnimations.WORK_ANIMATION, ageInTicks, 1f);
+        }
+
+        if (byteBuddy.isSlamming()) {
+            this.animate(byteBuddy.slamState, ByteBuddyAnimations.SLAM_ANIMATION, ageInTicks, 1f);
+        }
     }
 
     private void applyHeadRotation(float pNetHeadYaw, float pHeadPitch) {

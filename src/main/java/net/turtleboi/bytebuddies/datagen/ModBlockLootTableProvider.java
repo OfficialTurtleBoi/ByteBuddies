@@ -33,6 +33,7 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
         add(ModBlocks.DEEPSLATE_BLUESTONE_ORE.get(),
                 block -> createBluestoneOreDrops(ModBlocks.BLUESTONE_ORE.get()));
         dropSelf(ModBlocks.BLUESTONE_BLOCK.get());
+        dropSelf(ModBlocks.DOCKING_STATION.get());
     }
 
     @Override
