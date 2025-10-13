@@ -17,6 +17,9 @@ import java.util.Map;
 public class ModItems {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(ByteBuddies.MOD_ID);
 
+    public static final DeferredItem<Item> RAW_ALUMINUM = ITEMS.register("raw_aluminum",
+            () -> new Item(new Item.Properties()));
+
     public static final DeferredItem<Item> ALUMINUM_INGOT = ITEMS.register("aluminum_ingot",
             () -> new Item(new Item.Properties()));
 

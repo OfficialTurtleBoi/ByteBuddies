@@ -22,10 +22,13 @@ public class ModLanguageProvider extends LanguageProvider {
     @Override
     protected void addTranslations() {
         add("creativetab.bytebuddies.bytebuddies_tab", "ByteBuddies");
+        addSimpleNameBlock(ModBlocks.ALUMINUM_ORE);
+        addSimpleNameBlock(ModBlocks.DEEPSLATE_ALUMINUM_ORE);
         addSimpleNameBlock(ModBlocks.ALUMINUM_BLOCK);
         addSimpleNameBlock(ModBlocks.BLUESTONE_ORE);
         addSimpleNameBlock(ModBlocks.DEEPSLATE_BLUESTONE_ORE);
         addSimpleNameBlock(ModBlocks.BLUESTONE_BLOCK);
+        addSimpleItemName(ModItems.RAW_ALUMINUM);
         addSimpleItemName(ModItems.ALUMINUM_INGOT);
         addSimpleItemName(ModItems.ALUMINUM_NUGGET);
         addSimpleItemName(ModItems.CARBON_ALLOY);

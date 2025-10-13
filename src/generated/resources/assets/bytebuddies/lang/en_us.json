@@ -1,7 +1,9 @@
 {
   "block.bytebuddies.aluminum_block": "Aluminum Block",
+  "block.bytebuddies.aluminum_ore": "Aluminum Ore",
   "block.bytebuddies.bluestone_block": "Bluestone Block",
   "block.bytebuddies.bluestone_ore": "Bluestone Ore",
+  "block.bytebuddies.deepslate_aluminum_ore": "Deepslate Aluminum Ore",
   "block.bytebuddies.deepslate_bluestone_ore": "Deepslate Bluestone Ore",
   "creativetab.bytebuddies.bytebuddies_tab": "ByteBuddies",
   "item.bytebuddies.advanced_battery": "Advanced Battery",
@@ -43,6 +45,7 @@
   "item.bytebuddies.iron_purple_floppy": "Purple Floppy Disk",
   "item.bytebuddies.iron_red_floppy": "Red Floppy Disk",
   "item.bytebuddies.iron_yellow_floppy": "Yellow Floppy Disk",
+  "item.bytebuddies.raw_aluminum": "Raw Aluminum",
   "item.bytebuddies.reinforced_battery": "Reinforced Battery",
   "item.bytebuddies.simple_battery": "Simple Battery",
   "item.bytebuddies.steel_ingot": "Steel Ingot",

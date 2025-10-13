@@ -19,6 +19,7 @@ public class ModItemModelProvider extends ItemModelProvider {
 
     @Override
     protected void registerModels() {
+        basicItem(ModItems.RAW_ALUMINUM.get());
         basicItem(ModItems.ALUMINUM_INGOT.get());
         basicItem(ModItems.ALUMINUM_NUGGET.get());
         basicItem(ModItems.CARBON_ALLOY.get());

@@ -73,7 +73,7 @@ public class ByteBuddyModel <T extends Entity> extends HierarchicalModel<T> impl
             this.animate(byteBuddy.wakeUpState, ByteBuddyAnimations.WAKE_UP_ANIMATION, ageInTicks, 1f);
         }
 
-        if (!byteBuddy.isSleeping() && !byteBuddy.isWaking()) {
+        if (!byteBuddy.isSleeping() && !byteBuddy.isWaking() ) {
             this.applyHeadRotation(netHeadYaw, headPitch);
             this.animateWalk(ByteBuddyAnimations.WALKING_ANIMATION, limbSwing, limbSwingAmount, 2f, 2.4f);
             this.animate(byteBuddy.idleAnimationState, ByteBuddyAnimations.IDLE_ANIMATION, ageInTicks, 1f);
