@@ -9,10 +9,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
-import net.minecraft.world.DifficultyInstance;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.*;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
@@ -21,26 +21,31 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.items.ItemStackHandler;
-import net.turtleboi.bytebuddies.entity.ai.FarmerGoal;
-import net.turtleboi.bytebuddies.entity.ai.RandomWaveAtFriendGoal;
+import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
+import net.turtleboi.bytebuddies.entity.ai.*;
 import net.turtleboi.bytebuddies.item.custom.FloppyDiskItem.*;
+import net.turtleboi.bytebuddies.screen.custom.ByteBuddyMenu;
 import net.turtleboi.bytebuddies.util.EnergyHooks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BooleanSupplier;
 
 public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
+    ByteBuddyEntity byteBuddy = this;
     public enum BuddyRole {
         FARMER, MINER, COMBAT, POTION, STORAGE, ANIMAL
     }
@@ -50,14 +55,19 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     private BuddyRole buddyRole = BuddyRole.FARMER;
     private final Set<Goal> roleGoals = new HashSet<>();
     @Nullable private BlockPos dockPos;
-    private final int baseRadius = 8;
     private final DiskEffects effects = new DiskEffects();
 
-    private long lastProgressGameTime = 0L;     // last time we *know* the bot made real progress
-    private long lastResetGameTime     = 0L;     // to avoid rapid-fire resets
-    private static final int STALL_RESET_TICKS   = 200;  // 10s @20tps (tune)
-    private static final int RESET_COOLDOWN_TICKS= 60;   // 3s between hard resets
-    private TaskType activeTask = TaskType.NONE;
+    private boolean farmingEnabled = true;
+    private boolean harvestEnabled = true;
+    private boolean plantEnabled = true;
+    private boolean tillEnabled = true;
+
+    private static final int BASE_ACTION_COOLDOWN_TICKS = 20;
+    private long farmGoalLockUntil = 0L;
+
+    @Nullable private HarvestGoal harvestGoal;
+    @Nullable private PlantGoal plantGoal;
+    @Nullable private TillGoal tillGoal;
 
     private static final EntityDataAccessor<Boolean> DATA_SLEEPING =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.BOOLEAN);
@@ -88,11 +98,56 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new PanicGoal(this, 2.0D));
-        this.goalSelector.addGoal(2, new FarmerGoal(this));
+        this.goalSelector.addGoal(2, new GatedGoal(this, this::isPlantEnabled, new PlantGoal(this)));
+        this.goalSelector.addGoal(3, new GatedGoal(this, this::isHarvestEnabled, new HarvestGoal(this)));
+        this.goalSelector.addGoal(4, new GatedGoal(this, this::isTillEnabled, new TillGoal(this)));
         this.goalSelector.addGoal(5, new RandomStrollGoal(this, 0.75D));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 3f));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(8, new RandomWaveAtFriendGoal(this, 6.0D, 120, 40));
+    }
+
+    private static final class GatedGoal extends Goal {
+        private final ByteBuddyEntity byteBuddy;
+        private final BooleanSupplier requirement;
+        private final Goal lockedGoal;
+
+        GatedGoal(ByteBuddyEntity byteBuddy, BooleanSupplier requirement, Goal lockedGoal) {
+            this.byteBuddy = byteBuddy;
+            this.requirement = requirement;
+            this.lockedGoal = lockedGoal;
+            this.setFlags(lockedGoal.getFlags());
+        }
+
+        @Override public boolean canUse() {
+            if (!(byteBuddy.level() instanceof ServerLevel sl)) return false;
+            if (!requirement.getAsBoolean()) return false;
+            if (byteBuddy.farmLockActive(sl)) return false;
+            return lockedGoal.canUse();
+        }
+
+        @Override public boolean canContinueToUse() {
+            return lockedGoal.canContinueToUse();
+        }
+
+        @Override public void start() {
+            lockedGoal.start();
+        }
+
+        @Override public void tick() {
+            lockedGoal.tick();
+        }
+
+        @Override public void stop() {
+            lockedGoal.stop();
+            if (byteBuddy.level() instanceof ServerLevel serverLevel) {
+                byteBuddy.armFarmLock(serverLevel, 8);
+            }
+        }
+
+        @Override public boolean isInterruptable() {
+            return lockedGoal.isInterruptable();
+        }
     }
 
     public AnimationState idleAnimationState = new AnimationState();
@@ -166,6 +221,46 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         this.entityData.set(DATA_SLAMMING, slamming);
     }
 
+    public void setFarmingEnabled(boolean farmingEnabled) {
+        this.farmingEnabled = farmingEnabled;
+    }
+
+    public void setHarvestEnabled(boolean harvestEnabled) {
+        this.harvestEnabled = harvestEnabled;
+    }
+
+    public void setPlantEnabled(boolean plantingEnabled) {
+        this.plantEnabled = plantingEnabled;
+    }
+
+    public void setTillEnabled(boolean tillingEnabled) {
+        tillEnabled = tillingEnabled;
+    }
+
+    public boolean isFarmingEnabled() {
+        return farmingEnabled;
+    }
+
+    public boolean isHarvestEnabled() {
+        return farmingEnabled && harvestEnabled;
+    }
+
+    public boolean isPlantEnabled()   {
+        return farmingEnabled && plantEnabled;
+    }
+
+    public boolean isTillEnabled()    {
+        return farmingEnabled && tillEnabled;
+    }
+
+    public boolean farmLockActive(ServerLevel serverLevel) {
+        return serverLevel.getGameTime() < farmGoalLockUntil;
+    }
+
+    public void armFarmLock(ServerLevel serverLevel, int ticks) {
+        farmGoalLockUntil = serverLevel.getGameTime() + ticks;
+    }
+
     @Override
     public @Nullable SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
                                                   MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
@@ -214,12 +309,11 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
                     SupportAuras.tickSupportLattice(this);
                 }
             }
+
         } else {
             setupAnimationStates();
         }
     }
-
-
 
     private void setupAnimationStates(){
         if (isSleeping()) {
@@ -287,15 +381,48 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         if (dockPos != null) {
             nbtData.put("dockPos", NbtUtils.writeBlockPos(dockPos));
         }
+        nbtData.putBoolean("FarmingEnabled", farmingEnabled);
+        nbtData.putBoolean("HarvestEnabled", harvestEnabled);
+        nbtData.putBoolean("PlantEnabled", plantEnabled);
+        nbtData.putBoolean("TillEnabled", tillEnabled);
+
+        var provider = level().registryAccess();
+        nbtData.put("MainInv", mainInv.serializeNBT(provider));
+        nbtData.put("UpgradeInv",upgradeInv.serializeNBT(provider));
+
+        nbtData.putInt("Energy", energyStorage.getEnergyStored());
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag nbtData) {
+    public void readAdditionalSaveData(@NotNull CompoundTag nbtData) {
         super.readAdditionalSaveData(nbtData);
         setSleeping(nbtData.getBoolean("Sleeping"));
         buddyRole = BuddyRole.values()[nbtData.getInt("role")];
         dockPos = NbtUtils.readBlockPos(nbtData, "dockPos").orElse(null);
+        if (nbtData.contains("FarmingEnabled")) {
+            farmingEnabled = nbtData.getBoolean("FarmingEnabled");
+        }
+        if (nbtData.contains("HarvestEnabled")) {
+            harvestEnabled = nbtData.getBoolean("HarvestEnabled");
+        }
+        if (nbtData.contains("PlantEnabled")) {
+            plantEnabled = nbtData.getBoolean("PlantEnabled");
+        }
+        if (nbtData.contains("TillEnabled")) {
+            tillEnabled = nbtData.getBoolean("TillEnabled");
+        }
         setNoAi(isSleeping());
+
+        var provider = level().registryAccess();
+        if (nbtData.contains("MainInv")) {
+            mainInv.deserializeNBT(provider, nbtData.getCompound("MainInv"));
+        }
+        if (nbtData.contains("UpgradeInv")) {
+            upgradeInv.deserializeNBT(provider, nbtData.getCompound("UpgradeInv"));
+        }
+        if (nbtData.contains("Energy")) {
+            setEnergyUnsafe(nbtData.getInt("Energy"));
+        }
     }
 
     @Override
@@ -310,6 +437,16 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
                 player.displayClientMessage(Component.literal("Set bot role to " + buddyRole), true);
                 return InteractionResult.SUCCESS;
             }
+
+            if (player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.openMenu(new SimpleMenuProvider((containerId, inventory, interactingPlayer) ->
+                                new ByteBuddyMenu(containerId, inventory, this),
+                                Component.literal("ByteBuddy")),
+                        buf -> buf.writeInt(this.getId())
+                );
+                return InteractionResult.SUCCESS;
+            }
+
         }
         return super.mobInteract(player, interactionHand);
     }
@@ -332,6 +469,14 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
 
     public IEnergyStorage getEnergyStorage() {
         return energyStorage;
+    }
+
+    private void setEnergyUnsafe(int value) {
+        try {
+            var storedEnergy = EnergyStorage.class.getDeclaredField("energy");
+            storedEnergy.setAccessible(true);
+            storedEnergy.setInt(energyStorage, Mth.clamp(value, 0, energyStorage.getMaxEnergyStored()));
+        } catch (Exception ignored) {}
     }
 
     public BuddyRole getBuddyRole() {
@@ -358,7 +503,6 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         }
     }
 
-
     public void clearDock() {
         dockPos = null;
     }
@@ -368,7 +512,17 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     }
 
     public int effectiveRadius() {
-        return (int)Math.ceil(baseRadius * effects.radiusMultiplier());
+        Optional<BlockPos> dockOpt = getDock();
+        if (dockOpt.isEmpty()) {
+            return 0;
+        }
+
+        BlockPos dockPos = dockOpt.get();
+        if (level().getBlockEntity(dockPos) instanceof DockingStationBlockEntity dockBlock) {
+            return (int) Math.ceil(dockBlock.dockBaseRadius * effects.radiusMultiplier());
+        }
+
+        return 0;
     }
 
     public float actionSpeedMultiplier() {
@@ -414,61 +568,173 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
 
         switch (getBuddyRole()) {
             case FARMER -> {
-                roleGoals.add(new FarmerGoal(this));
-                // roleGoals.add(new TillingGoal(this));
-                // roleGoals.add(new ForesterGoal(this));
+                roleGoals.add(new GatedGoal(this, this::isPlantEnabled, new PlantGoal(this)));
+                roleGoals.add(new GatedGoal(this, this::isHarvestEnabled, new HarvestGoal(this)));
+                roleGoals.add(new GatedGoal(this, this::isTillEnabled, new TillGoal(this)));
             }
             case MINER -> {
-                // roleGoals.add(new QuarryGoal(this));
-                // roleGoals.add(new VeinGoal(this));
+                // add mining goals later
             }
             case COMBAT -> {
-                // roleGoals.add(new GuardGoal(this));
-                // roleGoals.add(new SentryGoal(this));
+                // combat goals later
             }
             case POTION -> {
-                //roleGoals.add(new BrewerGoal(this));
-                // roleGoals.add(new DistributorGoal(this));
+                // brewing goals later
             }
             case STORAGE -> {
-                //roleGoals.add(new SorterGoal(this));
+                // storage goals later
             }
             case ANIMAL -> {
-                //roleGoals.add(new HusbandryGoal(this));
+                // husbandry goals later
             }
         }
+
         int priority = 2;
-        for (Goal goals : roleGoals) this.goalSelector.addGoal(priority, goals);
+        for (Goal goals : roleGoals) this.goalSelector.addGoal(priority++, goals);
     }
 
-    @Override
-    public int receiveEnergy(int toReceive, boolean simulate) {
-        return 0;
+    public static final class PlantRequest {
+        public final BlockPos blockPos;
+        public final BlockState blockState;
+        public final Item seedItem;
+        public PlantRequest(BlockPos blockPos, BlockState blockState, Item seedItem) {
+            this.blockPos = blockPos; this.blockState = blockState; this.seedItem = seedItem;
+        }
     }
 
-    @Override
-    public int extractEnergy(int toExtract, boolean simulate) {
-        return 0;
+    @Nullable private PlantRequest pendingPlantRequest;
+
+    public void requestImmediatePlant(BlockPos pos, BlockState state, Item seed) {
+        this.pendingPlantRequest = new PlantRequest(pos, state, seed);
     }
 
-    @Override
-    public int getEnergyStored() {
-        return 0;
+    @Nullable
+    public PlantRequest pollPlantRequest() {
+        PlantRequest plantRequest = this.pendingPlantRequest;
+        this.pendingPlantRequest = null;
+        return plantRequest;
     }
 
-    @Override
-    public int getMaxEnergyStored() {
-        return 0;
+    private long replantHoldUntil = 0L;
+    public void holdHarvestForReplant(ServerLevel serverLevel, int ticks) {
+        replantHoldUntil = serverLevel.getGameTime() + Math.max(1, ticks);
     }
 
-    @Override
-    public boolean canExtract() {
-        return false;
+    public boolean harvestOnHold(ServerLevel serverLevel) {
+        return serverLevel.getGameTime() < replantHoldUntil;
     }
 
-    @Override
-    public boolean canReceive() {
-        return false;
+    private static List<BlockPos> pathBlockPositions(Path path, int from, int to) {
+        int start = Math.max(0, from);
+        int end = Math.min(path.getNodeCount(), to);
+        List<BlockPos> out = new ArrayList<>(Math.max(0, end - start));
+        for (int i = start; i < end; i++) out.add(path.getNodePos(i));
+        return out;
+    }
+
+    private static List<BlockPos> pathAhead(Path path, int lookAhead) {
+        int start = Math.min(path.getNextNodeIndex(), path.getNodeCount());
+        int end = Math.min(start + Math.max(0, lookAhead), path.getNodeCount());
+        return pathBlockPositions(path, start, end);
+    }
+
+    public static void reservePathAhead(ByteBuddyEntity byteBuddy, ServerLevel serverLevel, Path path, int lookAhead) {
+        Optional<BlockPos> dockOpt = byteBuddy.getDock();
+        if (dockOpt.isEmpty()) {
+            return;
+        }
+
+        BlockPos dockPos = dockOpt.get();
+        if (serverLevel.getBlockEntity(dockPos) instanceof DockingStationBlockEntity dockBlock) {
+            for (BlockPos node : pathAhead(path, lookAhead)) {
+                dockBlock.tryClaim(serverLevel, TaskType.MOVE, node, byteBuddy.getUUID(), 20);
+            }
+        }
+
+    }
+
+    public void renewPathAhead(ServerLevel serverLevel, Path path, int lookAhead) {
+        Optional<BlockPos> dockOpt = getDock();
+        if (dockOpt.isEmpty()) {
+            return;
+        }
+
+        BlockPos dockPos = dockOpt.get();
+        if (level().getBlockEntity(dockPos) instanceof DockingStationBlockEntity dockBlock) {
+            for (BlockPos node : pathAhead(path, lookAhead)) {
+                dockBlock.renewClaim(serverLevel, TaskType.MOVE, node, this.getUUID(), 20);
+            }
+        }
+    }
+
+    public void releasePath(Path path) {
+        Optional<BlockPos> dockOpt = getDock();
+        if (dockOpt.isEmpty()) {
+            return;
+        }
+
+        BlockPos dockPos = dockOpt.get();
+        if (level().getBlockEntity(dockPos) instanceof DockingStationBlockEntity dockBlock) {
+            for (int i = 0; i < path.getNodeCount(); i++) {
+                dockBlock.releaseClaim(TaskType.MOVE, path.getNodePos(i), this.getUUID());
+            }
+        }
+    }
+
+    public static boolean isStandableTerrain(Level level, BlockPos blockPos) {
+        if (!level.isLoaded(blockPos)) return false;
+
+        BlockState below = level.getBlockState(blockPos.below());
+        boolean solidFloor = !below.getCollisionShape(level, blockPos.below()).isEmpty();
+
+        BlockState feet = level.getBlockState(blockPos);
+        boolean feetFree = feet.getCollisionShape(level, blockPos).isEmpty();
+
+        BlockState head = level.getBlockState(blockPos.above());
+        boolean headFree = head.getCollisionShape(level, blockPos.above()).isEmpty();
+
+        boolean noLiquid = level.getFluidState(blockPos).isEmpty()
+                && level.getFluidState(blockPos.above()).isEmpty();
+
+        return solidFloor && feetFree && headFree && noLiquid;
+    }
+
+    public static boolean isStandableForMove(ByteBuddyEntity byteBuddy, Level level, BlockPos blockPos) {
+        if (!isStandableTerrain(level, blockPos)) return false;
+
+        if (!(level instanceof ServerLevel serverLevel)) return true;
+        BlockPos dockPos = byteBuddy.getDock().orElse(null);
+        if (dockPos == null) return true;
+
+        if (!(level.getBlockEntity(dockPos) instanceof DockingStationBlockEntity dockBlock)) return true;
+        boolean reserved = dockBlock.isReserved(serverLevel, TaskType.MOVE, blockPos);
+        if (!reserved) return true;
+
+        return dockBlock.isReservedBy(serverLevel, TaskType.MOVE, blockPos, byteBuddy.getUUID());
+    }
+
+    @Override public int receiveEnergy(int toReceive, boolean simulate) {
+        return energyStorage.receiveEnergy(toReceive, simulate);
+    }
+
+    @Override public int extractEnergy(int toExtract, boolean simulate) {
+        return energyStorage.extractEnergy(toExtract, simulate);
+    }
+
+    @Override public int getEnergyStored() {
+        return energyStorage.getEnergyStored();
+    }
+
+    @Override public int getMaxEnergyStored() {
+        return energyStorage.getMaxEnergyStored();
+    }
+
+    @Override public boolean canExtract() {
+        return energyStorage.canExtract();
+    }
+
+    @Override public boolean canReceive() {
+        return energyStorage.canReceive();
     }
 
     public static final class SupportAuras {
@@ -505,11 +771,17 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         }
     }
 
+    public int scaledCooldownTicks() {
+        float speedMultiplier = Math.max(0.25f, this.actionSpeedMultiplier());
+        return Math.max(4, Math.round(BASE_ACTION_COOLDOWN_TICKS / speedMultiplier));
+    }
+
     public enum TaskType {
         HARVEST,
         FORESTRY,
         PLANT,
         TILL,
+        MOVE,
         MINE,
         COMBAT,
         BREW,

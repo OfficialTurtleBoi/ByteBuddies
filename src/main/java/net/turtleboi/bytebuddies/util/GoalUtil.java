@@ -1,0 +1,169 @@
+package net.turtleboi.bytebuddies.util;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BushBlock;
+import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.util.TriState;
+import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
+import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
+
+import javax.annotation.Nullable;
+import java.util.Set;
+import java.util.function.LongConsumer;
+import java.util.function.LongSupplier;
+
+public class GoalUtil {
+    public static void lockToAnchor(ByteBuddyEntity byteBuddy, Vec3 targetAnchor) {
+        if (targetAnchor == null) return;
+        byteBuddy.getNavigation().stop();
+        byteBuddy.setPos(targetAnchor.x, targetAnchor.y, targetAnchor.z);
+        var deltaMovement = byteBuddy.getDeltaMovement();
+        byteBuddy.setDeltaMovement(deltaMovement.x * 0.2, deltaMovement.y * 0.2, deltaMovement.z * 0.2);
+    }
+
+    public static boolean actionReady(ServerLevel serverLevel, long nextActionTick) {
+        return serverLevel.getGameTime() >= nextActionTick;
+    }
+
+    public static double hDistSq(Vec3 posA, Vec3 posB) {
+        double dx = posA.x - posB.x, dz = posA.z - posB.z;
+        return dx * dx + dz * dz;
+    }
+
+    public static int toTicks(double seconds) {
+        return (int)Math.round(seconds * 20.0);
+    }
+
+    @Nullable
+    public static Vec3 getEdgeAnchor(BlockPos blockPos, BlockPos standingPos) {
+        if (blockPos == null || standingPos == null) return null;
+        Vec3 centerPos = blockPos.getCenter();
+        Vec3 standingCenterPos = standingPos.getCenter();
+        Vec3 subtracted = standingCenterPos.subtract(centerPos);
+        if (subtracted.lengthSqr() < 1.0e-6) subtracted = new Vec3(1, 0, 0);
+        subtracted = subtracted.normalize();
+        double inset = 0.55;
+        return new Vec3(centerPos.x + subtracted.x * inset, standingPos.getY(), centerPos.z + subtracted.z * inset);
+    }
+
+    @Nullable
+    public static DockingStationBlockEntity dockBlockEntity(ByteBuddyEntity byteBuddy) {
+        return (DockingStationBlockEntity) byteBuddy.getDock()
+                .map(blockPos -> byteBuddy.level().getBlockEntity(blockPos))
+                .filter(blockEntity -> blockEntity instanceof DockingStationBlockEntity)
+                .orElse(null);
+    }
+
+    public static void renewClaimIfNeeded(
+            ByteBuddyEntity byteBuddy, ServerLevel serverLevel, ByteBuddyEntity.TaskType taskType, @Nullable BlockPos claimedPos,
+            @Nullable BlockPos currentPos, long currentTime, int renewPeriod, int timeOutTicks, LongSupplier nextRenewGetter, LongConsumer nextRenewSetter) {
+        if (currentPos == null || !currentPos.equals(claimedPos)) return;
+        if (currentTime < nextRenewGetter.getAsLong()) return;
+        DockingStationBlockEntity dockBlock = dockBlockEntity(byteBuddy);
+        if (dockBlock == null) return;
+        dockBlock.renewClaim(serverLevel, taskType, claimedPos, byteBuddy.getUUID(), timeOutTicks);
+        nextRenewSetter.accept(currentTime + renewPeriod);
+    }
+
+    public static boolean isStandableTerrain(Level level, BlockPos blockPos) {
+        if (!level.isLoaded(blockPos)) return false;
+        BlockState below = level.getBlockState(blockPos.below());
+        boolean solidFloor = !below.getCollisionShape(level, blockPos.below()).isEmpty();
+
+        BlockState feet = level.getBlockState(blockPos);
+        boolean feetFree = feet.getCollisionShape(level, blockPos).isEmpty();
+
+        BlockState head = level.getBlockState(blockPos.above());
+        boolean headFree = head.getCollisionShape(level, blockPos.above()).isEmpty();
+
+        boolean noLiquid = level.getFluidState(blockPos).isEmpty()
+                && level.getFluidState(blockPos.above()).isEmpty();
+
+        return solidFloor && feetFree && headFree && noLiquid;
+    }
+
+    public static boolean isStandableForMove(ByteBuddyEntity byteBuddy, Level level, BlockPos blockPos) {
+        if (!isStandableTerrain(level, blockPos)) return false;
+
+        if (!(level instanceof ServerLevel serverLevel)) return true;
+        BlockPos dockPos = byteBuddy.getDock().orElse(null);
+        if (dockPos == null) return true;
+
+        if (!(level.getBlockEntity(dockPos) instanceof DockingStationBlockEntity dockBlock)) return true;
+
+        boolean reserved = dockBlock.isReserved(serverLevel, ByteBuddyEntity.TaskType.MOVE, blockPos);
+        if (!reserved) return true;
+
+        return dockBlock.isReservedBy(serverLevel, ByteBuddyEntity.TaskType.MOVE, blockPos, byteBuddy.getUUID());
+    }
+
+    public static boolean isPlantable(BlockState blockState) {
+        return blockState.getBlock() instanceof BushBlock
+                || blockState.getBlock() instanceof CropBlock
+                || blockState.is(BlockTags.CROPS);
+    }
+
+    public static boolean canPlantAt(Level level, BlockPos blockPos, BlockState plantState) {
+        if (!level.isLoaded(blockPos)) return false;
+        BlockState plantCandidate = level.getBlockState(blockPos);
+        if (isPlantable(plantCandidate)) return false;
+        if (!(plantCandidate.isAir() || plantCandidate.canBeReplaced())) return false;
+        if (!level.getFluidState(blockPos).isEmpty()) return false;
+
+        BlockPos soilPos = blockPos.below();
+        BlockState soilCandidate = level.getBlockState(soilPos);
+        TriState canSustainPlant = soilCandidate.canSustainPlant(level, soilPos, Direction.UP, plantState);
+        if (canSustainPlant.isFalse()) return false;
+
+        if (canSustainPlant.isDefault() && !plantState.canSurvive(level, blockPos)) return false;
+
+        return plantState.canSurvive(level, blockPos);
+    }
+
+    private static final Set<Block> TILLABLE = Set.of(
+            Blocks.DIRT,
+            Blocks.GRASS_BLOCK,
+            Blocks.COARSE_DIRT
+    );
+
+    public static boolean canTillAt(Level level, BlockPos blockPos) {
+        if (!level.isLoaded(blockPos)) return false;
+        BlockState soilCandidate = level.getBlockState(blockPos);
+
+        if (soilCandidate.is(Blocks.FARMLAND)) return false;
+        if (!TILLABLE.contains(soilCandidate.getBlock())) return false;
+
+        BlockPos aboveSoil = blockPos.above();
+        BlockState aboveSoilState = level.getBlockState(aboveSoil);
+
+        return (aboveSoilState.isAir() || aboveSoilState.canBeReplaced()) && level.getFluidState(aboveSoil).isEmpty();
+    }
+
+    public static long getCurrentTime(LivingEntity livingEntity) {
+        return (livingEntity.level() instanceof ServerLevel serverLevel) ? serverLevel.getGameTime() : 0L;
+    }
+
+    public static void reserveCurrentPathIfAny(ServerLevel serverLevel, ByteBuddyEntity byteBuddy, int lookAhead) {
+        Path path = byteBuddy.getNavigation().getPath();
+        if (path != null) {
+            ByteBuddyEntity.reservePathAhead(byteBuddy, serverLevel, path, lookAhead);
+        }
+    }
+
+    public static void releaseCurrentPathIfAny(ByteBuddyEntity byteBuddy) {
+        Path path = byteBuddy.getNavigation().getPath();
+        if (path != null) {
+            byteBuddy.releasePath(path);
+        }
+    }
+}

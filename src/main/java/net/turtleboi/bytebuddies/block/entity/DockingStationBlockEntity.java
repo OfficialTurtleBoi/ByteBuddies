@@ -50,6 +50,7 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
     };
 
     private final Set<UUID> boundBuddies = new HashSet<>();
+    public int dockBaseRadius = 4;
     private final EnergyStorage energyStorage = new EnergyStorage(400_000, 800, 800);
 
     public DockingStationBlockEntity(BlockPos blockPos, BlockState blockState) {
@@ -76,7 +77,7 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
                 pruneReservations(serverLevel);
             }
 
-            AABB boundingBox = new AABB(blockPos).inflate(8);
+            AABB boundingBox = new AABB(blockPos).inflate(dockBaseRadius);
             for (ByteBuddyEntity byteBuddy : level.getEntitiesOfClass(ByteBuddyEntity.class, boundingBox)) {
                 //int energyTransfer = Math.min(200, energyStorage.getEnergyStored());
                 //if (energyTransfer > 0) {
@@ -152,10 +153,10 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
         return reservations.containsKey(new TaskKey(taskType, blockPos));
     }
 
-    public boolean isReservedBy(ServerLevel serverLevel, TaskType task, BlockPos blockPos, UUID botId) {
+    public boolean isReservedBy(ServerLevel serverLevel, TaskType task, BlockPos blockPos, UUID buddyId) {
         pruneReservations(serverLevel);
         var reservation = reservations.get(new TaskKey(task, blockPos));
-        return reservation != null && reservation.buddyId.equals(botId);
+        return reservation != null && reservation.buddyId.equals(buddyId);
     }
 
     public boolean tryClaim(ServerLevel serverLevel, TaskType taskType, BlockPos blockPos, UUID buddyId, int reservationTicks) {
@@ -167,10 +168,10 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
         return true;
     }
 
-    public void renewClaim(ServerLevel serverLevel, TaskType taskType, BlockPos blockPos, UUID botId, int reservationTicks) {
+    public void renewClaim(ServerLevel serverLevel, TaskType taskType, BlockPos blockPos, UUID buddyId, int reservationTicks) {
         TaskKey taskKey = new TaskKey(taskType, blockPos);
         Reservation reservation = reservations.get(taskKey);
-        if (reservation != null && reservation.buddyId.equals(botId)) {
+        if (reservation != null && reservation.buddyId.equals(buddyId)) {
             reservation.expiresAt = reservationTime(currentTime(serverLevel), reservationTicks);
         }
     }
@@ -195,33 +196,27 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
         return saveWithFullMetadata(registries);
     }
 
-    @Override
-    public int receiveEnergy(int toReceive, boolean transferable) {
-        return 0;
+    @Override public int receiveEnergy(int toReceive, boolean simulate) {
+        return energyStorage.receiveEnergy(toReceive, simulate);
     }
 
-    @Override
-    public int extractEnergy(int toExtract, boolean transferable) {
-        return 0;
+    @Override public int extractEnergy(int toExtract, boolean simulate) {
+        return energyStorage.extractEnergy(toExtract, simulate);
     }
 
-    @Override
-    public int getEnergyStored() {
-        return 0;
+    @Override public int getEnergyStored() {
+        return energyStorage.getEnergyStored();
     }
 
-    @Override
-    public int getMaxEnergyStored() {
-        return 0;
+    @Override public int getMaxEnergyStored() {
+        return energyStorage.getMaxEnergyStored();
     }
 
-    @Override
-    public boolean canExtract() {
-        return false;
+    @Override public boolean canExtract() {
+        return energyStorage.canExtract();
     }
 
-    @Override
-    public boolean canReceive() {
-        return false;
+    @Override public boolean canReceive() {
+        return energyStorage.canReceive();
     }
 }

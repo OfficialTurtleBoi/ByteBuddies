@@ -5,6 +5,7 @@ import net.turtleboi.bytebuddies.block.ModBlocks;
 import net.turtleboi.bytebuddies.entity.ModEntities;
 import net.turtleboi.bytebuddies.item.ModCreativeModeTabs;
 import net.turtleboi.bytebuddies.item.ModItems;
+import net.turtleboi.bytebuddies.screen.ModMenuTypes;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -32,6 +33,7 @@ public class ByteBuddies {
         ModBlockEntities.register(modEventBus);
         ModCreativeModeTabs.register(modEventBus);
         ModEntities.register(modEventBus);
+        ModMenuTypes.register(modEventBus);
         modEventBus.addListener(this::addCreative);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
