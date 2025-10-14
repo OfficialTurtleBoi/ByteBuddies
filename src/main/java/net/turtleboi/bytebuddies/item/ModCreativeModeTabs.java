@@ -21,15 +21,21 @@ public class ModCreativeModeTabs {
             () -> CreativeModeTab.builder().icon(() -> new ItemStack(ModItems.CHIP.get()))
                     .title(Component.translatable("creativetab.bytebuddies.bytebuddies_tab"))
                     .displayItems((itemDisplayParameters, pOutput) -> {
+                        pOutput.accept(ModBlocks.DOCKING_STATION);
                         pOutput.accept(ModBlocks.ALUMINUM_BLOCK);
+                        pOutput.accept(ModBlocks.STEEL_BLOCK);
+                        pOutput.accept(ModBlocks.CHARGED_STEEL_BLOCK);
                         pOutput.accept(ModBlocks.BLUESTONE_ORE);
                         pOutput.accept(ModBlocks.DEEPSLATE_BLUESTONE_ORE);
                         pOutput.accept(ModBlocks.BLUESTONE_BLOCK);
+                        pOutput.accept(ModItems.BUSTER_SWORD);
                         pOutput.accept(ModItems.ALUMINUM_INGOT);
                         pOutput.accept(ModItems.ALUMINUM_NUGGET);
                         pOutput.accept(ModItems.CARBON_ALLOY);
                         pOutput.accept(ModItems.STEEL_INGOT);
+                        pOutput.accept(ModItems.STEEL_NUGGET);
                         pOutput.accept(ModItems.CHARGED_STEEL_INGOT);
+                        pOutput.accept(ModItems.CHARGED_STEEL_NUGGET);
                         pOutput.accept(ModItems.BLUESTONE);
                         pOutput.accept(ModItems.COPPER_PLATING);
                         pOutput.accept(ModItems.IRON_PLATING);
@@ -54,7 +60,9 @@ public class ModCreativeModeTabs {
                         pOutput.accept(chargedSuperChargedBattery);
                         pOutput.accept(ModItems.CARBON_PASTE);
                         pOutput.accept(ModItems.CHIP);
+                        pOutput.accept(ModItems.SUPER_CHIP);
                         pOutput.accept(ModItems.WRENCH);
+                        pOutput.accept(ModItems.SOLAR_ARRAY);
                         for (String color : ModItems.COLORS) {
                             for (String tier : ModItems.TIERS) {
                                 String key = tier + "_" + color + "_floppy";

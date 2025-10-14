@@ -25,15 +25,21 @@ public class ModLanguageProvider extends LanguageProvider {
         addSimpleNameBlock(ModBlocks.ALUMINUM_ORE);
         addSimpleNameBlock(ModBlocks.DEEPSLATE_ALUMINUM_ORE);
         addSimpleNameBlock(ModBlocks.ALUMINUM_BLOCK);
+        addSimpleNameBlock(ModBlocks.STEEL_BLOCK);
+        addSimpleNameBlock(ModBlocks.CHARGED_STEEL_BLOCK);
         addSimpleNameBlock(ModBlocks.BLUESTONE_ORE);
         addSimpleNameBlock(ModBlocks.DEEPSLATE_BLUESTONE_ORE);
         addSimpleNameBlock(ModBlocks.BLUESTONE_BLOCK);
+        addSimpleNameBlock(ModBlocks.DOCKING_STATION);
+        addSimpleItemName(ModItems.BUSTER_SWORD);
         addSimpleItemName(ModItems.RAW_ALUMINUM);
         addSimpleItemName(ModItems.ALUMINUM_INGOT);
         addSimpleItemName(ModItems.ALUMINUM_NUGGET);
         addSimpleItemName(ModItems.CARBON_ALLOY);
         addSimpleItemName(ModItems.STEEL_INGOT);
+        addSimpleItemName(ModItems.STEEL_NUGGET);
         addSimpleItemName(ModItems.CHARGED_STEEL_INGOT);
+        addSimpleItemName(ModItems.CHARGED_STEEL_NUGGET);
         addSimpleItemName(ModItems.BLUESTONE);
         addSimpleItemName(ModItems.COPPER_PLATING);
         addSimpleItemName(ModItems.IRON_PLATING);
@@ -48,7 +54,9 @@ public class ModLanguageProvider extends LanguageProvider {
         addSimpleItemName(ModItems.REINFORCED_BATTERY);
         addSimpleItemName(ModItems.SUPER_CHARGED_BATTERY);
         addSimpleItemName(ModItems.CHIP);
+        addSimpleItemName(ModItems.SUPER_CHIP);
         addSimpleItemName(ModItems.WRENCH);
+        addSimpleItemName(ModItems.SOLAR_ARRAY);
         add(ModItems.BYTEBUDDY_SPAWN_EGG.get(), "ByteBuddy Spawn Egg");
 
         ModItems.FLOPPY_DISKS.entrySet().stream()

@@ -30,6 +30,8 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
         add(ModBlocks.DEEPSLATE_ALUMINUM_ORE.get(),
                 block -> createOreDrop(ModBlocks.DEEPSLATE_ALUMINUM_ORE.get(), ModItems.RAW_ALUMINUM.get()));
         dropSelf(ModBlocks.ALUMINUM_BLOCK.get());
+        dropSelf(ModBlocks.STEEL_BLOCK.get());
+        dropSelf(ModBlocks.CHARGED_STEEL_BLOCK.get());
         add(ModBlocks.BLUESTONE_ORE.get(),
                 block -> createBluestoneOreDrops(ModBlocks.BLUESTONE_ORE.get()));
         add(ModBlocks.DEEPSLATE_BLUESTONE_ORE.get(),

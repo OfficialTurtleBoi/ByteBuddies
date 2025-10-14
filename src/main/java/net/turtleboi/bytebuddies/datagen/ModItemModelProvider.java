@@ -24,7 +24,9 @@ public class ModItemModelProvider extends ItemModelProvider {
         basicItem(ModItems.ALUMINUM_NUGGET.get());
         basicItem(ModItems.CARBON_ALLOY.get());
         basicItem(ModItems.STEEL_INGOT.get());
+        basicItem(ModItems.STEEL_NUGGET.get());
         basicItem(ModItems.CHARGED_STEEL_INGOT.get());
+        basicItem(ModItems.CHARGED_STEEL_NUGGET.get());
         basicItem(ModItems.BLUESTONE.get());
         basicItem(ModItems.COPPER_PLATING.get());
         basicItem(ModItems.IRON_PLATING.get());
@@ -39,7 +41,9 @@ public class ModItemModelProvider extends ItemModelProvider {
         basicItem(ModItems.SUPER_CHARGED_BATTERY.get());
         basicItem(ModItems.CARBON_PASTE.get());
         basicItem(ModItems.CHIP.get());
+        basicItem(ModItems.SUPER_CHIP.get());
         handheldItem(ModItems.WRENCH.get());
+        basicItem(ModItems.SOLAR_ARRAY.get());
         ModItems.FLOPPY_DISKS.values().forEach(this::layeredFloppyModel);
         withExistingParent(ModItems.BYTEBUDDY_SPAWN_EGG.getId().getPath(), mcLoc("item/template_spawn_egg"));
     }

@@ -33,6 +33,12 @@ public class ModBlocks {
     public static final DeferredBlock<Block> ALUMINUM_BLOCK = registerBlock("aluminum_block",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)));
 
+    public static final DeferredBlock<Block> STEEL_BLOCK = registerBlock("steel_block",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)));
+
+    public static final DeferredBlock<Block> CHARGED_STEEL_BLOCK = registerBlock("charged_steel_block",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)));
+
     public static final DeferredBlock<Block> BLUESTONE_ORE = registerBlock("bluestone_ore",
             () -> new BluestoneOreBlock(
                     BlockBehaviour.Properties.of()

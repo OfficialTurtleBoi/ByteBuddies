@@ -1,6 +1,8 @@
 package net.turtleboi.bytebuddies.item;
 
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.Tiers;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.DeferredSpawnEggItem;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -17,6 +19,9 @@ import java.util.Map;
 public class ModItems {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(ByteBuddies.MOD_ID);
 
+    public static final DeferredItem<Item> BUSTER_SWORD = ITEMS.register("buster_sword",
+            () -> new SwordItem(Tiers.NETHERITE, new Item.Properties()));
+
     public static final DeferredItem<Item> RAW_ALUMINUM = ITEMS.register("raw_aluminum",
             () -> new Item(new Item.Properties()));
 
@@ -32,7 +37,13 @@ public class ModItems {
     public static final DeferredItem<Item> STEEL_INGOT = ITEMS.register("steel_ingot",
             () -> new Item(new Item.Properties()));
 
+    public static final DeferredItem<Item> STEEL_NUGGET = ITEMS.register("steel_nugget",
+            () -> new Item(new Item.Properties()));
+
     public static final DeferredItem<Item> CHARGED_STEEL_INGOT = ITEMS.register("charged_steel_ingot",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> CHARGED_STEEL_NUGGET = ITEMS.register("charged_steel_nugget",
             () -> new Item(new Item.Properties()));
 
     public static final DeferredItem<Item> BLUESTONE = ITEMS.register("bluestone",
@@ -98,8 +109,14 @@ public class ModItems {
     public static final DeferredItem<Item> CHIP = ITEMS.register("chip",
             () -> new Item(new Item.Properties()));
 
+    public static final DeferredItem<Item> SUPER_CHIP = ITEMS.register("super_chip",
+            () -> new Item(new Item.Properties()));
+
     public static final DeferredItem<Item> WRENCH = ITEMS.register("wrench",
             () -> new WrenchItem(new Item.Properties()));
+
+    public static final DeferredItem<Item> SOLAR_ARRAY = ITEMS.register("solar_array",
+            () -> new Item(new Item.Properties()));
 
     public static final DeferredItem<Item> BYTEBUDDY_SPAWN_EGG = ITEMS.register("byte_buddy_spawn_egg",
             ()-> new DeferredSpawnEggItem(ModEntities.BYTEBUDDY,0x70747d,0x34a0bf,new Item.Properties()));
