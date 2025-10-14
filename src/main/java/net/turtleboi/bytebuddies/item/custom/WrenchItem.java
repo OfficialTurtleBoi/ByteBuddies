@@ -43,10 +43,6 @@ public class WrenchItem extends Item {
         ByteBuddies.LOGGER.info("[ByteBuddies] Wrench.useOn: side={} pos={} block={}",
                 level.isClientSide ? "CLIENT" : "SERVER", blockPos, blockState.getBlock().getClass().getSimpleName());
 
-        if (!(blockState.getBlock() instanceof DockingStationBlock)) {
-            return InteractionResult.PASS;
-        }
-
         Player player = useOnContext.getPlayer();
         ItemStack wrenchStack = useOnContext.getItemInHand();
 
@@ -57,7 +53,7 @@ public class WrenchItem extends Item {
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
 
-        if (!level.isClientSide) {
+        if (!level.isClientSide && blockState.getBlock() instanceof DockingStationBlock) {
             setDock(wrenchStack, level, blockPos);
             ByteBuddies.LOGGER.info("[ByteBuddies] wrench: stored dock {} in {}",
                     blockPos, level.dimension().location());

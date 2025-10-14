@@ -82,7 +82,7 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
                 //int energyTransfer = Math.min(200, energyStorage.getEnergyStored());
                 //if (energyTransfer > 0) {
                     //energyStorage.extractEnergy(energyTransfer, false);
-                    byteBuddy.getEnergyStorage().receiveEnergy(25, false);
+                    //byteBuddy.getEnergyStorage().receiveEnergy(25, false);
                 //}
             }
         }

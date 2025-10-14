@@ -1,6 +1,7 @@
 package net.turtleboi.bytebuddies.screen.custom;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -24,13 +25,18 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
         addPlayerHotbar(playerInv);
 
         addBuddyInventory();
+        addBuddyAugments();
         addBuddyUpgrades();
     }
 
-    public static ByteBuddyMenu clientFactory(int id, Inventory inv, FriendlyByteBuf buf) {
-        int entityId = buf.readInt();
-        var e = inv.player.level().getEntity(entityId);
-        return new ByteBuddyMenu(id, inv, (e instanceof ByteBuddyEntity b) ? b : null);
+    public static ByteBuddyMenu clientFactory(int buddyId, Inventory inventory, FriendlyByteBuf byteBuf) {
+        int entityId = byteBuf.readInt();
+        var entity = inventory.player.level().getEntity(entityId);
+        return new ByteBuddyMenu(buddyId, inventory, (entity instanceof ByteBuddyEntity byteBuddy) ? byteBuddy : null);
+    }
+
+    public LivingEntity getByteBuddy() {
+        return buddy;
     }
 
     // CREDIT GOES TO: diesieben07 | https://github.com/diesieben07/SevenCommons
@@ -49,7 +55,7 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
     private static final int TE_INVENTORY_FIRST_SLOT_INDEX = VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT;
 
     // THIS YOU HAVE TO DEFINE!
-    private static final int TE_INVENTORY_SLOT_COUNT = 31;  // must be the number of slots you have!
+    private static final int TE_INVENTORY_SLOT_COUNT = 11;  // must be the number of slots you have!
     @Override
     public @NotNull ItemStack quickMoveStack(@NotNull Player playerIn, int pIndex) {
         Slot sourceSlot = slots.get(pIndex);
@@ -88,67 +94,76 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
         return buddy != null && buddy.isAlive() && player.distanceTo(buddy) < 4.0;
     }
 
-    private static final int SLOT = 18;
-
-    // Player inventory (3×9) starts at (7, 87)
+    private static final int SLOT_SIZE = 18;
     private void addPlayerInventory(Inventory playerInventory) {
-        int startX = 8;
-        int startY = 108;
+        int startX = 21;
+        int startY = 145;
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
                 this.addSlot(new Slot(
                         playerInventory,
                         col + row * 9 + 9,
-                        startX + col * SLOT,
-                        startY + row * SLOT
+                        startX + col * SLOT_SIZE,
+                        startY + row * SLOT_SIZE
                 ));
             }
         }
     }
 
-    // Player hotbar (1×9) starts at (7, 145)
     private void addPlayerHotbar(Inventory playerInventory) {
-        int startX = 8;
-        int startY = 166;
+        int startX = 21;
+        int startY = 203;
         for (int i = 0; i < 9; ++i) {
             this.addSlot(new Slot(
                     playerInventory,
                     i,
-                    startX + i * SLOT,
+                    startX + i * SLOT_SIZE,
                     startY
             ));
         }
     }
 
-    // Buddy inventory (3×9) starts at (7, 29)
     private void addBuddyInventory() {
-        if (buddy == null) return; // client safety
-        int startX = 8;
-        int startY = 40;
+        if (buddy == null) return;
+        int startX = 75;
+        int startY = 63;
         int slot = 0;
         for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
+            for (int col = 0; col < 3; col++) {
                 this.addSlot(new SlotItemHandler(
                         buddy.getMainInv(),
                         slot++,
-                        startX + col * SLOT,
-                        startY + row * SLOT
+                        startX + col * SLOT_SIZE,
+                        startY + row * SLOT_SIZE
                 ));
             }
         }
     }
 
-    // Buddy upgrade bar (4×1 vertical) starts at (52, 7)
+    private void addBuddyAugments() {
+        if (buddy == null) return;
+        int startX = 33;
+        int startY = 54;
+        for (int u = 0; u < 4; u++) {
+            this.addSlot(new SlotItemHandler(
+                    buddy.getAugmentInv(),
+                    u,
+                    startX,
+                    startY + u * SLOT_SIZE
+            ));
+        }
+    }
+
     private void addBuddyUpgrades() {
-        if (buddy == null) return; // client safety
-        int startX = 53;
-        int y = 18;
+        if (buddy == null) return;
+        int startX = 153;
+        int startY = 54;
         for (int u = 0; u < 4; u++) {
             this.addSlot(new SlotItemHandler(
                     buddy.getUpgradeInv(),
                     u,
-                    startX + u * SLOT,
-                    y
+                    startX,
+                    startY + u * SLOT_SIZE
             ));
         }
     }
@@ -168,4 +183,18 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
     public boolean tillEnabled() {
         return buddy != null && buddy.isTillEnabled();
     }
+
+    public int getEnergyStored() {
+        if (this.buddy.level().isClientSide) {
+            return buddy.getSyncedEnergy();
+        } else {
+            return buddy.getEnergyStorage().getEnergyStored();
+        }
+    }
+
+    public int getMaxEnergyStored() {
+        return buddy != null ? buddy.getEnergyStorage().getMaxEnergyStored() : 0;
+    }
+
+
 }

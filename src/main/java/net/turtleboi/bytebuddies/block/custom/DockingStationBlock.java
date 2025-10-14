@@ -20,6 +20,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.turtleboi.bytebuddies.block.ModBlockEntities;
 import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
+import net.turtleboi.bytebuddies.item.ModItems;
+import net.turtleboi.bytebuddies.item.custom.WrenchItem;
 import org.jetbrains.annotations.Nullable;
 
 public class DockingStationBlock extends BaseEntityBlock {
@@ -65,6 +67,10 @@ public class DockingStationBlock extends BaseEntityBlock {
     @Override
     protected ItemInteractionResult useItemOn(ItemStack itemStack, BlockState blockState, Level level, BlockPos blockPos,
                                               Player player, InteractionHand interactionHand, BlockHitResult hitResult) {
+        if (itemStack.is(ModItems.WRENCH.get())){
+            return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+        }
+
         if (!level.isClientSide()){
             BlockEntity blockEntity = level.getBlockEntity(blockPos);
             if (blockEntity instanceof DockingStationBlockEntity dockingStation) {
@@ -73,6 +79,7 @@ public class DockingStationBlock extends BaseEntityBlock {
                 throw new IllegalStateException("Our container provider is missing");
             }
         }
+
         return ItemInteractionResult.sidedSuccess(level.isClientSide());
     }
 

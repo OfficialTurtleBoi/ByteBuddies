@@ -45,13 +45,13 @@ import java.util.*;
 import java.util.function.BooleanSupplier;
 
 public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
-    ByteBuddyEntity byteBuddy = this;
     public enum BuddyRole {
         FARMER, MINER, COMBAT, POTION, STORAGE, ANIMAL
     }
-    private final ItemStackHandler mainInv = new ItemStackHandler(27);
+    private final ItemStackHandler mainInv = new ItemStackHandler(9);
+    private final ItemStackHandler augmentInv = new ItemStackHandler(4);
     private final ItemStackHandler upgradeInv = new ItemStackHandler(4);
-    private final EnergyStorage energyStorage = new EnergyStorage(100_000, 400, 400);
+    private final EnergyStorage energyStorage = new EnergyStorage(16000, 256, 256);
     private BuddyRole buddyRole = BuddyRole.FARMER;
     private final Set<Goal> roleGoals = new HashSet<>();
     @Nullable private BlockPos dockPos;
@@ -80,6 +80,9 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     private static final EntityDataAccessor<Boolean> DATA_SLAMMING =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Integer> DATA_ROLE =
+            SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.INT);
+
+    private static final EntityDataAccessor<Integer> DATA_ENERGY =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.INT);
 
     private final NonNullList<ItemStack> armorItems = NonNullList.withSize(4, ItemStack.EMPTY);
@@ -179,6 +182,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         builder.define(DATA_WORKING, false);
         builder.define(DATA_SLAMMING, false);
         builder.define(DATA_ROLE, BuddyRole.FARMER.ordinal());
+        builder.define(DATA_ENERGY, 0);
     }
 
     public boolean isSleeping() {
@@ -304,10 +308,16 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
             }
 
             if (tickCount % 10 == 0) {
+                consumeEnergy(1);
                 EnergyHooks.drainBatteries(this);
                 if (supportAuraEnabled()) {
                     SupportAuras.tickSupportLattice(this);
                 }
+            }
+
+            int currentEnergy = energyStorage.getEnergyStored();
+            if (currentEnergy != getSyncedEnergy()) {
+                setSyncedEnergy(currentEnergy);
             }
 
         } else {
@@ -388,6 +398,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
 
         var provider = level().registryAccess();
         nbtData.put("MainInv", mainInv.serializeNBT(provider));
+        nbtData.put("AugmentInv",augmentInv.serializeNBT(provider));
         nbtData.put("UpgradeInv",upgradeInv.serializeNBT(provider));
 
         nbtData.putInt("Energy", energyStorage.getEnergyStored());
@@ -417,6 +428,9 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         if (nbtData.contains("MainInv")) {
             mainInv.deserializeNBT(provider, nbtData.getCompound("MainInv"));
         }
+        if (nbtData.contains("AugmentInv")) {
+            augmentInv.deserializeNBT(provider, nbtData.getCompound("AugmentInv"));
+        }
         if (nbtData.contains("UpgradeInv")) {
             upgradeInv.deserializeNBT(provider, nbtData.getCompound("UpgradeInv"));
         }
@@ -431,20 +445,27 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
             if (isSleeping()) {
                 awaken();
                 return InteractionResult.CONSUME;
-            } else if (player.getItemInHand(interactionHand).getItem() == Items.WHEAT) {
-                setBuddyRole(BuddyRole.FARMER);
-                player.getItemInHand(interactionHand).shrink(1);
-                player.displayClientMessage(Component.literal("Set bot role to " + buddyRole), true);
-                return InteractionResult.SUCCESS;
             }
 
-            if (player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.openMenu(new SimpleMenuProvider((containerId, inventory, interactingPlayer) ->
-                                new ByteBuddyMenu(containerId, inventory, this),
-                                Component.literal("ByteBuddy")),
-                        buf -> buf.writeInt(this.getId())
-                );
-                return InteractionResult.SUCCESS;
+            ItemStack inHand = player.getItemInHand(interactionHand);
+            ItemStack mainHand = player.getMainHandItem();
+            ItemStack offHand = player.getOffhandItem();
+            if (inHand.is(Items.WHEAT)) {
+                setBuddyRole(BuddyRole.FARMER);
+                inHand.shrink(1);
+                player.displayClientMessage(Component.literal("Set bot role to " + buddyRole), true);
+                return InteractionResult.sidedSuccess(level().isClientSide);
+            }
+
+            if (!isSleeping() && mainHand.isEmpty() && offHand.isEmpty()) {
+                if (player instanceof ServerPlayer serverPlayer) {
+                    serverPlayer.openMenu(new SimpleMenuProvider((containerId, inventory, interactingPlayer) ->
+                                    new ByteBuddyMenu(containerId, inventory, this),
+                                    Component.literal("ByteBuddy")),
+                            buf -> buf.writeInt(this.getId())
+                    );
+                    return InteractionResult.sidedSuccess(level().isClientSide);
+                }
             }
 
         }
@@ -465,6 +486,10 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
 
     public ItemStackHandler getUpgradeInv() {
         return upgradeInv;
+    }
+
+    public ItemStackHandler getAugmentInv() {
+        return augmentInv;
     }
 
     public IEnergyStorage getEnergyStorage() {
@@ -713,28 +738,52 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         return dockBlock.isReservedBy(serverLevel, TaskType.MOVE, blockPos, byteBuddy.getUUID());
     }
 
-    @Override public int receiveEnergy(int toReceive, boolean simulate) {
+    @Override
+    public int receiveEnergy(int toReceive, boolean simulate) {
         return energyStorage.receiveEnergy(toReceive, simulate);
     }
 
-    @Override public int extractEnergy(int toExtract, boolean simulate) {
+    @Override
+    public int extractEnergy(int toExtract, boolean simulate) {
         return energyStorage.extractEnergy(toExtract, simulate);
     }
 
-    @Override public int getEnergyStored() {
+    @Override
+    public int getEnergyStored() {
         return energyStorage.getEnergyStored();
     }
 
-    @Override public int getMaxEnergyStored() {
+    @Override
+    public int getMaxEnergyStored() {
         return energyStorage.getMaxEnergyStored();
     }
 
-    @Override public boolean canExtract() {
+    @Override
+    public boolean canExtract() {
         return energyStorage.canExtract();
     }
 
-    @Override public boolean canReceive() {
+    @Override
+    public boolean canReceive() {
         return energyStorage.canReceive();
+    }
+
+    public void setSyncedEnergy(int value) {
+        if (!level().isClientSide) {
+            this.entityData.set(DATA_ENERGY, Math.max(0, value));
+        }
+    }
+
+    /** Client-safe getter: on the client returns the last synced value. On server, it’s also available. */
+    public int getSyncedEnergy() {
+        return this.entityData.get(DATA_ENERGY);
+    }
+
+    /** Call this whenever the real FE changes on the server (charge/discharge). */
+    private void onEnergyChanged() {
+        if (!level().isClientSide) {
+            setSyncedEnergy(energyStorage.getEnergyStored());
+        }
     }
 
     public static final class SupportAuras {

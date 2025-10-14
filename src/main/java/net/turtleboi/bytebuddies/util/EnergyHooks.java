@@ -8,9 +8,9 @@ import net.turtleboi.bytebuddies.item.custom.BatteryItem;
 public final class EnergyHooks {
     public static void drainBatteries(ByteBuddyEntity byteBuddy) {
         int missingEnergy = byteBuddy.getEnergyStorage().getMaxEnergyStored() - byteBuddy.getEnergyStorage().getEnergyStored();
-        if (missingEnergy <= 0) {
-            for (int i = 0; i < byteBuddy.getMainInv().getSlots(); i++) {
-                ItemStack stackInSlot = byteBuddy.getMainInv().getStackInSlot(i);
+        if (missingEnergy >= 0) {
+            for (int i = 0; i < byteBuddy.getAugmentInv().getSlots(); i++) {
+                ItemStack stackInSlot = byteBuddy.getAugmentInv().getStackInSlot(i);
                 if (!stackInSlot.isEmpty() && stackInSlot.getItem() instanceof BatteryItem batteryItem) {
                     int neededEnergy = Math.min(missingEnergy, batteryItem.getIoRate());
                     int pulledEnergy = batteryItem.extract(stackInSlot, neededEnergy, false);

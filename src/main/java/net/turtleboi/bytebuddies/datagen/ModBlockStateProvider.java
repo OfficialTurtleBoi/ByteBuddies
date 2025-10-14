@@ -20,7 +20,6 @@ public class ModBlockStateProvider extends BlockStateProvider {
         blockWithItem(ModBlocks.BLUESTONE_ORE);
         blockWithItem(ModBlocks.DEEPSLATE_BLUESTONE_ORE);
         blockWithItem(ModBlocks.BLUESTONE_BLOCK);
-        blockWithItem(ModBlocks.DOCKING_STATION);
     }
 
     private void blockWithItem(DeferredBlock<?> deferredBlock){
