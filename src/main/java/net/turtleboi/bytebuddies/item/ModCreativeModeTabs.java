@@ -4,7 +4,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.bytebuddies.ByteBuddies;
@@ -36,7 +35,7 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.STEEL_NUGGET);
                         pOutput.accept(ModItems.CHARGED_STEEL_INGOT);
                         pOutput.accept(ModItems.CHARGED_STEEL_NUGGET);
-                        pOutput.accept(ModItems.BLUESTONE);
+                        pOutput.accept(ModItems.BLUESTONE_DUST);
                         pOutput.accept(ModItems.COPPER_PLATING);
                         pOutput.accept(ModItems.IRON_PLATING);
                         pOutput.accept(ModItems.GOLD_PLATING);
@@ -62,7 +61,13 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.CHIP);
                         pOutput.accept(ModItems.SUPER_CHIP);
                         pOutput.accept(ModItems.WRENCH);
+                        pOutput.accept(ModItems.AQUATIC_MOTOR);
                         pOutput.accept(ModItems.SOLAR_ARRAY);
+                        pOutput.accept(ModItems.GYROSCOPIC_STABILIZER);
+                        pOutput.accept(ModItems.REINFORCED_IRON_PLATING);
+                        pOutput.accept(ModItems.REINFORCED_STEEL_PLATING);
+                        pOutput.accept(ModItems.REINFORCED_NETHERITE_PLATING);
+                        pOutput.accept(ModItems.REINFORCED_CHARGED_STEEL_PLATING);
                         for (String color : ModItems.COLORS) {
                             for (String tier : ModItems.TIERS) {
                                 String key = tier + "_" + color + "_floppy";

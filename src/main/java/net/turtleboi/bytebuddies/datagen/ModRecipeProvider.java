@@ -54,11 +54,11 @@ public class ModRecipeProvider extends RecipeProvider implements IConditionBuild
                 .pattern("BBB")
                 .pattern("BBB")
                 .pattern("BBB")
-                .define('B', ModItems.BLUESTONE.get())
-                .unlockedBy("has_bluestone", has(ModItems.BLUESTONE.get()))
+                .define('B', ModItems.BLUESTONE_DUST.get())
+                .unlockedBy("has_bluestone", has(ModItems.BLUESTONE_DUST.get()))
                 .save(recipeOutput);
 
-        ShapelessRecipeBuilder.shapeless(RecipeCategory.REDSTONE, ModItems.BLUESTONE.get(), 9)
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.REDSTONE, ModItems.BLUESTONE_DUST.get(), 9)
                 .requires(ModBlocks.BLUESTONE_BLOCK.get())
                 .unlockedBy("has_bluestone_block", has(ModBlocks.BLUESTONE_BLOCK.get()))
                 .save(recipeOutput);
@@ -161,9 +161,9 @@ public class ModRecipeProvider extends RecipeProvider implements IConditionBuild
                 .define('C', ModItems.CARBON_PASTE)
                 .define('G', Items.GOLD_NUGGET)
                 .define('Q', Items.QUARTZ)
-                .define('B', ModItems.BLUESTONE.get())
+                .define('B', ModItems.BLUESTONE_DUST.get())
                 .define('R', Items.REDSTONE)
-                .unlockedBy("has_bluestone", has(ModItems.BLUESTONE.get()))
+                .unlockedBy("has_bluestone", has(ModItems.BLUESTONE_DUST.get()))
                 .unlockedBy("has_copper", has(Items.COPPER_INGOT))
                 .unlockedBy("has_quartz", has(Items.QUARTZ))
                 .unlockedBy("has_redstone", has(Items.REDSTONE))

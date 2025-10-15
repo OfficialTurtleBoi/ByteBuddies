@@ -1,7 +1,19 @@
 {
   "variants": {
-    "": {
+    "facing=east": {
+      "model": "bytebuddies:block/docking_station",
+      "y": 90
+    },
+    "facing=north": {
       "model": "bytebuddies:block/docking_station"
+    },
+    "facing=south": {
+      "model": "bytebuddies:block/docking_station",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bytebuddies:block/docking_station",
+      "y": 270
     }
   }
 }

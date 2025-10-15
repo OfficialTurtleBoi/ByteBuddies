@@ -40,7 +40,7 @@ public class ModLanguageProvider extends LanguageProvider {
         addSimpleItemName(ModItems.STEEL_NUGGET);
         addSimpleItemName(ModItems.CHARGED_STEEL_INGOT);
         addSimpleItemName(ModItems.CHARGED_STEEL_NUGGET);
-        addSimpleItemName(ModItems.BLUESTONE);
+        addSimpleItemName(ModItems.BLUESTONE_DUST);
         addSimpleItemName(ModItems.COPPER_PLATING);
         addSimpleItemName(ModItems.IRON_PLATING);
         addSimpleItemName(ModItems.GOLD_PLATING);
@@ -56,7 +56,13 @@ public class ModLanguageProvider extends LanguageProvider {
         addSimpleItemName(ModItems.CHIP);
         addSimpleItemName(ModItems.SUPER_CHIP);
         addSimpleItemName(ModItems.WRENCH);
+        addSimpleItemName(ModItems.AQUATIC_MOTOR);
         addSimpleItemName(ModItems.SOLAR_ARRAY);
+        addSimpleItemName(ModItems.GYROSCOPIC_STABILIZER);
+        addSimpleItemName(ModItems.REINFORCED_IRON_PLATING);
+        addSimpleItemName(ModItems.REINFORCED_STEEL_PLATING);
+        addSimpleItemName(ModItems.REINFORCED_NETHERITE_PLATING);
+        addSimpleItemName(ModItems.REINFORCED_CHARGED_STEEL_PLATING);
         add(ModItems.BYTEBUDDY_SPAWN_EGG.get(), "ByteBuddy Spawn Egg");
 
         ModItems.FLOPPY_DISKS.entrySet().stream()

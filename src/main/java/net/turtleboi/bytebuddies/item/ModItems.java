@@ -46,7 +46,7 @@ public class ModItems {
     public static final DeferredItem<Item> CHARGED_STEEL_NUGGET = ITEMS.register("charged_steel_nugget",
             () -> new Item(new Item.Properties()));
 
-    public static final DeferredItem<Item> BLUESTONE = ITEMS.register("bluestone",
+    public static final DeferredItem<Item> BLUESTONE_DUST = ITEMS.register("bluestone_dust",
             () -> new Item(new Item.Properties()));
 
     public static final DeferredItem<Item> COPPER_PLATING = ITEMS.register("copper_plating",
@@ -115,7 +115,25 @@ public class ModItems {
     public static final DeferredItem<Item> WRENCH = ITEMS.register("wrench",
             () -> new WrenchItem(new Item.Properties()));
 
+    public static final DeferredItem<Item> AQUATIC_MOTOR = ITEMS.register("aquatic_motor",
+            () -> new Item(new Item.Properties()));
+
     public static final DeferredItem<Item> SOLAR_ARRAY = ITEMS.register("solar_array",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> GYROSCOPIC_STABILIZER = ITEMS.register("gyroscopic_stabilizer",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> REINFORCED_IRON_PLATING = ITEMS.register("reinforced_iron_plating",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> REINFORCED_STEEL_PLATING = ITEMS.register("reinforced_steel_plating",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> REINFORCED_NETHERITE_PLATING = ITEMS.register("reinforced_netherite_plating",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> REINFORCED_CHARGED_STEEL_PLATING = ITEMS.register("reinforced_charged_steel_plating",
             () -> new Item(new Item.Properties()));
 
     public static final DeferredItem<Item> BYTEBUDDY_SPAWN_EGG = ITEMS.register("byte_buddy_spawn_egg",

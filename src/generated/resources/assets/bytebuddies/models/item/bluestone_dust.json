@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "bytebuddies:item/bluestone"
+    "layer0": "bytebuddies:item/bluestone_dust"
   }
 }

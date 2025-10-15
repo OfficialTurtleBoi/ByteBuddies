@@ -51,7 +51,7 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
                 block,
                 this.applyExplosionDecay(
                         block,
-                        LootItem.lootTableItem(ModItems.BLUESTONE)
+                        LootItem.lootTableItem(ModItems.BLUESTONE_DUST)
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(4.0F, 5.0F)))
                                 .apply(ApplyBonusCount.addUniformBonusCount(registrylookup.getOrThrow(Enchantments.FORTUNE)))
                 )

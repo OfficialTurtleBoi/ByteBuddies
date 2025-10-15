@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "bytebuddies:item/reinforced_steel_plating"
+  }
+}
