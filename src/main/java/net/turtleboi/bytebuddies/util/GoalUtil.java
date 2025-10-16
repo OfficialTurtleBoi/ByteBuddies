@@ -26,9 +26,28 @@ public class GoalUtil {
     public static void lockToAnchor(ByteBuddyEntity byteBuddy, Vec3 targetAnchor) {
         if (targetAnchor == null) return;
         byteBuddy.getNavigation().stop();
+
+        // 1) Compute a collision-safe target box BEFORE teleporting
+        var bb = byteBuddy.getBoundingBox();
+        var move = targetAnchor.subtract(byteBuddy.position());
+        var movedBB = bb.move(move);
+
+        // 2) If that intersects anything, nudge or bail out (don’t snap into walls)
+        if (!byteBuddy.level().noCollision(movedBB)) {
+            // Try a tiny upward nudge first (common case: grazing slab/crop, etc.)
+            var upBB = movedBB.move(0.0, 0.0625, 0.0);
+            if (!byteBuddy.level().noCollision(upBB)) {
+                // If still colliding, don’t snap—let the navigator finish the last step
+                return;
+            }
+            // Apply the upward nudge to the anchor
+            targetAnchor = targetAnchor.add(0.0, 0.0625, 0.0);
+        }
+
+        // 3) Snap, then kill velocity & fall accumulation
         byteBuddy.setPos(targetAnchor.x, targetAnchor.y, targetAnchor.z);
-        var deltaMovement = byteBuddy.getDeltaMovement();
-        byteBuddy.setDeltaMovement(deltaMovement.x * 0.2, deltaMovement.y * 0.2, deltaMovement.z * 0.2);
+        byteBuddy.setDeltaMovement(0.0, 0.0, 0.0);
+        byteBuddy.resetFallDistance();
     }
 
     public static boolean actionReady(ServerLevel serverLevel, long nextActionTick) {
@@ -107,6 +126,12 @@ public class GoalUtil {
         return dockBlock.isReservedBy(serverLevel, ByteBuddyEntity.TaskType.MOVE, blockPos, byteBuddy.getUUID());
     }
 
+    public static boolean isAirOrReplaceableAbove(Level level, BlockPos pos) {
+        BlockPos above = pos.above();
+        return (level.getBlockState(above).getCollisionShape(level, above).isEmpty()
+                && level.getFluidState(above).isEmpty());
+    }
+
     public static boolean isPlantable(BlockState blockState) {
         return blockState.getBlock() instanceof BushBlock
                 || blockState.getBlock() instanceof CropBlock
@@ -147,6 +172,16 @@ public class GoalUtil {
         BlockState aboveSoilState = level.getBlockState(aboveSoil);
 
         return (aboveSoilState.isAir() || aboveSoilState.canBeReplaced()) && level.getFluidState(aboveSoil).isEmpty();
+    }
+
+    public static boolean canMineAt(Level level, BlockPos pos) {
+        if (!level.isLoaded(pos)) return false;
+        if (level.getBlockEntity(pos) instanceof DockingStationBlockEntity) return false;
+        BlockState state = level.getBlockState(pos);
+        if (state.isAir()) return false;
+        if (state.is(Blocks.BEDROCK)) return false;
+        if (state.getDestroySpeed(level, pos) < 0) return false;
+        return true;
     }
 
     public static long getCurrentTime(LivingEntity livingEntity) {

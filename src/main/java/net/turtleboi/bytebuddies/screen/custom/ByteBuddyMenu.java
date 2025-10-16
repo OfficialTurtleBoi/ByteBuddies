@@ -10,6 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.SlotItemHandler;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.screen.ModMenuTypes;
+import net.turtleboi.bytebuddies.util.ModTags;
 import org.jetbrains.annotations.NotNull;
 
 public class ByteBuddyMenu extends AbstractContainerMenu {
@@ -144,14 +145,38 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
         if (buddy == null) return;
         int startX = 33;
         int startY = 54;
-        for (int u = 0; u < 4; u++) {
-            this.addSlot(new SlotItemHandler(
-                    buddy.getAugmentInv(),
-                    u,
-                    startX,
-                    startY + u * SLOT_SIZE
-            ));
-        }
+
+        this.addSlot(new SlotItemHandler(buddy.getAugmentInv(), 0, startX, startY) {
+            @Override public boolean mayPlace(ItemStack itemStack) {
+                return ByteBuddyEntity.isAnyTool(itemStack);
+            }
+            @Override public int getMaxStackSize() { return 1; }
+        });
+
+        this.addSlot(new SlotItemHandler(buddy.getAugmentInv(), 1, startX, startY + SLOT_SIZE) {
+            @Override public boolean mayPlace(ItemStack itemStack) {
+                return itemStack.is(ModTags.Items.AUGMENT);
+            }
+            @Override public int getMaxStackSize() { return 1; }
+        });
+
+
+        this.addSlot(new SlotItemHandler(buddy.getAugmentInv(), 2, startX, startY + 2 * SLOT_SIZE) {
+            @Override public boolean mayPlace(ItemStack itemStack) {
+                return itemStack.is(ModTags.Items.AUGMENT);
+            }
+            @Override public int getMaxStackSize() { return 1; }
+        });
+
+        this.addSlot(new SlotItemHandler(buddy.getAugmentInv(), 3, startX, startY + 3 * SLOT_SIZE) {
+            @Override public boolean mayPlace(ItemStack itemStack) {
+                return ByteBuddyEntity.isBattery(itemStack);
+            }
+
+            @Override public int getMaxStackSize() {
+                return 1;
+            }
+        });
     }
 
     private void addBuddyUpgrades() {
@@ -164,7 +189,15 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
                     u,
                     startX,
                     startY + u * SLOT_SIZE
-            ));
+            ) {
+                @Override public boolean mayPlace(ItemStack itemStack) {
+                    return ByteBuddyEntity.isFloppyDisk(itemStack);
+                }
+
+                @Override public int getMaxStackSize() {
+                    return 1;
+                }
+            });
         }
     }
 

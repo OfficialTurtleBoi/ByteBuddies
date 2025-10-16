@@ -21,7 +21,7 @@ import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.util.BotDebug;
 import net.turtleboi.bytebuddies.util.BotDebug.GoalPhase;
 import net.turtleboi.bytebuddies.util.GoalUtil;
-import net.turtleboi.bytebuddies.util.ToolHooks;
+import net.turtleboi.bytebuddies.util.ToolUtil;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -547,7 +547,7 @@ public class TillGoal extends Goal {
             return;
         }
 
-        ToolHooks.applyToolWear(byteBuddy, ToolHooks.ToolType.HOE, byteBuddy.toolWearMultiplier());
+        ToolUtil.applyToolWear(byteBuddy, ToolUtil.ToolType.HOE, byteBuddy.toolWearMultiplier());
 
         level.playSound(
                 null,

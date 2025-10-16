@@ -8,6 +8,7 @@ import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.item.ModItems;
+import net.turtleboi.bytebuddies.util.ModTags;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;
@@ -22,5 +23,21 @@ public class ModItemTagProvider extends ItemTagsProvider {
     protected void addTags(HolderLookup.Provider provider) {
         tag(Tags.Items.ORES)
                 .add(ModItems.RAW_ALUMINUM.get());
+
+        tag(ModTags.Items.BATTERY)
+                .add(ModItems.SIMPLE_BATTERY.get())
+                .add(ModItems.ADVANCED_BATTERY.get())
+                .add(ModItems.BIOCELL_BATTERY.get())
+                .add(ModItems.REINFORCED_BATTERY.get())
+                .add(ModItems.SUPER_CHARGED_BATTERY.get());
+
+        tag(ModTags.Items.AUGMENT)
+                .add(ModItems.AQUATIC_MOTOR.get())
+                .add(ModItems.SOLAR_ARRAY.get())
+                .add(ModItems.GYROSCOPIC_STABILIZER.get())
+                .add(ModItems.REINFORCED_IRON_PLATING.get())
+                .add(ModItems.REINFORCED_STEEL_PLATING.get())
+                .add(ModItems.REINFORCED_NETHERITE_PLATING.get())
+                .add(ModItems.REINFORCED_CHARGED_STEEL_PLATING.get());
     }
 }

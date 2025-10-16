@@ -5,28 +5,23 @@ import net.minecraft.world.item.*;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 
-public final class ToolHooks {
-    public static void applyToolWear(ByteBuddyEntity byteBuddy, ToolType kind, float wearMultiplier) {
-        if (kind == ToolType.EMPTY_HAND) return;
+public final class ToolUtil {
+    public static void applyToolWear(ByteBuddyEntity byteBuddy, ToolType toolType, float wearMultiplier) {
+        if (toolType == ToolType.EMPTY_HAND) return;
 
-        int slot = findToolSlot(byteBuddy.getMainInv(), kind);
+        int slot = byteBuddy.getHeldToolSlot();
         if (slot < 0) return;
 
-        ItemStack tool = byteBuddy.getMainInv().getStackInSlot(slot);
-        if (!tool.isDamageableItem()) return;
+        ItemStack toolStack = byteBuddy.getHeldTool();
+        if (!toolStack.isDamageableItem()) return;
 
         int baseWear = 1;
-        int damage = Math.max(1, Math.round(baseWear * wearMultiplier));
-        tool.hurtAndBreak(damage, byteBuddy, EquipmentSlot.MAINHAND);
-        byteBuddy.getMainInv().setStackInSlot(slot, tool);
-    }
-
-    public static int findToolSlot(ItemStackHandler inventoryHandler, ToolType toolType) {
-        for (int i = 0; i < inventoryHandler.getSlots(); i++) {
-            ItemStack itemStack = inventoryHandler.getStackInSlot(i);
-            if (!itemStack.isEmpty() && matchesToolType(itemStack, toolType)) return i;
+        int damageValue = Math.max(1, Math.round(baseWear * wearMultiplier));
+        ItemStack heldTool = byteBuddy.getHeldTool();
+        if (!heldTool.isEmpty() && heldTool.isDamageableItem()) {
+            heldTool.hurtAndBreak(damageValue, byteBuddy, EquipmentSlot.MAINHAND);
+            byteBuddy.getAugmentInv().setStackInSlot(slot, heldTool);
         }
-        return -1;
     }
 
     public static boolean matchesToolType(ItemStack toolStack, ToolType toolType) {

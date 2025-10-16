@@ -118,6 +118,30 @@ public class BatteryItem extends Item {
         return InteractionResultHolder.success(itemInHand);
     }
 
+    public static void drainBatteries(ByteBuddyEntity byteBuddy) {
+        int missingEnergy = byteBuddy.getEnergyStorage().getMaxEnergyStored() - byteBuddy.getEnergyStorage().getEnergyStored();
+        if (missingEnergy >= 0) {
+            for (int i = 0; i < byteBuddy.getAugmentInv().getSlots(); i++) {
+                ItemStack stackInSlot = byteBuddy.getAugmentInv().getStackInSlot(i);
+                if (!stackInSlot.isEmpty() && stackInSlot.getItem() instanceof BatteryItem batteryItem) {
+                    int neededEnergy = Math.min(missingEnergy, batteryItem.getIoRate());
+                    int pulledEnergy = batteryItem.extract(stackInSlot, neededEnergy, false);
+                    if (pulledEnergy > 0) {
+                        int receivedEnergy = byteBuddy.getEnergyStorage().receiveEnergy(pulledEnergy, false);
+                        if (receivedEnergy < pulledEnergy)
+                            batteryItem.setEnergy(stackInSlot, batteryItem.getEnergy(stackInSlot) + (pulledEnergy - receivedEnergy));
+
+                        //ByteBuddies.LOGGER.debug("[ByteBuddies] bot drained battery: +{}FE (slot {}), bot={}/{}",
+                        //        receivedEnergy, i, byteBuddy.getEnergyStorage().getEnergyStored(), byteBuddy.getEnergyStorage().getMaxEnergyStored());
+
+                        missingEnergy -= receivedEnergy;
+                        if (missingEnergy <= 0) break;
+                    }
+                }
+            }
+        }
+    }
+
     @Override
     public void appendHoverText(ItemStack batteryStack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(batteryStack, context, tooltip, flag);

@@ -19,7 +19,6 @@ import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import org.jetbrains.annotations.NotNull;
 
 public class ByteBuddyModel <T extends Entity> extends HierarchicalModel<T> implements ArmedModel {
-    // This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
     public static final ModelLayerLocation BYTEBUDDY_LAYER = new ModelLayerLocation(
             ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "bytebuddy"), "main");
 
@@ -113,7 +112,13 @@ public class ByteBuddyModel <T extends Entity> extends HierarchicalModel<T> impl
     }
 
     @Override
-    public void translateToHand(HumanoidArm side, PoseStack poseStack) {
-
+    public void translateToHand(HumanoidArm arm, PoseStack poseStack) {
+        this.bytebuddy.translateAndRotate(poseStack);
+        float scale = 0.63f;
+        ModelPart armPart = arm == HumanoidArm.LEFT ? this.leftArm : this.rightArm;
+        armPart.translateAndRotate(poseStack);
+        poseStack.translate(0.0f, (-5f * scale) * (1/16f), (scale) * (1/16f));
+        poseStack.scale(scale, scale, scale);
     }
+
 }
