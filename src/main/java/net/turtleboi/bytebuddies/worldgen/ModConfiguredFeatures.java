@@ -13,7 +13,6 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.RuleTest;
 import net.minecraft.world.level.levelgen.structure.templatesystem.TagMatchTest;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.block.ModBlocks;
-import org.openjdk.nashorn.internal.ir.Block;
 
 import java.util.List;
 
@@ -26,8 +25,8 @@ public class ModConfiguredFeatures {
         RuleTest deepslateReplaceables = new TagMatchTest(BlockTags.DEEPSLATE_ORE_REPLACEABLES);
 
         List<OreConfiguration.TargetBlockState> overworldAluminumOres = List.of(
-                OreConfiguration.target(stoneReplaceables, ModBlocks.ALUMINUM_ORE.get().defaultBlockState()),
-                OreConfiguration.target(deepslateReplaceables, ModBlocks.DEEPSLATE_ALUMINUM_ORE.get().defaultBlockState()));
+                OreConfiguration.target(stoneReplaceables, ModBlocks.BAUXITE_ORE.get().defaultBlockState()),
+                OreConfiguration.target(deepslateReplaceables, ModBlocks.DEEPSLATE_BAUXITE_ORE.get().defaultBlockState()));
 
         List<OreConfiguration.TargetBlockState> overworldBluestoneOres = List.of(
                 OreConfiguration.target(stoneReplaceables, ModBlocks.BLUESTONE_ORE.get().defaultBlockState()),

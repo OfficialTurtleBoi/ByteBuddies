@@ -22,7 +22,7 @@ public class ModItems {
     public static final DeferredItem<Item> BUSTER_SWORD = ITEMS.register("buster_sword",
             () -> new SwordItem(Tiers.NETHERITE, new Item.Properties()));
 
-    public static final DeferredItem<Item> RAW_ALUMINUM = ITEMS.register("raw_aluminum",
+    public static final DeferredItem<Item> RAW_BAUXITE = ITEMS.register("raw_bauxite",
             () -> new Item(new Item.Properties()));
 
     public static final DeferredItem<Item> ALUMINUM_INGOT = ITEMS.register("aluminum_ingot",
@@ -92,19 +92,19 @@ public class ModItems {
     }
 
     public static final DeferredItem<Item> SIMPLE_BATTERY = ITEMS.register("simple_battery",
-            () -> new BatteryItem(new Item.Properties(), "simple", 50000, 2000));
+            () -> new BatteryItem(new Item.Properties(), "simple", 8000, 32));
 
     public static final DeferredItem<Item> ADVANCED_BATTERY = ITEMS.register("advanced_battery",
-            () -> new BatteryItem(new Item.Properties(), "advanced",  150000,  4000));
+            () -> new BatteryItem(new Item.Properties(), "advanced",  16000,  64));
 
     public static final DeferredItem<Item> BIOCELL_BATTERY = ITEMS.register("biocell_battery",
-            () -> new BatteryItem(new Item.Properties(), "biocell",   200000,  4000));
+            () -> new BatteryItem(new Item.Properties(), "biocell",   48000,  64));
 
     public static final DeferredItem<Item> REINFORCED_BATTERY = ITEMS.register("reinforced_battery",
-            () -> new BatteryItem(new Item.Properties(), "reinforced", 350000, 6000));
+            () -> new BatteryItem(new Item.Properties(), "reinforced", 64000, 128));
 
     public static final DeferredItem<Item> SUPER_CHARGED_BATTERY = ITEMS.register("super_charged_battery",
-            () -> new BatteryItem(new Item.Properties(), "supercharged", 500000, 8000));
+            () -> new BatteryItem(new Item.Properties(), "supercharged", 128000, 512));
 
     public static final DeferredItem<Item> CHIP = ITEMS.register("chip",
             () -> new Item(new Item.Properties()));
@@ -122,6 +122,15 @@ public class ModItems {
             () -> new Item(new Item.Properties()));
 
     public static final DeferredItem<Item> GYROSCOPIC_STABILIZER = ITEMS.register("gyroscopic_stabilizer",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> ARC_WELDER = ITEMS.register("arc_welder",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> GEOTHERMAL_REGULATOR = ITEMS.register("geothermal_regulator",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> DYANAMO_COIL = ITEMS.register("dynamo_coil",
             () -> new Item(new Item.Properties()));
 
     public static final DeferredItem<Item> REINFORCED_IRON_PLATING = ITEMS.register("reinforced_iron_plating",

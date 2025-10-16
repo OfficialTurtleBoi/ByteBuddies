@@ -22,8 +22,8 @@ public class ModLanguageProvider extends LanguageProvider {
     @Override
     protected void addTranslations() {
         add("creativetab.bytebuddies.bytebuddies_tab", "ByteBuddies");
-        addSimpleNameBlock(ModBlocks.ALUMINUM_ORE);
-        addSimpleNameBlock(ModBlocks.DEEPSLATE_ALUMINUM_ORE);
+        addSimpleNameBlock(ModBlocks.BAUXITE_ORE);
+        addSimpleNameBlock(ModBlocks.DEEPSLATE_BAUXITE_ORE);
         addSimpleNameBlock(ModBlocks.ALUMINUM_BLOCK);
         addSimpleNameBlock(ModBlocks.STEEL_BLOCK);
         addSimpleNameBlock(ModBlocks.CHARGED_STEEL_BLOCK);
@@ -31,8 +31,10 @@ public class ModLanguageProvider extends LanguageProvider {
         addSimpleNameBlock(ModBlocks.DEEPSLATE_BLUESTONE_ORE);
         addSimpleNameBlock(ModBlocks.BLUESTONE_BLOCK);
         addSimpleNameBlock(ModBlocks.DOCKING_STATION);
+        addSimpleNameBlock(ModBlocks.GENERATOR);
+        addSimpleNameBlock(ModBlocks.SOLAR_PANEL);
         addSimpleItemName(ModItems.BUSTER_SWORD);
-        addSimpleItemName(ModItems.RAW_ALUMINUM);
+        addSimpleItemName(ModItems.RAW_BAUXITE);
         addSimpleItemName(ModItems.ALUMINUM_INGOT);
         addSimpleItemName(ModItems.ALUMINUM_NUGGET);
         addSimpleItemName(ModItems.CARBON_ALLOY);
@@ -59,6 +61,9 @@ public class ModLanguageProvider extends LanguageProvider {
         addSimpleItemName(ModItems.AQUATIC_MOTOR);
         addSimpleItemName(ModItems.SOLAR_ARRAY);
         addSimpleItemName(ModItems.GYROSCOPIC_STABILIZER);
+        addSimpleItemName(ModItems.ARC_WELDER);
+        addSimpleItemName(ModItems.GEOTHERMAL_REGULATOR);
+        addSimpleItemName(ModItems.DYANAMO_COIL);
         addSimpleItemName(ModItems.REINFORCED_IRON_PLATING);
         addSimpleItemName(ModItems.REINFORCED_STEEL_PLATING);
         addSimpleItemName(ModItems.REINFORCED_NETHERITE_PLATING);

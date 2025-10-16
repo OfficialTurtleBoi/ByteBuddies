@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "bytebuddies:block/aluminum_ore"
+    "all": "bytebuddies:block/bauxite_ore"
   }
 }

@@ -19,7 +19,7 @@ public class ModItemModelProvider extends ItemModelProvider {
 
     @Override
     protected void registerModels() {
-        basicItem(ModItems.RAW_ALUMINUM.get());
+        basicItem(ModItems.RAW_BAUXITE.get());
         basicItem(ModItems.ALUMINUM_INGOT.get());
         basicItem(ModItems.ALUMINUM_NUGGET.get());
         basicItem(ModItems.CARBON_ALLOY.get());
@@ -46,6 +46,9 @@ public class ModItemModelProvider extends ItemModelProvider {
         basicItem(ModItems.AQUATIC_MOTOR.get());
         basicItem(ModItems.SOLAR_ARRAY.get());
         basicItem(ModItems.GYROSCOPIC_STABILIZER.get());
+        basicItem(ModItems.ARC_WELDER.get());
+        basicItem(ModItems.GEOTHERMAL_REGULATOR.get());
+        basicItem(ModItems.DYANAMO_COIL.get());
         basicItem(ModItems.REINFORCED_IRON_PLATING.get());
         basicItem(ModItems.REINFORCED_STEEL_PLATING.get());
         basicItem(ModItems.REINFORCED_NETHERITE_PLATING.get());

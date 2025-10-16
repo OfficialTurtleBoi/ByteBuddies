@@ -6,7 +6,7 @@
     "targets": [
       {
         "state": {
-          "Name": "bytebuddies:aluminum_ore"
+          "Name": "bytebuddies:bauxite_ore"
         },
         "target": {
           "predicate_type": "minecraft:tag_match",
@@ -15,7 +15,7 @@
       },
       {
         "state": {
-          "Name": "bytebuddies:deepslate_aluminum_ore"
+          "Name": "bytebuddies:deepslate_bauxite_ore"
         },
         "target": {
           "predicate_type": "minecraft:tag_match",
