@@ -1,3 +1,4 @@
-// 1.21.1	2025-09-30T21:07:19.8250176	Tags for minecraft:block mod id bytebuddies
-0536f1cd39cb09f2cac7cb2166475e1f46b2dd5f data/minecraft/tags/block/mineable/pickaxe.json
-b5001bbd6a3287ab4142a23fd426024b00ad786c data/minecraft/tags/block/needs_iron_tool.json
+// 1.21.1	2025-10-16T16:50:03.0967776	Tags for minecraft:block mod id bytebuddies
+9db84bb64de1ad3f6cdd794d93a4854b8a6396bf data/minecraft/tags/block/mineable/pickaxe.json
+4b91dc02a6ab2e72c457d362e992b39c3079ab09 data/minecraft/tags/block/needs_iron_tool.json
+39132a4cb3eea5d3711a62dce4854403118ab420 data/minecraft/tags/block/needs_stone_tool.json

@@ -22,7 +22,7 @@ public class ModItemTagProvider extends ItemTagsProvider {
     @Override
     protected void addTags(HolderLookup.Provider provider) {
         tag(Tags.Items.ORES)
-                .add(ModItems.RAW_ALUMINUM.get());
+                .add(ModItems.RAW_BAUXITE.get());
 
         tag(ModTags.Items.BATTERY)
                 .add(ModItems.SIMPLE_BATTERY.get())
@@ -35,6 +35,9 @@ public class ModItemTagProvider extends ItemTagsProvider {
                 .add(ModItems.AQUATIC_MOTOR.get())
                 .add(ModItems.SOLAR_ARRAY.get())
                 .add(ModItems.GYROSCOPIC_STABILIZER.get())
+                .add(ModItems.ARC_WELDER.get())
+                .add(ModItems.GEOTHERMAL_REGULATOR.get())
+                .add(ModItems.DYANAMO_COIL.get())
                 .add(ModItems.REINFORCED_IRON_PLATING.get())
                 .add(ModItems.REINFORCED_STEEL_PLATING.get())
                 .add(ModItems.REINFORCED_NETHERITE_PLATING.get())

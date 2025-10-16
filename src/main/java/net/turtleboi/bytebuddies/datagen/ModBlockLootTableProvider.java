@@ -25,10 +25,10 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
 
     @Override
     protected void generate() {
-        add(ModBlocks.ALUMINUM_ORE.get(),
-                block -> createOreDrop(ModBlocks.ALUMINUM_ORE.get(), ModItems.RAW_ALUMINUM.get()));
-        add(ModBlocks.DEEPSLATE_ALUMINUM_ORE.get(),
-                block -> createOreDrop(ModBlocks.DEEPSLATE_ALUMINUM_ORE.get(), ModItems.RAW_ALUMINUM.get()));
+        add(ModBlocks.BAUXITE_ORE.get(),
+                block -> createOreDrop(ModBlocks.BAUXITE_ORE.get(), ModItems.RAW_BAUXITE.get()));
+        add(ModBlocks.DEEPSLATE_BAUXITE_ORE.get(),
+                block -> createOreDrop(ModBlocks.DEEPSLATE_BAUXITE_ORE.get(), ModItems.RAW_BAUXITE.get()));
         dropSelf(ModBlocks.ALUMINUM_BLOCK.get());
         dropSelf(ModBlocks.STEEL_BLOCK.get());
         dropSelf(ModBlocks.CHARGED_STEEL_BLOCK.get());
@@ -38,6 +38,8 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
                 block -> createBluestoneOreDrops(ModBlocks.BLUESTONE_ORE.get()));
         dropSelf(ModBlocks.BLUESTONE_BLOCK.get());
         dropSelf(ModBlocks.DOCKING_STATION.get());
+        dropSelf(ModBlocks.GENERATOR.get());
+        dropSelf(ModBlocks.SOLAR_PANEL.get());
     }
 
     @Override

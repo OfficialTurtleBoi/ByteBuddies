@@ -21,13 +21,18 @@ public class ModCreativeModeTabs {
                     .title(Component.translatable("creativetab.bytebuddies.bytebuddies_tab"))
                     .displayItems((itemDisplayParameters, pOutput) -> {
                         pOutput.accept(ModBlocks.DOCKING_STATION);
+                        pOutput.accept(ModBlocks.GENERATOR);
+                        pOutput.accept(ModBlocks.SOLAR_PANEL);
                         pOutput.accept(ModBlocks.ALUMINUM_BLOCK);
                         pOutput.accept(ModBlocks.STEEL_BLOCK);
                         pOutput.accept(ModBlocks.CHARGED_STEEL_BLOCK);
+                        pOutput.accept(ModBlocks.BAUXITE_ORE);
+                        pOutput.accept(ModBlocks.DEEPSLATE_BAUXITE_ORE);
                         pOutput.accept(ModBlocks.BLUESTONE_ORE);
                         pOutput.accept(ModBlocks.DEEPSLATE_BLUESTONE_ORE);
                         pOutput.accept(ModBlocks.BLUESTONE_BLOCK);
                         pOutput.accept(ModItems.BUSTER_SWORD);
+                        pOutput.accept(ModItems.RAW_BAUXITE);
                         pOutput.accept(ModItems.ALUMINUM_INGOT);
                         pOutput.accept(ModItems.ALUMINUM_NUGGET);
                         pOutput.accept(ModItems.CARBON_ALLOY);
@@ -64,6 +69,9 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.AQUATIC_MOTOR);
                         pOutput.accept(ModItems.SOLAR_ARRAY);
                         pOutput.accept(ModItems.GYROSCOPIC_STABILIZER);
+                        pOutput.accept(ModItems.ARC_WELDER);
+                        pOutput.accept(ModItems.GEOTHERMAL_REGULATOR);
+                        pOutput.accept(ModItems.DYANAMO_COIL);
                         pOutput.accept(ModItems.REINFORCED_IRON_PLATING);
                         pOutput.accept(ModItems.REINFORCED_STEEL_PLATING);
                         pOutput.accept(ModItems.REINFORCED_NETHERITE_PLATING);

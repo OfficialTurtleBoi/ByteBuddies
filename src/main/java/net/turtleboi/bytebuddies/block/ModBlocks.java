@@ -1,6 +1,5 @@
 package net.turtleboi.bytebuddies.block;
 
-import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.*;
@@ -14,6 +13,8 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.bytebuddies.block.custom.BluestoneOreBlock;
 import net.turtleboi.bytebuddies.block.custom.DockingStationBlock;
+import net.turtleboi.bytebuddies.block.custom.GeneratorBlock;
+import net.turtleboi.bytebuddies.block.custom.SolarPanelBlock;
 import net.turtleboi.bytebuddies.item.ModItems;
 import net.turtleboi.bytebuddies.ByteBuddies;
 
@@ -24,10 +25,10 @@ public class ModBlocks {
     public static final DeferredRegister.Blocks BLOCKS =
             DeferredRegister.createBlocks(ByteBuddies.MOD_ID);
 
-    public static final DeferredBlock<Block> ALUMINUM_ORE = registerBlock("aluminum_ore",
+    public static final DeferredBlock<Block> BAUXITE_ORE = registerBlock("bauxite_ore",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)));
 
-    public static final DeferredBlock<Block> DEEPSLATE_ALUMINUM_ORE = registerBlock("deepslate_aluminum_ore",
+    public static final DeferredBlock<Block> DEEPSLATE_BAUXITE_ORE = registerBlock("deepslate_bauxite_ore",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)));
 
     public static final DeferredBlock<Block> ALUMINUM_BLOCK = registerBlock("aluminum_block",
@@ -62,6 +63,12 @@ public class ModBlocks {
 
     public static final DeferredBlock<Block> DOCKING_STATION = registerBlock("docking_station",
             () -> new DockingStationBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)));
+
+    public static final DeferredBlock<Block> GENERATOR = registerBlock("generator",
+            () -> new GeneratorBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)));
+
+    public static final DeferredBlock<Block> SOLAR_PANEL = registerBlock("solar_panel",
+            () -> new SolarPanelBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)));
 
     private static <T extends Block> DeferredBlock<T> registerBlock(String name, Supplier<T> block){
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);

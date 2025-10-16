@@ -51,7 +51,7 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
 
     private final Set<UUID> boundBuddies = new HashSet<>();
     public int dockBaseRadius = 4;
-    private final EnergyStorage energyStorage = new EnergyStorage(400_000, 800, 800);
+    private final EnergyStorage energyStorage = new EnergyStorage(48000, 640, 640);
 
     public DockingStationBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(ModBlockEntities.DOCKING_STATION_BE.get(), blockPos, blockState);

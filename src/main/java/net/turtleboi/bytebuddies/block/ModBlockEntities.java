@@ -14,8 +14,16 @@ public class ModBlockEntities{
             DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, ByteBuddies.MOD_ID);
 
     public static final Supplier<BlockEntityType<DockingStationBlockEntity>> DOCKING_STATION_BE =
-            BLOCK_ENTITIES.register("pedestal_be", () -> BlockEntityType.Builder.of(
+            BLOCK_ENTITIES.register("docking_station_be", () -> BlockEntityType.Builder.of(
                     DockingStationBlockEntity::new, ModBlocks.DOCKING_STATION.get()).build(null));
+
+    public static final Supplier<BlockEntityType<DockingStationBlockEntity>> GENERATOR_BE =
+            BLOCK_ENTITIES.register("generator_be", () -> BlockEntityType.Builder.of(
+                    DockingStationBlockEntity::new, ModBlocks.GENERATOR.get()).build(null));
+
+    public static final Supplier<BlockEntityType<DockingStationBlockEntity>> SOLAR_PANEL_BE =
+            BLOCK_ENTITIES.register("solar_panel_be", () -> BlockEntityType.Builder.of(
+                    DockingStationBlockEntity::new, ModBlocks.SOLAR_PANEL.get()).build(null));
 
     public static void register(IEventBus eventBus){
         BLOCK_ENTITIES.register(eventBus);

@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "bytebuddies:item/raw_aluminum"
+    "layer0": "bytebuddies:item/dynamo_coil"
   }
 }
