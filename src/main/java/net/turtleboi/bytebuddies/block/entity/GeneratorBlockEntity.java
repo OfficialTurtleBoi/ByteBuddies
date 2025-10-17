@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class GeneratorBlockEntity extends BlockEntity implements IEnergyStorage, MenuProvider {
     private int progress = 0;
-    private int maxProgress = 80;
+    private int maxProgress = 0;
     private final EnergyStorage energyStorage = new EnergyStorage(48000, 640, 640);
     private final ItemStackHandler fuelSlot = new ItemStackHandler(1){
         @Override
@@ -89,7 +89,7 @@ public class GeneratorBlockEntity extends BlockEntity implements IEnergyStorage,
     public void tick(Level level, BlockPos blockPos, BlockState blockState) {
         if (level != null) {
             ItemStack fuelItemStack = getFuelSlot().getStackInSlot(0);
-            if (!fuelItemStack.isEmpty() && progress <= 0) {
+            if (!fuelItemStack.isEmpty() && progress <= 0 && maxProgress == 0) {
                 this.maxProgress = fuelItemStack.getBurnTime(RecipeType.SMELTING);
                 this.progress++;
                 setChanged(level, blockPos, blockState);
@@ -118,7 +118,7 @@ public class GeneratorBlockEntity extends BlockEntity implements IEnergyStorage,
 
     private void resetProgress() {
         this.progress = 0;
-        this.maxProgress = 100;
+        this.maxProgress = 0;
         setChanged();
     }
 

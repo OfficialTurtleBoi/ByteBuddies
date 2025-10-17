@@ -25,6 +25,8 @@ public class ByteBuddyModel <T extends Entity> extends HierarchicalModel<T> impl
     private final ModelPart bytebuddy;
     private final ModelPart head;
     private final ModelPart display;
+    private final ModelPart displayBg;
+    private final ModelPart displayFace;
     private final ModelPart rightArm;
     private final ModelPart leftArm;
     private final ModelPart rightLeg;
@@ -34,6 +36,8 @@ public class ByteBuddyModel <T extends Entity> extends HierarchicalModel<T> impl
         this.bytebuddy = root.getChild("bytebuddy");
         this.head = this.bytebuddy.getChild("head");
         this.display = this.head.getChild("display");
+        this.displayBg = display.getChild("displayBg");
+        this.displayFace = display.getChild("displayFace");
         this.rightArm = this.bytebuddy.getChild("rightArm");
         this.leftArm = this.bytebuddy.getChild("leftArm");
         this.rightLeg = this.bytebuddy.getChild("rightLeg");
@@ -48,18 +52,27 @@ public class ByteBuddyModel <T extends Entity> extends HierarchicalModel<T> impl
 
         PartDefinition head = bytebuddy.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0F, -4.0F, -4.0F, 8.0F, 8.0F, 8.0F, new CubeDeformation(0.25F)), PartPose.offset(0.0F, -6.0F, 0.0F));
 
-        PartDefinition display = head.addOrReplaceChild("display", CubeListBuilder.create().texOffs(0, 16).addBox(-4.0F, -4.0F, -1.95F, 8.0F, 8.0F, 8.0F, new CubeDeformation(0.0F))
-                .texOffs(32, 24).addBox(-4.0F, -4.0F, -2.05F, 8.0F, 8.0F, 0.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, -2.05F));
+        PartDefinition display = head.addOrReplaceChild("display", CubeListBuilder.create(), PartPose.offset(0, 0, -2.05f));
 
-        PartDefinition rightArm = bytebuddy.addOrReplaceChild("rightArm", CubeListBuilder.create().texOffs(32, 0).addBox(-1.0F, -1.0F, -1.0F, 1.0F, 4.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(-5.0F, -4.5F, 0.0F));
+        display.addOrReplaceChild("displayBg",
+                CubeListBuilder.create()
+                        .texOffs(0, 0).addBox(-4, -4, -1.95f, 8, 8, 8, new CubeDeformation(0.0f)),
+                PartPose.ZERO);
 
-        PartDefinition leftArm = bytebuddy.addOrReplaceChild("leftArm", CubeListBuilder.create().texOffs(32, 0).mirror().addBox(0.0F, -1.0F, -1.0F, 1.0F, 4.0F, 2.0F, new CubeDeformation(0.0F)).mirror(false), PartPose.offset(5.0F, -4.5F, 0.0F));
+        display.addOrReplaceChild("displayFace",
+                CubeListBuilder.create()
+                        .texOffs(0, 0).addBox(-4, -4, -2.05f, 8, 8, 0.0f, new CubeDeformation(0.0f)),
+                PartPose.ZERO);
 
-        PartDefinition rightLeg = bytebuddy.addOrReplaceChild("rightLeg", CubeListBuilder.create().texOffs(0, 32).addBox(-1.0F, -1.25F, -1.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(-2.0F, -1.75F, 0.0F));
+        PartDefinition rightArm = bytebuddy.addOrReplaceChild("rightArm", CubeListBuilder.create().texOffs(16, 16).addBox(-1.0F, -1.0F, -1.0F, 1.0F, 4.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(-5.0F, -4.5F, 0.0F));
 
-        PartDefinition leftLeg = bytebuddy.addOrReplaceChild("leftLeg", CubeListBuilder.create().texOffs(0, 32).mirror().addBox(-1.0F, -1.25F, -1.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F)).mirror(false), PartPose.offset(2.0F, -1.75F, 0.0F));
+        PartDefinition leftArm = bytebuddy.addOrReplaceChild("leftArm", CubeListBuilder.create().texOffs(16, 16).mirror().addBox(0.0F, -1.0F, -1.0F, 1.0F, 4.0F, 2.0F, new CubeDeformation(0.0F)).mirror(false), PartPose.offset(5.0F, -4.5F, 0.0F));
 
-        return LayerDefinition.create(meshdefinition, 64, 64);
+        PartDefinition rightLeg = bytebuddy.addOrReplaceChild("rightLeg", CubeListBuilder.create().texOffs(0, 16).addBox(-1.0F, -1.25F, -1.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(-2.0F, -1.75F, 0.0F));
+
+        PartDefinition leftLeg = bytebuddy.addOrReplaceChild("leftLeg", CubeListBuilder.create().texOffs(0, 16).mirror().addBox(-1.0F, -1.25F, -1.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F)).mirror(false), PartPose.offset(2.0F, -1.75F, 0.0F));
+
+        return LayerDefinition.create(meshdefinition, 32, 32);
     }
 
     @Override
@@ -121,4 +134,18 @@ public class ByteBuddyModel <T extends Entity> extends HierarchicalModel<T> impl
         poseStack.scale(scale, scale, scale);
     }
 
+    public void setDisplayVisibility(boolean bgVisible, boolean faceVisible) {
+        this.displayBg.visible = bgVisible;
+        this.displayFace.visible = faceVisible;
+    }
+
+    public void translateToDisplay(PoseStack pose) {
+        this.bytebuddy.translateAndRotate(pose);
+        this.head.translateAndRotate(pose);
+        this.display.translateAndRotate(pose);
+    }
+
+    public void renderDisplayBg(PoseStack poseStack, VertexConsumer vertexConsumer, int light, int overlay, int color) {
+        displayBg.render(poseStack, vertexConsumer, light, overlay, color);
+    }
 }

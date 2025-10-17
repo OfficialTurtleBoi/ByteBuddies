@@ -106,11 +106,13 @@ public class GeneratorScreen extends AbstractContainerScreen<GeneratorMenu> {
     private void drawProgressBar(GuiGraphics guiGraphics, int x, int y) {
         guiGraphics.blit(GUI_TEXTURE, x, y, 188, 0, 12, 15, 256, 256);
 
-        long energy = getProgressSafe();
-        long energyMax = Math.max(1, getMaxProgressSafe());
-        long remaining = energyMax - energy;
-        int filled = Mth.clamp((int)Math.round((double)remaining * 15 / (double)energyMax), 0, 15);
-
+        long progress = getProgressSafe();
+        long progressMax = Math.max(1, getMaxProgressSafe());
+        long remaining = progressMax - progress;
+        int filled =  0;
+        if (progressMax != 1) {
+            filled = Mth.clamp((int) Math.round((double) remaining * 15 / (double) progressMax), 0, 15);
+        }
         int dy = 15 - filled;
         int drawY = y + dy;
 
