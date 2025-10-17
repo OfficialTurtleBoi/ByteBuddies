@@ -1,43 +1,100 @@
-package net.turtleboi.bytebuddies.screen.custom;
+package net.turtleboi.bytebuddies.screen.custom.menu;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.screen.ModMenuTypes;
-import net.turtleboi.bytebuddies.util.ModTags;
 import org.jetbrains.annotations.NotNull;
 
-public class ByteBuddyMenu extends AbstractContainerMenu {
-    public final ByteBuddyEntity buddy;
-    public final Inventory playerInv;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 
-    public ByteBuddyMenu(int containerId, Inventory playerInv, ByteBuddyEntity buddy) {
-        super(ModMenuTypes.BUDDY_MENU.get(), containerId);
-        this.playerInv = playerInv;
-        this.buddy = buddy;
+public class DockingStationMenu extends AbstractContainerMenu {
+    public final DockingStationBlockEntity dockBlock;
+    public final Level level;
+    private final IntList buddyEntityIds = new IntArrayList();
+    private int clientEnergy;
+    private int clientMaxEnergy;
+
+    public DockingStationMenu(int containerId, Inventory playerInv, BlockEntity blockEntity) {
+        super(ModMenuTypes.DOCKING_STATION_MENU.get(), containerId);
+        this.dockBlock = ((DockingStationBlockEntity) blockEntity);
+        this.level = playerInv.player.level();
 
         addPlayerInventory(playerInv);
         addPlayerHotbar(playerInv);
 
-        addBuddyInventory();
-        addBuddyAugments();
-        addBuddyUpgrades();
+        addStationInventory();
+        addBatterySlot();
+
+        this.addDataSlot(new DataSlot() {
+            @Override public int get() {
+                return dockBlock.getEnergyStorage().getEnergyStored();
+            }
+            @Override public void set(int value) {
+                clientEnergy = value;
+            }
+        });
+
+        this.addDataSlot(new DataSlot() {
+            @Override public int get() {
+                return dockBlock.getEnergyStorage().getMaxEnergyStored();
+            }
+            @Override public void set(int value) {
+                clientMaxEnergy = value;
+            }
+        });
     }
 
-    public static ByteBuddyMenu clientFactory(int buddyId, Inventory inventory, FriendlyByteBuf byteBuf) {
-        int entityId = byteBuf.readInt();
-        var entity = inventory.player.level().getEntity(entityId);
-        return new ByteBuddyMenu(buddyId, inventory, (entity instanceof ByteBuddyEntity byteBuddy) ? byteBuddy : null);
+    public static DockingStationMenu clientFactory(int containerId, Inventory inventory, FriendlyByteBuf byteBuf) {
+        DockingStationMenu dockingStationMenu = new DockingStationMenu(containerId, inventory, inventory.player.level().getBlockEntity(byteBuf.readBlockPos()));
+        int idCount = byteBuf.readVarInt();
+        for (int i = 0; i < idCount; i++) {
+            dockingStationMenu.getBuddyEntityIds().add(byteBuf.readVarInt());
+        }
+        return dockingStationMenu;
     }
 
-    public LivingEntity getByteBuddy() {
-        return buddy;
+    public BlockEntity getDockingStation() {
+        return dockBlock;
+    }
+
+    public IntList getBuddyEntityIds() {
+        return buddyEntityIds;
+    }
+
+    public int getBuddyCount() {
+        return buddyEntityIds.size();
+    }
+
+    @Nullable
+    public ByteBuddyEntity getBuddyByIndexClient(int index) {
+        if (level.isClientSide) {
+        if (index < 0 || index >= buddyEntityIds.size()) return null;
+        int id = buddyEntityIds.getInt(index);
+        Entity buddyEntity = level.getEntity(id);
+        return (buddyEntity instanceof ByteBuddyEntity byteBuddy) ? byteBuddy : null;
+        }
+        return null;
+    }
+
+    public Component getBuddyNameByIndexClient(int index) {
+        ByteBuddyEntity b = getBuddyByIndexClient(index);
+        return (b != null) ? b.getDisplayName() : Component.literal("Loading…");
     }
 
     // CREDIT GOES TO: diesieben07 | https://github.com/diesieben07/SevenCommons
@@ -56,7 +113,7 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
     private static final int TE_INVENTORY_FIRST_SLOT_INDEX = VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT;
 
     // THIS YOU HAVE TO DEFINE!
-    private static final int TE_INVENTORY_SLOT_COUNT = 11;  // must be the number of slots you have!
+    private static final int TE_INVENTORY_SLOT_COUNT = 28;  // must be the number of slots you have!
     @Override
     public @NotNull ItemStack quickMoveStack(@NotNull Player playerIn, int pIndex) {
         Slot sourceSlot = slots.get(pIndex);
@@ -92,12 +149,27 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(@NotNull Player player) {
-        return buddy != null && buddy.isAlive() && player.distanceTo(buddy) < 4.0;
+        return this.dockBlock != null && player.distanceToSqr(
+                dockBlock.getBlockPos().getX() + 0.5, dockBlock.getBlockPos().getY() + 0.5, dockBlock.getBlockPos().getZ() + 0.5) <= 64.0;
+    }
+
+    public List<ByteBuddyEntity> getVisibleBuddiesClient(Player player) {
+        if (player.level().isClientSide) {
+            List<ByteBuddyEntity> buddyList = new ArrayList<>();
+            for (int id : buddyEntityIds) {
+                Entity buddyEntity = player.level().getEntity(id);
+                if (buddyEntity instanceof ByteBuddyEntity byteBuddy) {
+                    buddyList.add(byteBuddy);
+                }
+            }
+            return buddyList;
+        }
+        return List.of();
     }
 
     private static final int SLOT_SIZE = 18;
     private void addPlayerInventory(Inventory playerInventory) {
-        int startX = 21;
+        int startX = 40;
         int startY = 145;
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
@@ -112,7 +184,7 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
     }
 
     private void addPlayerHotbar(Inventory playerInventory) {
-        int startX = 21;
+        int startX = 40;
         int startY = 203;
         for (int i = 0; i < 9; ++i) {
             this.addSlot(new Slot(
@@ -124,15 +196,15 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
         }
     }
 
-    private void addBuddyInventory() {
-        if (buddy == null) return;
-        int startX = 75;
+    private void addStationInventory() {
+        if (dockBlock == null) return;
+        int startX = 40;
         int startY = 63;
         int slot = 0;
         for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
+            for (int col = 0; col < 9; col++) {
                 this.addSlot(new SlotItemHandler(
-                        buddy.getMainInv(),
+                        dockBlock.getMainInv(),
                         slot++,
                         startX + col * SLOT_SIZE,
                         startY + row * SLOT_SIZE
@@ -141,93 +213,21 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
         }
     }
 
-    private void addBuddyAugments() {
-        if (buddy == null) return;
-        int startX = 33;
-        int startY = 54;
-
-        this.addSlot(new SlotItemHandler(buddy.getAugmentInv(), 0, startX, startY) {
-            @Override public boolean mayPlace(ItemStack itemStack) {
-                return ByteBuddyEntity.isAnyTool(itemStack);
-            }
-            @Override public int getMaxStackSize() { return 1; }
-        });
-
-        this.addSlot(new SlotItemHandler(buddy.getAugmentInv(), 1, startX, startY + SLOT_SIZE) {
-            @Override public boolean mayPlace(ItemStack itemStack) {
-                return itemStack.is(ModTags.Items.AUGMENT);
-            }
-            @Override public int getMaxStackSize() { return 1; }
-        });
-
-
-        this.addSlot(new SlotItemHandler(buddy.getAugmentInv(), 2, startX, startY + 2 * SLOT_SIZE) {
-            @Override public boolean mayPlace(ItemStack itemStack) {
-                return itemStack.is(ModTags.Items.AUGMENT);
-            }
-            @Override public int getMaxStackSize() { return 1; }
-        });
-
-        this.addSlot(new SlotItemHandler(buddy.getAugmentInv(), 3, startX, startY + 3 * SLOT_SIZE) {
-            @Override public boolean mayPlace(ItemStack itemStack) {
-                return ByteBuddyEntity.isBattery(itemStack);
-            }
-
-            @Override public int getMaxStackSize() {
-                return 1;
-            }
-        });
-    }
-
-    private void addBuddyUpgrades() {
-        if (buddy == null) return;
-        int startX = 153;
-        int startY = 54;
-        for (int u = 0; u < 4; u++) {
-            this.addSlot(new SlotItemHandler(
-                    buddy.getUpgradeInv(),
-                    u,
-                    startX,
-                    startY + u * SLOT_SIZE
-            ) {
-                @Override public boolean mayPlace(ItemStack itemStack) {
-                    return ByteBuddyEntity.isFloppyDisk(itemStack);
-                }
-
-                @Override public int getMaxStackSize() {
-                    return 1;
-                }
-            });
-        }
-    }
-
-    public boolean farmingEnabled() {
-        return buddy != null && buddy.isFarmingEnabled();
-    }
-
-    public boolean harvestEnabled() {
-        return buddy != null && buddy.isHarvestEnabled();
-    }
-
-    public boolean plantEnabled() {
-        return buddy != null && buddy.isPlantEnabled();
-    }
-
-    public boolean tillEnabled() {
-        return buddy != null && buddy.isTillEnabled();
+    private void addBatterySlot() {
+        if (dockBlock == null) return;
+        this.addSlot(new SlotItemHandler(
+                dockBlock.getBatterySlot(),
+                0,
+                6,
+                109
+        ));
     }
 
     public int getEnergyStored() {
-        if (this.buddy.level().isClientSide) {
-            return buddy.getSyncedEnergy();
-        } else {
-            return buddy.getEnergyStorage().getEnergyStored();
-        }
+        return clientEnergy;
     }
 
     public int getMaxEnergyStored() {
-        return buddy != null ? buddy.getEnergyStorage().getMaxEnergyStored() : 0;
+        return clientMaxEnergy;
     }
-
-
 }

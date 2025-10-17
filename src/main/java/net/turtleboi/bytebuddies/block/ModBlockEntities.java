@@ -6,6 +6,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
+import net.turtleboi.bytebuddies.block.entity.GeneratorBlockEntity;
+import net.turtleboi.bytebuddies.block.entity.SolarPanelBlockEntity;
 
 import java.util.function.Supplier;
 
@@ -17,13 +19,13 @@ public class ModBlockEntities{
             BLOCK_ENTITIES.register("docking_station_be", () -> BlockEntityType.Builder.of(
                     DockingStationBlockEntity::new, ModBlocks.DOCKING_STATION.get()).build(null));
 
-    public static final Supplier<BlockEntityType<DockingStationBlockEntity>> GENERATOR_BE =
+    public static final Supplier<BlockEntityType<GeneratorBlockEntity>> GENERATOR_BE =
             BLOCK_ENTITIES.register("generator_be", () -> BlockEntityType.Builder.of(
-                    DockingStationBlockEntity::new, ModBlocks.GENERATOR.get()).build(null));
+                    GeneratorBlockEntity::new, ModBlocks.GENERATOR.get()).build(null));
 
-    public static final Supplier<BlockEntityType<DockingStationBlockEntity>> SOLAR_PANEL_BE =
+    public static final Supplier<BlockEntityType<SolarPanelBlockEntity>> SOLAR_PANEL_BE =
             BLOCK_ENTITIES.register("solar_panel_be", () -> BlockEntityType.Builder.of(
-                    DockingStationBlockEntity::new, ModBlocks.SOLAR_PANEL.get()).build(null));
+                    SolarPanelBlockEntity::new, ModBlocks.SOLAR_PANEL.get()).build(null));
 
     public static void register(IEventBus eventBus){
         BLOCK_ENTITIES.register(eventBus);

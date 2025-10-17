@@ -1,0 +1,201 @@
+package net.turtleboi.bytebuddies.screen.custom.menu;
+
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.DataSlot;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.neoforge.items.SlotItemHandler;
+import net.turtleboi.bytebuddies.block.entity.GeneratorBlockEntity;
+import net.turtleboi.bytebuddies.screen.ModMenuTypes;
+import org.jetbrains.annotations.NotNull;
+
+public class GeneratorMenu extends AbstractContainerMenu {
+    public final GeneratorBlockEntity generatorBlockEntity;
+    public final Level level;
+    private int clientProgress;
+    private int clientMaxProgress;
+    private int clientEnergy;
+    private int clientMaxEnergy;
+
+    public GeneratorMenu(int containerId, Inventory playerInv, BlockEntity blockEntity) {
+        super(ModMenuTypes.GENERATOR_MENU.get(), containerId);
+        this.generatorBlockEntity = ((GeneratorBlockEntity) blockEntity);
+        this.level = playerInv.player.level();
+
+        addPlayerInventory(playerInv);
+        addPlayerHotbar(playerInv);
+
+        addFuelSlot();
+        addBatterySlot();
+
+        this.addDataSlot(new DataSlot() {
+            @Override public int get() {
+                return generatorBlockEntity.getProgress();
+            }
+            @Override public void set(int value) {
+                clientProgress = value;
+            }
+        });
+
+        this.addDataSlot(new DataSlot() {
+            @Override public int get() {
+                return generatorBlockEntity.getMaxProgress();
+            }
+            @Override public void set(int value) {
+                clientMaxProgress = value;
+            }
+        });
+
+        this.addDataSlot(new DataSlot() {
+            @Override public int get() {
+                return generatorBlockEntity.getEnergyStorage().getEnergyStored();
+            }
+            @Override public void set(int value) {
+                clientEnergy = value;
+            }
+        });
+
+        this.addDataSlot(new DataSlot() {
+            @Override public int get() {
+                return generatorBlockEntity.getEnergyStorage().getMaxEnergyStored();
+            }
+            @Override public void set(int value) {
+                clientMaxEnergy = value;
+            }
+        });
+    }
+
+    public static GeneratorMenu clientFactory(int containerId, Inventory inventory, FriendlyByteBuf byteBuf) {
+        return new GeneratorMenu(containerId, inventory, inventory.player.level().getBlockEntity(byteBuf.readBlockPos()));
+    }
+
+    public BlockEntity getSolarPanel() {
+        return generatorBlockEntity;
+    }
+
+    // CREDIT GOES TO: diesieben07 | https://github.com/diesieben07/SevenCommons
+    // must assign a slot number to each of the slots used by the GUI.
+    // For this container, we can see both the tile inventory's slots as well as the player inventory slots and the hotbar.
+    // Each time we add a Slot to the container, it automatically increases the slotIndex, which means
+    //  0 - 8 = hotbar slots (which will map to the InventoryPlayer slot numbers 0 - 8)
+    //  9 - 35 = player inventory slots (which map to the InventoryPlayer slot numbers 9 - 35)
+    //  36 - 44 = TileInventory slots, which map to our TileEntity slot numbers 0 - 8)
+    private static final int HOTBAR_SLOT_COUNT = 9;
+    private static final int PLAYER_INVENTORY_ROW_COUNT = 3;
+    private static final int PLAYER_INVENTORY_COLUMN_COUNT = 9;
+    private static final int PLAYER_INVENTORY_SLOT_COUNT = PLAYER_INVENTORY_COLUMN_COUNT * PLAYER_INVENTORY_ROW_COUNT;
+    private static final int VANILLA_SLOT_COUNT = HOTBAR_SLOT_COUNT + PLAYER_INVENTORY_SLOT_COUNT;
+    private static final int VANILLA_FIRST_SLOT_INDEX = 0;
+    private static final int TE_INVENTORY_FIRST_SLOT_INDEX = VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT;
+
+    // THIS YOU HAVE TO DEFINE!
+    private static final int TE_INVENTORY_SLOT_COUNT = 1;  // must be the number of slots you have!
+    @Override
+    public @NotNull ItemStack quickMoveStack(@NotNull Player playerIn, int pIndex) {
+        Slot sourceSlot = slots.get(pIndex);
+        if (sourceSlot == null || !sourceSlot.hasItem()) return ItemStack.EMPTY;  //EMPTY_ITEM
+        ItemStack sourceStack = sourceSlot.getItem();
+        ItemStack copyOfSourceStack = sourceStack.copy();
+
+        // Check if the slot clicked is one of the vanilla container slots
+        if (pIndex < VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT) {
+            // This is a vanilla container slot so merge the stack into the tile inventory
+            if (!moveItemStackTo(sourceStack, TE_INVENTORY_FIRST_SLOT_INDEX, TE_INVENTORY_FIRST_SLOT_INDEX
+                    + TE_INVENTORY_SLOT_COUNT, false)) {
+                return ItemStack.EMPTY;  // EMPTY_ITEM
+            }
+        } else if (pIndex < TE_INVENTORY_FIRST_SLOT_INDEX + TE_INVENTORY_SLOT_COUNT) {
+            // This is a TE slot so merge the stack into the players inventory
+            if (!moveItemStackTo(sourceStack, VANILLA_FIRST_SLOT_INDEX, VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT, false)) {
+                return ItemStack.EMPTY;
+            }
+        } else {
+            System.out.println("Invalid slotIndex:" + pIndex);
+            return ItemStack.EMPTY;
+        }
+        // If stack size == 0 (the entire stack was moved) set slot contents to null
+        if (sourceStack.getCount() == 0) {
+            sourceSlot.set(ItemStack.EMPTY);
+        } else {
+            sourceSlot.setChanged();
+        }
+        sourceSlot.onTake(playerIn, sourceStack);
+        return copyOfSourceStack;
+    }
+
+    @Override
+    public boolean stillValid(@NotNull Player player) {
+        return this.generatorBlockEntity != null && player.distanceToSqr(
+                generatorBlockEntity.getBlockPos().getX() + 0.5, generatorBlockEntity.getBlockPos().getY() + 0.5, generatorBlockEntity.getBlockPos().getZ() + 0.5) <= 64.0;
+    }
+
+    private static final int SLOT_SIZE = 18;
+    private void addPlayerInventory(Inventory playerInventory) {
+        int startX = 8;
+        int startY = 106;
+        for (int row = 0; row < 3; ++row) {
+            for (int col = 0; col < 9; ++col) {
+                this.addSlot(new Slot(
+                        playerInventory,
+                        col + row * 9 + 9,
+                        startX + col * SLOT_SIZE,
+                        startY + row * SLOT_SIZE
+                ));
+            }
+        }
+    }
+
+    private void addPlayerHotbar(Inventory playerInventory) {
+        int startX = 8;
+        int startY = 164;
+        for (int i = 0; i < 9; ++i) {
+            this.addSlot(new Slot(
+                    playerInventory,
+                    i,
+                    startX + i * SLOT_SIZE,
+                    startY
+            ));
+        }
+    }
+
+    private void addFuelSlot() {
+        if (generatorBlockEntity == null) return;
+        this.addSlot(new SlotItemHandler(
+                generatorBlockEntity.getFuelSlot(),
+                0,
+                90,
+                42
+        ));
+    }
+
+    private void addBatterySlot() {
+        if (generatorBlockEntity == null) return;
+        this.addSlot(new SlotItemHandler(
+                generatorBlockEntity.getBatterySlot(),
+                0,
+                40,
+                62
+        ));
+    }
+
+    public int getProgress() {
+        return clientProgress;
+    }
+
+    public int getMaxProgress() {
+        return clientMaxProgress;
+    }
+
+    public int getEnergyStored() {
+        return clientEnergy;
+    }
+
+    public int getMaxEnergyStored() {
+        return clientMaxEnergy;
+    }
+}

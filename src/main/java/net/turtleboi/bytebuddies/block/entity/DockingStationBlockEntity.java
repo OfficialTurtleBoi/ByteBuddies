@@ -11,9 +11,11 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -29,14 +31,33 @@ import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.block.ModBlockEntities;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity.*;
+import net.turtleboi.bytebuddies.item.custom.BatteryItem;
+import net.turtleboi.bytebuddies.util.InventoryUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class DockingStationBlockEntity extends BlockEntity implements IEnergyStorage, MenuProvider {
-    public final ItemStackHandler inventory = new ItemStackHandler(3) {
+    private final ItemStackHandler mainInv = new ItemStackHandler(27){
         @Override
-        protected int getStackLimit(int slot, ItemStack itemStack) {
+        protected void onContentsChanged(int slot) {
+            setChanged();
+            if(!level.isClientSide()) {
+                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+            }
+        }
+    };
+
+    private final ItemStackHandler batterySlot = new ItemStackHandler(1){
+        @Override
+        public boolean isItemValid(int slot, ItemStack itemStack) {
+            if (itemStack.isEmpty()) return false;
+            return InventoryUtil.isBattery(itemStack);
+        }
+
+        @Override
+        protected int getStackLimit(int slot, @NotNull ItemStack itemStack) {
             return 1;
         }
 
@@ -52,6 +73,7 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
     private final Set<UUID> boundBuddies = new HashSet<>();
     public int dockBaseRadius = 4;
     private final EnergyStorage energyStorage = new EnergyStorage(48000, 640, 640);
+    private int tickCount = 0;
 
     public DockingStationBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(ModBlockEntities.DOCKING_STATION_BE.get(), blockPos, blockState);
@@ -71,10 +93,31 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
         }
     }
 
+    public Set<UUID> getBoundBuddyUUIDs() {
+        return Collections.unmodifiableSet(boundBuddies);
+    }
+
+    public List<Integer> findByteBuddyEntityIds(ServerLevel serverLevel) {
+        List<Integer> byteBuddyIds = new ArrayList<>();
+        for (UUID uuid : boundBuddies) {
+            Entity entity = serverLevel.getEntity(uuid);
+            if (entity instanceof ByteBuddyEntity byteBuddy) {
+                byteBuddyIds.add(byteBuddy.getId());
+            }
+        }
+        return byteBuddyIds;
+    }
+
     public void tick(Level level, BlockPos blockPos, BlockState blockState) {
         if (level != null) {
             if (level instanceof ServerLevel serverLevel) {
                 pruneReservations(serverLevel);
+            }
+
+            tickCount++;
+            if (tickCount % 20 == 0) {
+                consumeEnergy(boundBuddies.size() * 25);
+                BatteryItem.dockBlockDrainBatteries(this);
             }
 
             AABB boundingBox = new AABB(blockPos).inflate(dockBaseRadius);
@@ -88,12 +131,35 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
         }
     }
 
+    public ItemStackHandler getMainInv() {
+        return this.mainInv;
+    }
+
+    public ItemStackHandler getBatterySlot() {
+        return this.batterySlot;
+    }
+
+    public IEnergyStorage getEnergyStorage() {
+        return this.energyStorage;
+    }
+
+    private void setEnergyUnsafe(int value) {
+        try {
+            var storedEnergy = EnergyStorage.class.getDeclaredField("energy");
+            storedEnergy.setAccessible(true);
+            storedEnergy.setInt(this.energyStorage, Mth.clamp(value, 0, this.energyStorage.getMaxEnergyStored()));
+        } catch (Exception ignored) {}
+    }
+
     @Override
     protected void saveAdditional(CompoundTag nbtData, HolderLookup.Provider registries) {
         super.saveAdditional(nbtData, registries);
         var dataList = new ListTag();
         for (UUID id : boundBuddies) dataList.add(StringTag.valueOf(id.toString()));
         nbtData.put("BoundBots", dataList);
+        nbtData.put("MainInv", this.mainInv.serializeNBT(registries));
+        nbtData.put("BatterySlot", this.batterySlot.serializeNBT(registries));
+        nbtData.putInt("Energy", this.energyStorage.getEnergyStored());
     }
 
     @Override
@@ -103,6 +169,16 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
         var dataList = nbtData.getList("BoundBots", Tag.TAG_STRING);
         for (int i = 0; i < dataList.size(); i++) {
             boundBuddies.add(UUID.fromString(dataList.getString(i)));
+        }
+        if (nbtData.contains("MainInv")) {
+            this.mainInv.deserializeNBT(registries, nbtData.getCompound("MainInv"));
+        }
+        if (nbtData.contains("BatterySlot")) {
+            this.batterySlot.deserializeNBT(registries, nbtData.getCompound("BatterySlot"));
+        }
+        setChanged();
+        if (nbtData.contains("Energy")) {
+            setEnergyUnsafe(nbtData.getInt("Energy"));
         }
     }
 
@@ -117,12 +193,12 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
     }
 
     public void drops() {
-        SimpleContainer inv = new SimpleContainer(inventory.getSlots());
-        for(int i = 0; i < inventory.getSlots(); i++) {
-            inv.setItem(i, inventory.getStackInSlot(i));
+        SimpleContainer inventory = new SimpleContainer(mainInv.getSlots());
+        for(int i = 0; i < mainInv.getSlots(); i++) {
+            inventory.setItem(i, mainInv.getStackInSlot(i));
         }
 
-        Containers.dropContents(this.level, this.worldPosition, inv);
+        Containers.dropContents(this.level, this.worldPosition, inventory);
     }
 
     private record TaskKey(TaskType taskType, BlockPos blockPos) {}
@@ -218,5 +294,13 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
 
     @Override public boolean canReceive() {
         return energyStorage.canReceive();
+    }
+
+    public boolean consumeEnergy(int energyCost) {
+        if (this.energyStorage.getEnergyStored() >= energyCost) {
+            this.energyStorage.extractEnergy(energyCost, false);
+            return true;
+        }
+        return false;
     }
 }

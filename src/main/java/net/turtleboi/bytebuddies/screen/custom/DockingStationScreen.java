@@ -2,6 +2,7 @@ package net.turtleboi.bytebuddies.screen.custom;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.GameRenderer;
@@ -11,21 +12,21 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.turtleboi.bytebuddies.ByteBuddies;
-import net.turtleboi.bytebuddies.screen.custom.menu.ByteBuddyMenu;
+import net.turtleboi.bytebuddies.screen.custom.menu.DockingStationMenu;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Optional;
 
-public class ByteBuddyScreen extends AbstractContainerScreen<ByteBuddyMenu> {
+public class DockingStationScreen extends AbstractContainerScreen<DockingStationMenu> {
     private static final ResourceLocation GUI_TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "textures/gui/bytebuddy_gui.png");
+            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "textures/gui/docking_station_gui.png");
     private static final ResourceLocation GUI_ADDONS_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "textures/gui/gui_addons.png");
 
     private static final int energyX = 6;
-    private static final int energyY = 64;
+    private static final int energyY = 53;
     private static final int energyWidth = 16;
     private static final int energyHeight = 52;
     private static final int energyEmptyU = 16;
@@ -33,7 +34,7 @@ public class ByteBuddyScreen extends AbstractContainerScreen<ByteBuddyMenu> {
     private static final int energyFullU = 0;
     private static final int energyFullV = 0;
 
-    private static final int buddyPreviewX = 82;
+    private static final int buddyPreviewX = 71;
     private static final int buddyPreviewY = 6;
     private static final int buddyPreviewWidth = 38;
     private static final int buddyPreviewHeight = 38;
@@ -43,10 +44,36 @@ public class ByteBuddyScreen extends AbstractContainerScreen<ByteBuddyMenu> {
     private boolean debugEnergyOverride = false;
     private double debugFillPct = 0.50;
 
-    public ByteBuddyScreen(ByteBuddyMenu buddyMenu, Inventory inventory, Component title) {
-        super(buddyMenu, inventory, title);
-        this.imageWidth = 202;
+    private int selected = 0;
+    private Button previousButton, nextButton;
+
+    public DockingStationScreen(DockingStationMenu dockingStationMenu, Inventory inventory, Component title) {
+        super(dockingStationMenu, inventory, title);
+        this.imageWidth = 240;
         this.imageHeight = 227;
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        int x = (width - this.imageWidth) / 2;
+        int y = (height - this.imageHeight) / 2;
+
+        int bx = x + buddyPreviewX;
+        int by = y + buddyPreviewY;
+
+        previousButton = addRenderableWidget(
+                Button.builder(Component.literal("<"), button -> cycleBuddy(-1))
+                        .bounds(bx - 20, by + buddyPreviewHeight / 2 - 6, 12, 12)
+                        .build()
+        );
+
+        nextButton = addRenderableWidget(
+                Button.builder(Component.literal(">"), button -> cycleBuddy(+1))
+                        .bounds(bx + buddyPreviewWidth + 68, by + buddyPreviewHeight / 2 - 6, 12, 12)
+                        .build()
+        );
+        updateNavState();
     }
 
     @Override
@@ -134,24 +161,34 @@ public class ByteBuddyScreen extends AbstractContainerScreen<ByteBuddyMenu> {
     private void drawBuddyPreview(GuiGraphics guiGraphics, int previewX, int previewY, int mouseX, int mouseY) {
         guiGraphics.blit(GUI_TEXTURE, previewX, previewY, buddyPreviewU, buddyPreviewV, buddyPreviewWidth, buddyPreviewHeight, 256, 256);
 
-        LivingEntity entity = getPreviewEntity();
+        LivingEntity entity = this.menu.getBuddyByIndexClient(selected);
         if (entity == null) return;
 
         int x2 = previewX + buddyPreviewWidth;
         int y2 = previewY + buddyPreviewHeight;
 
         final float entityHeight = Math.max(0.6f, entity.getBbHeight());
-        final float targetScale = (ByteBuddyScreen.buddyPreviewHeight * 0.65f);
+        final float targetScale = (DockingStationScreen.buddyPreviewHeight * 0.65f);
         int scale = Math.max(8, Mth.floor(targetScale / entityHeight));
         InventoryScreen.renderEntityInInventoryFollowsMouse(
                 guiGraphics, previewX, previewY, x2, y2, scale, 0.1f, mouseX, mouseY, entity
         );
     }
 
-    private LivingEntity getPreviewEntity() {
-        try {
-            return this.menu.getByteBuddy();
-        } catch (Throwable ignored) {}
-        return null;
+    private void cycleBuddy(int delta) {
+        int count = this.menu.getBuddyCount();
+        if (count <= 0) return;
+        selected = (selected + delta) % count;
+        if (selected < 0) selected += count;
+        updateNavState();
+    }
+
+    private void updateNavState() {
+        int count = this.menu.getBuddyCount();
+        boolean enable = count > 1;
+        if (previousButton != null) previousButton.active = enable;
+        if (nextButton != null) nextButton.active = enable;
+        if (count == 0) selected = 0;
+        else if (selected >= count) selected = count - 1;
     }
 }

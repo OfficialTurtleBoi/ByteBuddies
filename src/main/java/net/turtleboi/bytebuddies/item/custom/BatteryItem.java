@@ -12,7 +12,9 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.turtleboi.bytebuddies.ByteBuddies;
+import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 
 import java.util.List;
@@ -118,7 +120,7 @@ public class BatteryItem extends Item {
         return InteractionResultHolder.success(itemInHand);
     }
 
-    public static void drainBatteries(ByteBuddyEntity byteBuddy) {
+    public static void buddyDrainBatteries(ByteBuddyEntity byteBuddy) {
         int missingEnergy = byteBuddy.getEnergyStorage().getMaxEnergyStored() - byteBuddy.getEnergyStorage().getEnergyStored();
         if (missingEnergy >= 0) {
             for (int i = 0; i < byteBuddy.getAugmentInv().getSlots(); i++) {
@@ -141,6 +143,28 @@ public class BatteryItem extends Item {
             }
         }
     }
+
+    public static void dockBlockDrainBatteries(BlockEntity blockEntity) {
+        if (blockEntity instanceof DockingStationBlockEntity dockBlock) {
+            int missingEnergy = dockBlock.getEnergyStorage().getMaxEnergyStored() - dockBlock.getEnergyStorage().getEnergyStored();
+            if (missingEnergy >= 0) {
+                ItemStack stackInSlot = dockBlock.getBatterySlot().getStackInSlot(0);
+                if (!stackInSlot.isEmpty() && stackInSlot.getItem() instanceof BatteryItem batteryItem) {
+                    int neededEnergy = Math.min(missingEnergy, batteryItem.getIoRate());
+                    int pulledEnergy = batteryItem.extract(stackInSlot, neededEnergy, false);
+                    if (pulledEnergy > 0) {
+                        int receivedEnergy = dockBlock.getEnergyStorage().receiveEnergy(pulledEnergy, false);
+                        if (receivedEnergy < pulledEnergy)
+                            batteryItem.setEnergy(stackInSlot, batteryItem.getEnergy(stackInSlot) + (pulledEnergy - receivedEnergy));
+                        //ByteBuddies.LOGGER.debug("[DockingStation] dock drained battery: +{}FE (slot {}), dock={}/{}",
+                        //        receivedEnergy, i, blockEntity.getEnergyStorage().getEnergyStored(), blockEntity.getEnergyStorage().getMaxEnergyStored());
+                    }
+                }
+            }
+        }
+    }
+
+
 
     @Override
     public void appendHoverText(ItemStack batteryStack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {

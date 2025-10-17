@@ -36,9 +36,9 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
 import net.turtleboi.bytebuddies.entity.ai.*;
 import net.turtleboi.bytebuddies.item.custom.BatteryItem;
-import net.turtleboi.bytebuddies.item.custom.FloppyDiskItem;
 import net.turtleboi.bytebuddies.item.custom.FloppyDiskItem.*;
-import net.turtleboi.bytebuddies.screen.custom.ByteBuddyMenu;
+import net.turtleboi.bytebuddies.screen.custom.menu.ByteBuddyMenu;
+import net.turtleboi.bytebuddies.util.InventoryUtil;
 import net.turtleboi.bytebuddies.util.ModTags;
 import net.turtleboi.bytebuddies.util.ToolUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +59,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
             return switch (slot) {
                 case 0 -> isAnyTool(itemStack);
                 case 1,2-> itemStack.is(ModTags.Items.AUGMENT);
-                case 3 -> isBattery(itemStack);
+                case 3 -> InventoryUtil.isBattery(itemStack);
                 default -> false;
             };
         }
@@ -77,7 +77,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     private final ItemStackHandler upgradeInv = new ItemStackHandler(4) {
         @Override
         public boolean isItemValid(int slot, ItemStack itemStack) {
-            return isFloppyDisk(itemStack);
+            return InventoryUtil.isFloppyDisk(itemStack);
         }
 
         @Override
@@ -404,7 +404,10 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
 
             if (tickCount % 10 == 0) {
                 consumeEnergy(1);
-                BatteryItem.drainBatteries(this);
+            }
+
+            if (tickCount % 20 == 0) {
+                BatteryItem.buddyDrainBatteries(this);
                 if (supportAuraEnabled()) {
                     SupportAuras.tickSupportLattice(this);
                 }
@@ -873,16 +876,6 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         return false;
     }
 
-    public static boolean isBattery(ItemStack itemStack) {
-        Item item = itemStack.getItem();
-        return item instanceof BatteryItem;
-    }
-
-    public static boolean isFloppyDisk(ItemStack itemStack) {
-        Item item = itemStack.getItem();
-        return item instanceof FloppyDiskItem;
-    }
-
     @Override
     public int receiveEnergy(int toReceive, boolean simulate) {
         return this.energyStorage.receiveEnergy(toReceive, simulate);
@@ -919,11 +912,9 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         }
     }
 
-
     public int getSyncedEnergy() {
         return this.entityData.get(DATA_ENERGY);
     }
-
 
     private void onEnergyChanged() {
         if (!level().isClientSide) {

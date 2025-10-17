@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
@@ -24,8 +25,10 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.turtleboi.bytebuddies.block.ModBlockEntities;
 import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
 import net.turtleboi.bytebuddies.item.ModItems;
-import net.turtleboi.bytebuddies.item.custom.WrenchItem;
+import net.turtleboi.bytebuddies.screen.custom.menu.DockingStationMenu;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class DockingStationBlock extends BaseEntityBlock {
     public static final MapCodec<DockingStationBlock> CODEC = simpleCodec(DockingStationBlock::new);
@@ -84,7 +87,18 @@ public class DockingStationBlock extends BaseEntityBlock {
         if (!level.isClientSide()){
             BlockEntity blockEntity = level.getBlockEntity(blockPos);
             if (blockEntity instanceof DockingStationBlockEntity dockingStation) {
-                ((ServerPlayer) player).openMenu(new SimpleMenuProvider(dockingStation, Component.literal("Docking Station")), blockPos);
+                if (player instanceof ServerPlayer serverPlayer) {
+                    List<Integer> ids = dockingStation.findByteBuddyEntityIds((ServerLevel) level);
+                    serverPlayer.openMenu(new SimpleMenuProvider((containerId, inventory, interactingPlayer) ->
+                                    new DockingStationMenu(containerId, inventory, dockingStation),
+                                    Component.literal("Docking Station")),
+                            buf -> {
+                                buf.writeBlockPos(blockPos);
+                                buf.writeVarInt(ids.size());
+                                for (int id : ids) buf.writeVarInt(id);
+                            });
+                    return ItemInteractionResult.sidedSuccess(level.isClientSide);
+                }
             } else {
                 throw new IllegalStateException("Our container provider is missing");
             }
