@@ -20,6 +20,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.turtleboi.bytebuddies.block.ModBlockEntities;
@@ -105,6 +106,17 @@ public class DockingStationBlock extends BaseEntityBlock {
         }
 
         return ItemInteractionResult.sidedSuccess(level.isClientSide());
+    }
+
+    public static Direction getHorizontalFacing(BlockState blockState) {
+        if (blockState.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+            return blockState.getValue(BlockStateProperties.HORIZONTAL_FACING);
+        }
+        if (blockState.hasProperty(BlockStateProperties.FACING)) {
+            Direction direction = blockState.getValue(BlockStateProperties.FACING);
+            return direction.getAxis().isHorizontal() ? direction : Direction.NORTH;
+        }
+        return Direction.NORTH;
     }
 
     @Override

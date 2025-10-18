@@ -1,19 +1,23 @@
 package net.turtleboi.bytebuddies.screen.custom.menu;
 
+import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.screen.ModMenuTypes;
@@ -39,7 +43,6 @@ public class DockingStationMenu extends AbstractContainerMenu {
         addPlayerHotbar(playerInv);
 
         addStationInventory();
-        addBatterySlot();
 
         this.addDataSlot(new DataSlot() {
             @Override public int get() {
@@ -92,11 +95,6 @@ public class DockingStationMenu extends AbstractContainerMenu {
         return null;
     }
 
-    public Component getBuddyNameByIndexClient(int index) {
-        ByteBuddyEntity b = getBuddyByIndexClient(index);
-        return (b != null) ? b.getDisplayName() : Component.literal("Loading…");
-    }
-
     // CREDIT GOES TO: diesieben07 | https://github.com/diesieben07/SevenCommons
     // must assign a slot number to each of the slots used by the GUI.
     // For this container, we can see both the tile inventory's slots as well as the player inventory slots and the hotbar.
@@ -113,7 +111,7 @@ public class DockingStationMenu extends AbstractContainerMenu {
     private static final int TE_INVENTORY_FIRST_SLOT_INDEX = VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT;
 
     // THIS YOU HAVE TO DEFINE!
-    private static final int TE_INVENTORY_SLOT_COUNT = 28;  // must be the number of slots you have!
+    private static final int TE_INVENTORY_SLOT_COUNT = 29;  // must be the number of slots you have!
     @Override
     public @NotNull ItemStack quickMoveStack(@NotNull Player playerIn, int pIndex) {
         Slot sourceSlot = slots.get(pIndex);
@@ -153,20 +151,6 @@ public class DockingStationMenu extends AbstractContainerMenu {
                 dockBlock.getBlockPos().getX() + 0.5, dockBlock.getBlockPos().getY() + 0.5, dockBlock.getBlockPos().getZ() + 0.5) <= 64.0;
     }
 
-    public List<ByteBuddyEntity> getVisibleBuddiesClient(Player player) {
-        if (player.level().isClientSide) {
-            List<ByteBuddyEntity> buddyList = new ArrayList<>();
-            for (int id : buddyEntityIds) {
-                Entity buddyEntity = player.level().getEntity(id);
-                if (buddyEntity instanceof ByteBuddyEntity byteBuddy) {
-                    buddyList.add(byteBuddy);
-                }
-            }
-            return buddyList;
-        }
-        return List.of();
-    }
-
     private static final int SLOT_SIZE = 18;
     private void addPlayerInventory(Inventory playerInventory) {
         int startX = 40;
@@ -200,7 +184,32 @@ public class DockingStationMenu extends AbstractContainerMenu {
         if (dockBlock == null) return;
         int startX = 40;
         int startY = 63;
-        int slot = 0;
+        int slot = 2;
+
+        this.addSlot(new SlotItemHandler(dockBlock.getMainInv(), DockingStationBlockEntity.batterySlot, 6, 109) {
+            @Override public boolean mayPlace(@NotNull ItemStack itemStack) {
+                return dockBlock.getMainInv().isItemValid(DockingStationBlockEntity.batterySlot, itemStack);
+            }
+
+            @Override
+            public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+                return Pair.of(InventoryMenu.BLOCK_ATLAS,
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/empty_slot_battery"));
+            }
+        });
+
+        this.addSlot(new SlotItemHandler(dockBlock.getMainInv(), DockingStationBlockEntity.clipboardSlot, 218, 53) {
+            @Override public boolean mayPlace(@NotNull ItemStack itemStack) {
+                return dockBlock.getMainInv().isItemValid(DockingStationBlockEntity.clipboardSlot, itemStack);
+            }
+
+            @Override
+            public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+                return Pair.of(InventoryMenu.BLOCK_ATLAS,
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/empty_slot_clipboard"));
+            }
+        });
+
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 this.addSlot(new SlotItemHandler(
@@ -211,16 +220,6 @@ public class DockingStationMenu extends AbstractContainerMenu {
                 ));
             }
         }
-    }
-
-    private void addBatterySlot() {
-        if (dockBlock == null) return;
-        this.addSlot(new SlotItemHandler(
-                dockBlock.getBatterySlot(),
-                0,
-                6,
-                109
-        ));
     }
 
     public int getEnergyStored() {

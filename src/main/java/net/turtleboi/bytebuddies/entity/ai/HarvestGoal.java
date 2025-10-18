@@ -161,9 +161,9 @@ public class HarvestGoal extends Goal {
 
             if (targetPos == null || approachPos == null) return;
 
-            Vec3 cropCenter = targetPos.getCenter();
+            Vec3 targetCenter = targetPos.getCenter();
             if (currentPhase == GoalPhase.ACTING) {
-                byteBuddy.getLookControl().setLookAt(cropCenter.x, targetPos.getBottomCenter().y, cropCenter.z, 15.0f, 15.0f);
+                byteBuddy.getLookControl().setLookAt(targetCenter.x, targetPos.getBottomCenter().y, targetCenter.z, 15.0f, 15.0f);
                 return;
             }
 
@@ -174,94 +174,21 @@ public class HarvestGoal extends Goal {
                     () -> nextClaimRenewHarvest,
                     ticks -> nextClaimRenewHarvest = ticks);
 
-            BlockState cropBlockState = byteBuddy.level().getBlockState(targetPos);
+            BlockState targetState = byteBuddy.level().getBlockState(targetPos);
             if (currentPhase != GoalPhase.ACTING) {
-                if (!(cropBlockState.getBlock() instanceof CropBlock crop) || !crop.isMaxAge(cropBlockState)) {
+                if (!(targetState.getBlock() instanceof CropBlock crop) || !crop.isMaxAge(targetState)) {
                     clearTarget();
                     enterPhase(GoalPhase.IDLE, "target invalid, rescan");
                     return;
                 }
             }
 
-            if (currentPhase == GoalPhase.MOVING) {
-                if (edgeAnchored || (targetAnchor != null && Math.sqrt(GoalUtil.hDistSq(byteBuddy.position(), targetAnchor)) <= finalApproachDist)) {
-                    if (byteBuddy.getNavigation() instanceof GroundPathNavigation pathNavigation) {
-                        Path path = pathNavigation.getPath();
-                        if (path != null && (serverLevel.getGameTime() % 5L) == 0L) {
-                            byteBuddy.renewPathAhead(serverLevel, path, 5);
-                        }
-                    }
-                    markProgress();
-                } else {
-                    Vec3 progressToTarget = (targetAnchor != null) ? targetAnchor : approachPos.getCenter();
-                    double distSq = GoalUtil.hDistSq(byteBuddy.position(), progressToTarget);
-                    if (distSq + 1.0e-3 < lastMoveDistSq) {
-                        lastMoveDistSq = distSq;
-                        markProgress();
-                    }
-                    if (byteBuddy.getNavigation() instanceof GroundPathNavigation pathNavigation) {
-                        Path path = pathNavigation.getPath();
-                        if (path != null && (serverLevel.getGameTime() % 5L) == 0L) {
-                            byteBuddy.renewPathAhead(serverLevel, path, 5);
-                        }
-                    }
-                    if (stalledFor(movingTimeout / 10)) {
-                        GoalUtil.releaseCurrentPathIfAny(byteBuddy);
-                        if (repath()) {
-                            GoalUtil.reserveCurrentPathIfAny(serverLevel, byteBuddy, 5);
-                            BotDebug.log(byteBuddy, "MOVING: repath");
-                            markProgress();
-                        } else if (rotateAnchor()) {
-                            GoalUtil.reserveCurrentPathIfAny(serverLevel, byteBuddy, 5);
-                            BotDebug.log(byteBuddy, "MOVING: rotate targetPos side");
-                            markProgress();
-                        } else {
-                            GoalUtil.releaseCurrentPathIfAny(byteBuddy);
-                            clearTarget();
-                            enterPhase(GoalPhase.IDLE, "MOVING stalled, rescan");
-                            return;
-                        }
-                    }
-                    if (timedOut(movingTimeout)) {
-                        GoalUtil.releaseCurrentPathIfAny(byteBuddy);
-                        clearTarget();
-                        enterPhase(GoalPhase.IDLE, "MOVING timeout, rescan");
-                        return;
-                    }
-                }
-            } else if (currentPhase == GoalPhase.ACTING) {
-                if (animationEnd > 0) {
-                    markProgress();
-                } else if (timedOut(actingTimeout)) {
-                    BotDebug.log(byteBuddy, "ACTING timeout; abort");
-                    clearTarget();
-                    enterPhase(GoalPhase.IDLE, "abort act");
-                    return;
-                }
-            } else if (currentPhase == GoalPhase.SEEKING) {
-                if (timedOut(seekingTimout)) {
-                    if (targetReselectRetries++ < 2) {
-                        var targetLock = findHarvestPlan();
-                        if (targetLock.isPresent()) {
-                            targetPos = targetLock.get().crop();
-                            approachPos = targetLock.get().targetPos();
-                            targetAnchor = GoalUtil.getEdgeAnchor(targetPos, approachPos);
-                            resetProgress();
-                            enterPhase(GoalPhase.MOVING, "retry seek -> moving");
-                        } else {
-                            enterPhase(GoalPhase.IDLE, "seek timeout, no target");
-                        }
-                    } else {
-                        enterPhase(GoalPhase.IDLE, "seek timeout (exhausted)");
-                    }
-                    return;
-                }
-            }
+            navigatePhases(serverLevel);
 
             if (targetAnchor != null) {
-                double horizontalDist = Math.sqrt(GoalUtil.hDistSq(byteBuddy.position(), targetAnchor));
+                double distToTarget = byteBuddy.position().distanceTo(targetAnchor);
 
-                if (horizontalDist > finalApproachDist) {
+                if (distToTarget > finalApproachDist) {
                     if (byteBuddy.getNavigation() instanceof GroundPathNavigation pathNavigation) {
                         Path currentPath = pathNavigation.getPath();
                         boolean needsNewPath = currentPath == null || currentPath.isDone() || approachPos == null || !currentPath.getTarget().equals(approachPos);
@@ -283,7 +210,7 @@ public class HarvestGoal extends Goal {
 
                 if (!edgeAnchored) {
                     GoalUtil.releaseCurrentPathIfAny(byteBuddy);
-                    if (horizontalDist <= microDistMin) {
+                    if (distToTarget <= microDistMin) {
                         GoalUtil.lockToAnchor(byteBuddy, targetAnchor);
                         edgeAnchored = true;
                         markProgress();
@@ -291,12 +218,12 @@ public class HarvestGoal extends Goal {
                     } else {
                         byteBuddy.getNavigation().stop();
                         byteBuddy.getMoveControl().setWantedPosition(targetAnchor.x, targetAnchor.y, targetAnchor.z, byteBuddy.actionSpeedMultiplier());
-                        if (horizontalDist + 1.0e-3 < lastAnchorDistSq) {
-                            lastAnchorDistSq = horizontalDist;
+                        if (distToTarget + 1.0e-3 < lastAnchorDistSq) {
+                            lastAnchorDistSq = distToTarget;
                             markProgress();
                         }
                         BotDebug.log(byteBuddy, String.format("final-targetPos dH=%.3f to edge %s",
-                                horizontalDist, approachPos.toShortString()));
+                                distToTarget, approachPos.toShortString()));
                     }
                 } else {
                     double distSq = Math.sqrt(GoalUtil.hDistSq(byteBuddy.position(), targetAnchor));
@@ -306,37 +233,32 @@ public class HarvestGoal extends Goal {
                 if (approachPos != null && byteBuddy.getNavigation() instanceof GroundPathNavigation pathNavigation) {
                     GoalUtil.releaseCurrentPathIfAny(byteBuddy);
                     Path path = pathNavigation.createPath(approachPos, 0);
-                    if (path != null) {
-                        pathNavigation.moveTo(path, byteBuddy.actionSpeedMultiplier());
-                        GoalUtil.reserveCurrentPathIfAny(serverLevel, byteBuddy, 5);
-                    } else {
-                        Vec3 approachCenter = approachPos.getCenter();
-                        byteBuddy.getNavigation().moveTo(approachCenter.x, approachPos.getY(), approachCenter.z, byteBuddy.actionSpeedMultiplier());
-                    }
+                    pathNavigation.moveTo(path, byteBuddy.actionSpeedMultiplier());
+                    GoalUtil.reserveCurrentPathIfAny(serverLevel, byteBuddy, 5);
                     return;
                 }
             }
 
             Vec3 buddyPos = byteBuddy.position();
-            boolean withinReachHarvest = GoalUtil.hDistSq(buddyPos, cropCenter) <= (reachDistanceMin * reachDistanceMin)
-                    && Math.abs(buddyPos.y - cropCenter.y) <= verticalTolerance;
+            boolean withinReach = GoalUtil.hDistSq(buddyPos, targetCenter) <= (reachDistanceMin * reachDistanceMin)
+                    && Math.abs(buddyPos.y - targetCenter.y) <= verticalTolerance;
 
-            if (withinReachHarvest) {
+            if (withinReach) {
                 if (animationEnd > 0 || currentPhase == GoalPhase.ACTING) {
-                    byteBuddy.getLookControl().setLookAt(cropCenter.x, targetPos.getBottomCenter().y, cropCenter.z, 15.0f, 15.0f);
+                    byteBuddy.getLookControl().setLookAt(targetCenter.x, targetPos.getBottomCenter().y, targetCenter.z, 15.0f, 15.0f);
                 } else {
                     if (!GoalUtil.actionReady(serverLevel, nextActionTick)) return;
                     if (!verifyClaimOrAbort(serverLevel, ByteBuddyEntity.TaskType.HARVEST, claimedHarvestPos, targetPos))
                         return;
 
                     firePos = targetPos;
-                    firePreState = cropBlockState;
+                    firePreState = targetState;
 
                     startTimedAnimation(
                             GoalUtil.toTicks(2.6),
                             GoalUtil.toTicks(1.8),
                             targetPos,
-                            cropBlockState
+                            targetState
                     );
 
                     BotDebug.log(byteBuddy, "HARVEST schedule: now=" + serverLevel.getGameTime() +
@@ -352,6 +274,117 @@ public class HarvestGoal extends Goal {
                         targetAnchor.x, targetAnchor.y, targetAnchor.z,
                         byteBuddy.actionSpeedMultiplier());
             }
+        }
+    }
+
+    private void navigatePhases(ServerLevel serverLevel) {
+        switch (currentPhase) {
+            case MOVING -> handleMoving(serverLevel);
+            case ACTING -> handleActing();
+            case SEEKING -> handleSeeking();
+            default -> {}
+        }
+    }
+
+    private void handleMoving(ServerLevel serverLevel) {
+        if (isWithinFinalApproach()) {
+            renewPathAheadIfNeeded(serverLevel, 5);
+            markProgress();
+            return;
+        }
+
+        updateApproachProgress();
+        renewPathAheadIfNeeded(serverLevel, 5);
+
+        if (stalledFor(movingTimeout / 10)) {
+            if (tryRecoverFromStall(serverLevel)) {
+                markProgress();
+            } else {
+                GoalUtil.releaseCurrentPathIfAny(byteBuddy);
+                clearTarget();
+                enterPhase(GoalPhase.IDLE, "MOVING stalled, rescan");
+            }
+            return;
+        }
+
+        if (timedOut(movingTimeout)) {
+            GoalUtil.releaseCurrentPathIfAny(byteBuddy);
+            clearTarget();
+            enterPhase(GoalPhase.IDLE, "MOVING timeout, rescan");
+        }
+    }
+
+    private boolean isWithinFinalApproach() {
+        if (edgeAnchored) return true;
+        if (targetAnchor == null) return false;
+        return Math.sqrt(GoalUtil.hDistSq(byteBuddy.position(), targetAnchor)) <= finalApproachDist;
+    }
+
+    private void updateApproachProgress() {
+        if (approachPos != null) {
+            final Vec3 progressToTarget = (targetAnchor != null) ? targetAnchor : approachPos.getCenter();
+            final double distSq = GoalUtil.hDistSq(byteBuddy.position(), progressToTarget);
+            if (distSq + 1.0e-3 < lastMoveDistSq) {
+                lastMoveDistSq = distSq;
+                markProgress();
+            }
+        }
+    }
+
+    private void renewPathAheadIfNeeded(ServerLevel serverLevel, int lookahead) {
+        if (!(byteBuddy.getNavigation() instanceof GroundPathNavigation pathNavigation)) return;
+        Path path = pathNavigation.getPath();
+        if (path == null) return;
+        if ((serverLevel.getGameTime() % 5L) != 0L) return;
+        byteBuddy.renewPathAhead(serverLevel, path, lookahead);
+    }
+
+    private boolean tryRecoverFromStall(ServerLevel serverLevel) {
+        GoalUtil.releaseCurrentPathIfAny(byteBuddy);
+
+        if (repath()) {
+            GoalUtil.reserveCurrentPathIfAny(serverLevel, byteBuddy, 5);
+            BotDebug.log(byteBuddy, "MOVING: repath");
+            return true;
+        }
+
+        if (rotateAnchor()) {
+            GoalUtil.reserveCurrentPathIfAny(serverLevel, byteBuddy, 5);
+            BotDebug.log(byteBuddy, "MOVING: rotate targetPos side");
+            return true;
+        }
+
+        return false;
+    }
+
+    private void handleActing() {
+        if (animationEnd > 0) {
+            markProgress();
+            return;
+        }
+        if (timedOut(actingTimeout)) {
+            BotDebug.log(byteBuddy, "ACTING timeout; abort");
+            clearTarget();
+            enterPhase(GoalPhase.IDLE, "abort act");
+        }
+    }
+
+    private void handleSeeking() {
+        if (!timedOut(seekingTimout)) return;
+
+        if (targetReselectRetries++ < 2) {
+            var plan = findHarvestPlan();
+            if (plan.isPresent()) {
+                targetPos = plan.get().crop();
+                approachPos = plan.get().targetPos();
+                targetAnchor = GoalUtil.getEdgeAnchor(targetPos, approachPos);
+                resetProgress();
+                enterPhase(GoalPhase.MOVING, "retry seek -> moving");
+            } else {
+                enterPhase(GoalPhase.IDLE, "seek timeout, no target");
+            }
+        } else {
+            enterPhase(GoalPhase.IDLE, "seek timeout (exhausted)");
         }
     }
 

@@ -1,6 +1,7 @@
 package net.turtleboi.bytebuddies.screen.custom;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -12,6 +13,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.turtleboi.bytebuddies.ByteBuddies;
+import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.screen.custom.menu.DockingStationMenu;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +42,11 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
     private static final int buddyPreviewHeight = 38;
     private static final int buddyPreviewU = buddyPreviewX;
     private static final int buddyPreviewV = buddyPreviewY;
+
+    private static final int infoX = 114;
+    private static final int infoY = 7;
+    private static final int infoW = 54;
+    private static final int infoH = 22;
 
     private boolean debugEnergyOverride = false;
     private double debugFillPct = 0.50;
@@ -74,6 +81,8 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
                         .build()
         );
         updateNavState();
+
+
     }
 
     @Override
@@ -100,6 +109,7 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
         int y = (height - this.imageHeight) / 2;
         drawEnergyBar(guiGraphics, x + energyX, y + energyY);
         drawBuddyPreview(guiGraphics, x + buddyPreviewX, y + buddyPreviewY, mouseX, mouseY);
+        drawBuddyInfo(guiGraphics, x + infoX, y + infoY);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
         drawEnergyToolTip(guiGraphics, mouseX, mouseY);
     }
@@ -173,6 +183,45 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
         InventoryScreen.renderEntityInInventoryFollowsMouse(
                 guiGraphics, previewX, previewY, x2, y2, scale, 0.1f, mouseX, mouseY, entity
         );
+    }
+
+    private void drawBuddyInfo(GuiGraphics guiGraphics, int boxX, int boxY) {
+        var entity = this.menu.getBuddyByIndexClient(selected);
+        if (entity == null) return;
+
+        String name = entity.getName().getString();
+        String role = (entity instanceof ByteBuddyEntity byteBuddy) ? byteBuddy.getBuddyRole().name() : "Unknown";
+        var pos = entity.blockPosition();
+        String coords = "(" + pos.getX() + "," + pos.getY() + "," + pos.getZ() + ")";
+
+        String[] lines = { name, "Role: " + role, coords };
+
+        int lineHeight = this.font.lineHeight;
+        int rawHeight = lines.length * lineHeight;
+        int maxWidth = 0;
+        for (String string : lines) maxWidth = Math.max(maxWidth, this.font.width(string));
+        if (maxWidth == 0 || rawHeight == 0) return;
+
+        float scaleX = (float) infoW / (float) maxWidth;
+        float scaleY = (float) infoH / (float) rawHeight;
+        float scale = Math.min(scaleX, scaleY);
+
+        var pose = guiGraphics.pose();
+        pose.pushPose();
+        pose.translate(boxX, boxY, 0);
+        pose.scale(scale, scale, 1f);
+
+        int drawAreaWScaled = Mth.floor(infoW / scale);
+        int drawAreaHScaled = Mth.floor(infoH / scale);
+        int y = Math.max(0, (drawAreaHScaled - rawHeight) / 2);
+
+        for (String string : lines) {
+            int fontWidth = this.font.width(string);
+            int x = (drawAreaWScaled - fontWidth) / 2;
+            guiGraphics.drawString(this.font, string, x, y, 0xFFFFFF, false);
+            y += lineHeight;
+        }
+        pose.popPose();
     }
 
     private void cycleBuddy(int delta) {

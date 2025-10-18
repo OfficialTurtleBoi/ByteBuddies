@@ -7,6 +7,7 @@ import net.neoforged.neoforge.common.data.BlockTagsProvider;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.block.ModBlocks;
+import net.turtleboi.bytebuddies.util.ModTags;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;
@@ -40,5 +41,9 @@ public class ModBlockTagProvider extends BlockTagsProvider {
                 .add(ModBlocks.ALUMINUM_BLOCK.get())
                 .add(ModBlocks.BLUESTONE_ORE.get())
                 .add(ModBlocks.DEEPSLATE_BLUESTONE_ORE.get());
+
+        tag(ModTags.Blocks.GENERATORS)
+                .add(ModBlocks.GENERATOR.get())
+                .add(ModBlocks.SOLAR_PANEL.get());
     }
 }

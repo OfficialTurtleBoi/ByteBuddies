@@ -10,6 +10,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.entity.ModEntities;
 import net.turtleboi.bytebuddies.item.custom.BatteryItem;
+import net.turtleboi.bytebuddies.item.custom.ClipboardItem;
 import net.turtleboi.bytebuddies.item.custom.FloppyDiskItem;
 import net.turtleboi.bytebuddies.item.custom.WrenchItem;
 
@@ -115,6 +116,9 @@ public class ModItems {
     public static final DeferredItem<Item> WRENCH = ITEMS.register("wrench",
             () -> new WrenchItem(new Item.Properties()));
 
+    public static final DeferredItem<Item> CLIPBOARD = ITEMS.register("clipboard",
+            () -> new ClipboardItem(new Item.Properties()));
+
     public static final DeferredItem<Item> AQUATIC_MOTOR = ITEMS.register("aquatic_motor",
             () -> new Item(new Item.Properties()));
 
@@ -131,6 +135,18 @@ public class ModItems {
             () -> new Item(new Item.Properties()));
 
     public static final DeferredItem<Item> DYANAMO_COIL = ITEMS.register("dynamo_coil",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> MAGNETIC_CRESCENT = ITEMS.register("magnetic_crescent",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> BASIC_STORAGE_CELL = ITEMS.register("basic_storage_cell",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> ADVANCED_STORAGE_CELL = ITEMS.register("advanced_storage_cell",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> ENDERLINK_STORAGE_CELL = ITEMS.register("enderlink_storage_cell",
             () -> new Item(new Item.Properties()));
 
     public static final DeferredItem<Item> REINFORCED_IRON_PLATING = ITEMS.register("reinforced_iron_plating",

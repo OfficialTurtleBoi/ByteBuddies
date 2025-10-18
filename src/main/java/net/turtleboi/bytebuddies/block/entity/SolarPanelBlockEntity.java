@@ -1,6 +1,7 @@
 package net.turtleboi.bytebuddies.block.entity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -21,6 +22,7 @@ import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -28,6 +30,7 @@ import net.turtleboi.bytebuddies.block.ModBlockEntities;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.item.custom.BatteryItem;
 import net.turtleboi.bytebuddies.util.InventoryUtil;
+import net.turtleboi.bytebuddies.util.ModTags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,6 +91,7 @@ public class SolarPanelBlockEntity extends BlockEntity implements IEnergyStorage
             tickCount++;
             if (tickCount % 20 == 0) {
                 giveBatteryEnergy();
+                pushEnergyToNeighbors();
             }
         }
     }
@@ -202,5 +206,28 @@ public class SolarPanelBlockEntity extends BlockEntity implements IEnergyStorage
         }
 
         return energyMoved;
+    }
+
+    private void pushEnergyToNeighbors() {
+        if (level == null || level.isClientSide) return;
+        if (energyStorage.getEnergyStored() <= 0) return;
+
+        for (Direction direction : Direction.values()) {
+            BlockPos neighborPos = worldPosition.relative(direction);
+            if (level.getBlockState(neighborPos).is(ModTags.Blocks.GENERATORS)) continue;
+            IEnergyStorage neighbor = level.getCapability(Capabilities.EnergyStorage.BLOCK, neighborPos, direction.getOpposite());
+            if (neighbor == null || !neighbor.canReceive()) continue;
+
+            int canExtract = this.energyStorage.extractEnergy(640, true);
+            if (canExtract <= 0) continue;
+
+            int accepted = neighbor.receiveEnergy(canExtract, false);
+            if (accepted <= 0) continue;
+
+            this.energyStorage.extractEnergy(accepted, false);
+            setChanged();
+
+            if (this.energyStorage.getEnergyStored() <= 0) break;
+        }
     }
 }

@@ -503,16 +503,28 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     }
 
     public Mood getMood() {
-        return Mood.values()[Mth.clamp(this.entityData.get(MOOD_ID), 0, Mood.values().length-1)];
+        int id = this.entityData.get(MOOD_ID);
+        Mood[] values = Mood.values();
+        return values[Math.max(0, Math.min(id, values.length - 1))];
     }
+
     public void setMood(Mood mood) {
         this.entityData.set(MOOD_ID, mood.ordinal());
     }
 
+    private void cycleMood(boolean backwards) {
+        Mood[] values = Mood.values();
+        int n = values.length;
+        int idx = getMood().ordinal();
+        int next = (idx + (backwards ? -1 : 1) + n) % n;
+        setMood(values[next]);
+    }
+
+
     public ResourceLocation getMoodTexture() {
         return switch (getMood()) {
             case HAPPY -> resourceLocation("textures/entity/bytebuddy/faces/happy.png");
-            case ANNOYED -> resourceLocation("textures/entity/bytebuddy/faces/angry.png");
+            case ANNOYED -> resourceLocation("textures/entity/bytebuddy/faces/annoyed.png");
             case SLEEP -> resourceLocation("textures/entity/bytebuddy/faces/sleep.png");
             case CONFUSED -> resourceLocation("textures/entity/bytebuddy/faces/confused.png");
             case CRYING -> resourceLocation("textures/entity/bytebuddy/faces/crying.png");
@@ -529,86 +541,86 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
-        nbt.putInt("role", this.buddyRole.ordinal());
+    public void addAdditionalSaveData(CompoundTag nbtData) {
+        super.addAdditionalSaveData(nbtData);
+        nbtData.putInt("role", this.buddyRole.ordinal());
         if (this.dockPos != null) {
-            nbt.put("dockPos", NbtUtils.writeBlockPos(this.dockPos));
+            nbtData.put("dockPos", NbtUtils.writeBlockPos(this.dockPos));
         }
-        nbt.putBoolean("FarmingEnabled", this.farmingEnabled);
-        nbt.putBoolean("HarvestEnabled", this.harvestEnabled);
-        nbt.putBoolean("PlantEnabled", this.plantEnabled);
-        nbt.putBoolean("TillEnabled", this.tillEnabled);
-        nbt.putBoolean("MiningEnabled", this.miningEnabled);
-        nbt.putBoolean("QuarryEnabled", this.quarryEnabled);
+        nbtData.putBoolean("FarmingEnabled", this.farmingEnabled);
+        nbtData.putBoolean("HarvestEnabled", this.harvestEnabled);
+        nbtData.putBoolean("PlantEnabled", this.plantEnabled);
+        nbtData.putBoolean("TillEnabled", this.tillEnabled);
+        nbtData.putBoolean("MiningEnabled", this.miningEnabled);
+        nbtData.putBoolean("QuarryEnabled", this.quarryEnabled);
 
         var provider = level().registryAccess();
-        nbt.put("MainInv", this.mainInv.serializeNBT(provider));
-        nbt.put("AugmentInv", this.augmentInv.serializeNBT(provider));
-        nbt.put("UpgradeInv", this.upgradeInv.serializeNBT(provider));
-        nbt.putInt("Energy", this.energyStorage.getEnergyStored());
-        nbt.putInt("DisplayRGB", this.entityData.get(DISPLAY_RGB));
+        nbtData.put("MainInv", this.mainInv.serializeNBT(provider));
+        nbtData.put("AugmentInv", this.augmentInv.serializeNBT(provider));
+        nbtData.put("UpgradeInv", this.upgradeInv.serializeNBT(provider));
+        nbtData.putInt("Energy", this.energyStorage.getEnergyStored());
+        nbtData.putInt("DisplayRGB", this.entityData.get(DISPLAY_RGB));
         int moodIdx = Mth.clamp(this.entityData.get(MOOD_ID), 0, Mood.values().length - 1);
-        nbt.putString("Mood", Mood.values()[moodIdx].name());
+        nbtData.putString("Mood", Mood.values()[moodIdx].name());
     }
 
     @Override
-    public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
+    public void readAdditionalSaveData(@NotNull CompoundTag nbtData) {
+        super.readAdditionalSaveData(nbtData);
 
-        setSleeping(nbt.getBoolean("Sleeping"));
+        setSleeping(nbtData.getBoolean("Sleeping"));
         setNoAi(isSleeping());
-        this.buddyRole = BuddyRole.values()[nbt.getInt("role")];
+        this.buddyRole = BuddyRole.values()[nbtData.getInt("role")];
         setBuddyRole(this.buddyRole);
-        this.dockPos = NbtUtils.readBlockPos(nbt, "dockPos").orElse(null);
+        this.dockPos = NbtUtils.readBlockPos(nbtData, "dockPos").orElse(null);
 
-        if (nbt.contains("FarmingEnabled")) {
-            this.farmingEnabled = nbt.getBoolean("FarmingEnabled");
+        if (nbtData.contains("FarmingEnabled")) {
+            this.farmingEnabled = nbtData.getBoolean("FarmingEnabled");
         }
-        if (nbt.contains("HarvestEnabled")) {
-            this.harvestEnabled = nbt.getBoolean("HarvestEnabled");
+        if (nbtData.contains("HarvestEnabled")) {
+            this.harvestEnabled = nbtData.getBoolean("HarvestEnabled");
         }
-        if (nbt.contains("PlantEnabled")) {
-            this.plantEnabled = nbt.getBoolean("PlantEnabled");
+        if (nbtData.contains("PlantEnabled")) {
+            this.plantEnabled = nbtData.getBoolean("PlantEnabled");
         }
-        if (nbt.contains("TillEnabled")) {
-            this.tillEnabled = nbt.getBoolean("TillEnabled");
+        if (nbtData.contains("TillEnabled")) {
+            this.tillEnabled = nbtData.getBoolean("TillEnabled");
         }
-        if (nbt.contains("MiningEnabled")) {
-            this.miningEnabled = nbt.getBoolean("MiningEnabled");
+        if (nbtData.contains("MiningEnabled")) {
+            this.miningEnabled = nbtData.getBoolean("MiningEnabled");
         }
-        if (nbt.contains("QuarryEnabled")) {
-            this.quarryEnabled = nbt.getBoolean("QuarryEnabled");
+        if (nbtData.contains("QuarryEnabled")) {
+            this.quarryEnabled = nbtData.getBoolean("QuarryEnabled");
         }
 
         var provider = level().registryAccess();
-        if (nbt.contains("MainInv")) {
-            this.mainInv.deserializeNBT(provider, nbt.getCompound("MainInv"));
+        if (nbtData.contains("MainInv")) {
+            this.mainInv.deserializeNBT(provider, nbtData.getCompound("MainInv"));
         }
-        if (nbt.contains("AugmentInv")) {
-            this.augmentInv.deserializeNBT(provider, nbt.getCompound("AugmentInv"));
+        if (nbtData.contains("AugmentInv")) {
+            this.augmentInv.deserializeNBT(provider, nbtData.getCompound("AugmentInv"));
         }
-        if (nbt.contains("UpgradeInv")) {
-            this.upgradeInv.deserializeNBT(provider, nbt.getCompound("UpgradeInv"));
+        if (nbtData.contains("UpgradeInv")) {
+            this.upgradeInv.deserializeNBT(provider, nbtData.getCompound("UpgradeInv"));
         }
-        if (nbt.contains("Energy")) {
-            setEnergyUnsafe(nbt.getInt("Energy"));
+        if (nbtData.contains("Energy")) {
+            setEnergyUnsafe(nbtData.getInt("Energy"));
         }
 
-        if (nbt.contains("DisplayRGB")) {
-            this.entityData.set(DISPLAY_RGB, nbt.getInt("DisplayRGB"));
+        if (nbtData.contains("DisplayRGB")) {
+            this.entityData.set(DISPLAY_RGB, nbtData.getInt("DisplayRGB"));
         }
 
         int moodOrdinal = 0;
-        if (nbt.contains("Mood")) {
+        if (nbtData.contains("Mood")) {
             try {
-                Mood mood = Mood.valueOf(nbt.getString("Mood"));
+                Mood mood = Mood.valueOf(nbtData.getString("Mood"));
                 moodOrdinal = mood.ordinal();
             } catch (IllegalArgumentException ignored) {
 
             }
-        } else if (nbt.contains("MoodId")) {
-            moodOrdinal = nbt.getInt("MoodId");
+        } else if (nbtData.contains("MoodId")) {
+            moodOrdinal = nbtData.getInt("MoodId");
         }
         moodOrdinal = Mth.clamp(moodOrdinal, 0, Mood.values().length - 1);
         this.entityData.set(MOOD_ID, moodOrdinal);
@@ -654,6 +666,14 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
                         Component.literal("Buddy color set to: " + dye.getName()),
                         true
                 );
+                return InteractionResult.sidedSuccess(level().isClientSide);
+            }
+            else if (inHand.is(Items.STICK)) {
+                if (!level().isClientSide) {
+                    boolean backwards = player.isShiftKeyDown();
+                    cycleMood(backwards);
+                    player.displayClientMessage(Component.literal("Face: " + getMood().name()), true);
+                }
                 return InteractionResult.sidedSuccess(level().isClientSide);
             }
 

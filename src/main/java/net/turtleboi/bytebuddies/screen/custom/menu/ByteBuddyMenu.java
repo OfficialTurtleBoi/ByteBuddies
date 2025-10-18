@@ -151,14 +151,18 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
             @Override public boolean mayPlace(ItemStack itemStack) {
                 return ByteBuddyEntity.isAnyTool(itemStack);
             }
-            @Override public int getMaxStackSize() { return 1; }
+            @Override public int getMaxStackSize() {
+                return 1;
+            }
         });
 
         this.addSlot(new SlotItemHandler(buddy.getAugmentInv(), 1, startX, startY + SLOT_SIZE) {
             @Override public boolean mayPlace(ItemStack itemStack) {
                 return itemStack.is(ModTags.Items.AUGMENT);
             }
-            @Override public int getMaxStackSize() { return 1; }
+            @Override public int getMaxStackSize() {
+                return 1;
+            }
         });
 
 
@@ -166,7 +170,9 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
             @Override public boolean mayPlace(ItemStack itemStack) {
                 return itemStack.is(ModTags.Items.AUGMENT);
             }
-            @Override public int getMaxStackSize() { return 1; }
+            @Override public int getMaxStackSize() {
+                return 1;
+            }
         });
 
         this.addSlot(new SlotItemHandler(buddy.getAugmentInv(), 3, startX, startY + 3 * SLOT_SIZE) {

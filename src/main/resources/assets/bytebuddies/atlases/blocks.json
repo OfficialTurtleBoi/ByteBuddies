@@ -1,0 +1,9 @@
+{
+  "sources": [
+    { "type": "single", "resource": "bytebuddies:item/empty_slot_battery" },
+    { "type": "single", "resource": "bytebuddies:item/empty_slot_tool" },
+    { "type": "single", "resource": "bytebuddies:item/empty_slot_augment" },
+    { "type": "single", "resource": "bytebuddies:item/empty_slot_floppy_disk" },
+    { "type": "single", "resource": "bytebuddies:item/empty_slot_clipboard" }
+  ]
+}

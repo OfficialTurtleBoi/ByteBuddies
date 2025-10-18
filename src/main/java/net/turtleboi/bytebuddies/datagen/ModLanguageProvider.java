@@ -8,6 +8,7 @@ import net.neoforged.neoforge.common.data.LanguageProvider;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.block.ModBlocks;
+import net.turtleboi.bytebuddies.entity.ModEntities;
 import net.turtleboi.bytebuddies.item.ModItems;
 
 import java.util.Map;
@@ -22,6 +23,7 @@ public class ModLanguageProvider extends LanguageProvider {
     @Override
     protected void addTranslations() {
         add("creativetab.bytebuddies.bytebuddies_tab", "ByteBuddies");
+        addEntityType(ModEntities.BYTEBUDDY, "ByteBuddy");
         addSimpleNameBlock(ModBlocks.BAUXITE_ORE);
         addSimpleNameBlock(ModBlocks.DEEPSLATE_BAUXITE_ORE);
         addSimpleNameBlock(ModBlocks.ALUMINUM_BLOCK);
@@ -58,12 +60,17 @@ public class ModLanguageProvider extends LanguageProvider {
         addSimpleItemName(ModItems.CHIP);
         addSimpleItemName(ModItems.SUPER_CHIP);
         addSimpleItemName(ModItems.WRENCH);
+        addSimpleItemName(ModItems.CLIPBOARD);
         addSimpleItemName(ModItems.AQUATIC_MOTOR);
         addSimpleItemName(ModItems.SOLAR_ARRAY);
         addSimpleItemName(ModItems.GYROSCOPIC_STABILIZER);
         addSimpleItemName(ModItems.ARC_WELDER);
         addSimpleItemName(ModItems.GEOTHERMAL_REGULATOR);
         addSimpleItemName(ModItems.DYANAMO_COIL);
+        addSimpleItemName(ModItems.MAGNETIC_CRESCENT);
+        addSimpleItemName(ModItems.BASIC_STORAGE_CELL);
+        addSimpleItemName(ModItems.ADVANCED_STORAGE_CELL);
+        addSimpleItemName(ModItems.ENDERLINK_STORAGE_CELL);
         addSimpleItemName(ModItems.REINFORCED_IRON_PLATING);
         addSimpleItemName(ModItems.REINFORCED_STEEL_PLATING);
         addSimpleItemName(ModItems.REINFORCED_NETHERITE_PLATING);

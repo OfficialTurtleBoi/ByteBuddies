@@ -2,10 +2,8 @@ package net.turtleboi.bytebuddies.block.entity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -32,6 +30,7 @@ import net.turtleboi.bytebuddies.block.ModBlockEntities;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity.*;
 import net.turtleboi.bytebuddies.item.custom.BatteryItem;
+import net.turtleboi.bytebuddies.item.custom.ClipboardItem;
 import net.turtleboi.bytebuddies.util.InventoryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,32 +38,38 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class DockingStationBlockEntity extends BlockEntity implements IEnergyStorage, MenuProvider {
-    private final ItemStackHandler mainInv = new ItemStackHandler(27){
+    public final int mainInvSize = 27;
+    public static final int batterySlot = 0;
+    public static final int clipboardSlot = 1;
+    public final int totalInvSize = mainInvSize + 2;
+    private final ItemStackHandler mainInv = new ItemStackHandler(totalInvSize){
         @Override
-        protected void onContentsChanged(int slot) {
-            setChanged();
-            if(!level.isClientSide()) {
-                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
-            }
-        }
-    };
-
-    private final ItemStackHandler batterySlot = new ItemStackHandler(1){
-        @Override
-        public boolean isItemValid(int slot, ItemStack itemStack) {
+        public boolean isItemValid(int slot, @NotNull ItemStack itemStack) {
             if (itemStack.isEmpty()) return false;
-            return InventoryUtil.isBattery(itemStack);
+
+            if (slot == batterySlot) {
+                return InventoryUtil.isBattery(itemStack);
+            }
+
+            if (slot == clipboardSlot) {
+                return itemStack.getItem() instanceof ClipboardItem;
+            }
+
+            return true;
         }
 
         @Override
         protected int getStackLimit(int slot, @NotNull ItemStack itemStack) {
-            return 1;
+            if (slot == batterySlot || slot == clipboardSlot) {
+                return 1;
+            }
+            return super.getSlotLimit(slot);
         }
 
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
-            if(!level.isClientSide()) {
+            if (level != null && !level.isClientSide) {
                 level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
             }
         }
@@ -135,9 +140,26 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
         return this.mainInv;
     }
 
-    public ItemStackHandler getBatterySlot() {
-        return this.batterySlot;
+    public ItemStack getBatteryStack() {
+        return mainInv.getStackInSlot(batterySlot);
     }
+
+    public ItemStack getClipboardStack() {
+        return mainInv.getStackInSlot(clipboardSlot);
+    }
+
+    @Nullable
+    public BlockPos getFirstPos() {
+        ItemStack clipboard = getClipboardStack();
+        return ClipboardItem.getFirstPosition(clipboard).orElse(null);
+    }
+
+    @Nullable
+    public BlockPos getSecondPos() {
+        ItemStack clipboard = getClipboardStack();
+        return ClipboardItem.getSecondPosition(clipboard).orElse(null);
+    }
+
 
     public IEnergyStorage getEnergyStorage() {
         return this.energyStorage;
@@ -158,7 +180,6 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
         for (UUID id : boundBuddies) dataList.add(StringTag.valueOf(id.toString()));
         nbtData.put("BoundBots", dataList);
         nbtData.put("MainInv", this.mainInv.serializeNBT(registries));
-        nbtData.put("BatterySlot", this.batterySlot.serializeNBT(registries));
         nbtData.putInt("Energy", this.energyStorage.getEnergyStored());
     }
 
@@ -172,9 +193,6 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
         }
         if (nbtData.contains("MainInv")) {
             this.mainInv.deserializeNBT(registries, nbtData.getCompound("MainInv"));
-        }
-        if (nbtData.contains("BatterySlot")) {
-            this.batterySlot.deserializeNBT(registries, nbtData.getCompound("BatterySlot"));
         }
         setChanged();
         if (nbtData.contains("Energy")) {

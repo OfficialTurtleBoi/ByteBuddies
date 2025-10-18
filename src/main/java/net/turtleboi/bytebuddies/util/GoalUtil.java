@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.TriState;
+import net.turtleboi.bytebuddies.block.custom.DockingStationBlock;
 import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 
@@ -27,24 +28,22 @@ public class GoalUtil {
         if (targetAnchor == null) return;
         byteBuddy.getNavigation().stop();
 
-        // 1) Compute a collision-safe target box BEFORE teleporting
         var bb = byteBuddy.getBoundingBox();
         var move = targetAnchor.subtract(byteBuddy.position());
         var movedBB = bb.move(move);
 
-        // 2) If that intersects anything, nudge or bail out (don’t snap into walls)
         if (!byteBuddy.level().noCollision(movedBB)) {
-            // Try a tiny upward nudge first (common case: grazing slab/crop, etc.)
+
             var upBB = movedBB.move(0.0, 0.0625, 0.0);
             if (!byteBuddy.level().noCollision(upBB)) {
-                // If still colliding, don’t snap—let the navigator finish the last step
+
                 return;
             }
-            // Apply the upward nudge to the anchor
+
             targetAnchor = targetAnchor.add(0.0, 0.0625, 0.0);
         }
 
-        // 3) Snap, then kill velocity & fall accumulation
+
         byteBuddy.setPos(targetAnchor.x, targetAnchor.y, targetAnchor.z);
         byteBuddy.setDeltaMovement(0.0, 0.0, 0.0);
         byteBuddy.resetFallDistance();
@@ -82,6 +81,13 @@ public class GoalUtil {
                 .filter(blockEntity -> blockEntity instanceof DockingStationBlockEntity)
                 .orElse(null);
     }
+
+    public static Direction backOfDock(DockingStationBlockEntity be) {
+        BlockState state = be.getBlockState();
+        Direction front = DockingStationBlock.getHorizontalFacing(state);
+        return front.getOpposite();
+    }
+
 
     public static void renewClaimIfNeeded(
             ByteBuddyEntity byteBuddy, ServerLevel serverLevel, ByteBuddyEntity.TaskType taskType, @Nullable BlockPos claimedPos,

@@ -66,12 +66,17 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.CHIP);
                         pOutput.accept(ModItems.SUPER_CHIP);
                         pOutput.accept(ModItems.WRENCH);
+                        pOutput.accept(ModItems.CLIPBOARD);
                         pOutput.accept(ModItems.AQUATIC_MOTOR);
                         pOutput.accept(ModItems.SOLAR_ARRAY);
                         pOutput.accept(ModItems.GYROSCOPIC_STABILIZER);
                         pOutput.accept(ModItems.ARC_WELDER);
                         pOutput.accept(ModItems.GEOTHERMAL_REGULATOR);
                         pOutput.accept(ModItems.DYANAMO_COIL);
+                        pOutput.accept(ModItems.MAGNETIC_CRESCENT);
+                        pOutput.accept(ModItems.BASIC_STORAGE_CELL);
+                        pOutput.accept(ModItems.ADVANCED_STORAGE_CELL);
+                        pOutput.accept(ModItems.ENDERLINK_STORAGE_CELL);
                         pOutput.accept(ModItems.REINFORCED_IRON_PLATING);
                         pOutput.accept(ModItems.REINFORCED_STEEL_PLATING);
                         pOutput.accept(ModItems.REINFORCED_NETHERITE_PLATING);

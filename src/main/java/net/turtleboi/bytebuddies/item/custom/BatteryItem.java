@@ -148,7 +148,7 @@ public class BatteryItem extends Item {
         if (blockEntity instanceof DockingStationBlockEntity dockBlock) {
             int missingEnergy = dockBlock.getEnergyStorage().getMaxEnergyStored() - dockBlock.getEnergyStorage().getEnergyStored();
             if (missingEnergy >= 0) {
-                ItemStack stackInSlot = dockBlock.getBatterySlot().getStackInSlot(0);
+                ItemStack stackInSlot = dockBlock.getBatteryStack();
                 if (!stackInSlot.isEmpty() && stackInSlot.getItem() instanceof BatteryItem batteryItem) {
                     int neededEnergy = Math.min(missingEnergy, batteryItem.getIoRate());
                     int pulledEnergy = batteryItem.extract(stackInSlot, neededEnergy, false);

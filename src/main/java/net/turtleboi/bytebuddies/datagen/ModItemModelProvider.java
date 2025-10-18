@@ -43,12 +43,17 @@ public class ModItemModelProvider extends ItemModelProvider {
         basicItem(ModItems.CHIP.get());
         basicItem(ModItems.SUPER_CHIP.get());
         handheldItem(ModItems.WRENCH.get());
+        basicItem(ModItems.CLIPBOARD.get());
         basicItem(ModItems.AQUATIC_MOTOR.get());
         basicItem(ModItems.SOLAR_ARRAY.get());
         basicItem(ModItems.GYROSCOPIC_STABILIZER.get());
         basicItem(ModItems.ARC_WELDER.get());
         basicItem(ModItems.GEOTHERMAL_REGULATOR.get());
         basicItem(ModItems.DYANAMO_COIL.get());
+        basicItem(ModItems.MAGNETIC_CRESCENT.get());
+        basicItem(ModItems.BASIC_STORAGE_CELL.get());
+        basicItem(ModItems.ADVANCED_STORAGE_CELL.get());
+        basicItem(ModItems.ENDERLINK_STORAGE_CELL.get());
         basicItem(ModItems.REINFORCED_IRON_PLATING.get());
         basicItem(ModItems.REINFORCED_STEEL_PLATING.get());
         basicItem(ModItems.REINFORCED_NETHERITE_PLATING.get());
