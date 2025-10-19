@@ -106,6 +106,10 @@ public class TillGoal extends Goal {
             return false;
         }
 
+        if (!GoalUtil.ensureUse(byteBuddy, ToolUtil.ToolType.HOE, tillEnergyCost, 1)) {
+            return false;
+        }
+
         var tillPlan = findTillPlan();
         if (tillPlan != null) {
             if (byteBuddy.level() instanceof ServerLevel serverLevel) {
@@ -144,7 +148,9 @@ public class TillGoal extends Goal {
             return true;
         }
 
-        return targetPos != null;
+        if (targetPos == null) return false;
+
+        return GoalUtil.ensureUse(byteBuddy, ToolUtil.ToolType.HOE, tillEnergyCost, 1);
     }
 
     @Override

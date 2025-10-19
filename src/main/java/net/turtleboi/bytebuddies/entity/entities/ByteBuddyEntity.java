@@ -36,6 +36,7 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
 import net.turtleboi.bytebuddies.entity.ai.*;
+import net.turtleboi.bytebuddies.item.ModItems;
 import net.turtleboi.bytebuddies.item.custom.BatteryItem;
 import net.turtleboi.bytebuddies.item.custom.FloppyDiskItem.*;
 import net.turtleboi.bytebuddies.screen.custom.menu.ByteBuddyMenu;
@@ -52,6 +53,12 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     public enum BuddyRole {
         NONE, FARMER, MINER, COMBAT, POTION, STORAGE, ANIMAL
     }
+    public enum ChassisMaterial {
+        ALUMINUM, IRON, STEEL, NETHERITE, CHARGED_STEEL
+    }
+    public enum Mood {
+        NEUTRAL, HAPPY, ANNOYED, SLEEP, CONFUSED, CRYING, EVIL, PLEASED, SAD, SURPRISED
+    }
     private final ItemStackHandler mainInv = new ItemStackHandler(9);
     private final ItemStackHandler augmentInv = new ItemStackHandler(4) {
         @Override
@@ -59,7 +66,16 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
             if (itemStack.isEmpty()) return false;
             return switch (slot) {
                 case 0 -> isAnyTool(itemStack);
-                case 1,2-> itemStack.is(ModTags.Items.AUGMENT);
+                case 1,2-> {
+                    if (!itemStack.is(ModTags.Items.AUGMENT)) yield false;
+                    boolean isPlating = itemStack.is(ModTags.Items.PLATING);
+                    if (isPlating) {
+                        int otherAugmentSlot = (slot == 1) ? 2 : 1;
+                        ItemStack otherStack = getStackInSlot(otherAugmentSlot);
+                        if (!otherStack.isEmpty() && otherStack.is(ModTags.Items.PLATING)) yield false;
+                    }
+                    yield true;
+                }
                 case 3 -> InventoryUtil.isBattery(itemStack);
                 default -> false;
             };
@@ -73,6 +89,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         @Override
         protected void onContentsChanged(int slot) {
             ByteBuddyEntity.this.refreshEffects();
+            recomputeChassisMaterialFromAugments();
         }
     };
     private final ItemStackHandler upgradeInv = new ItemStackHandler(4) {
@@ -105,6 +122,8 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     private boolean miningEnabled = false;
     private boolean quarryEnabled = false;
 
+    private boolean haulingEnabled = false;
+
     private static final int baseCooldown = 20;
     private long cooldownUntil = 0L;
 
@@ -124,6 +143,8 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     private static final EntityDataAccessor<Integer> DATA_ENERGY =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.INT);
 
+    private static final EntityDataAccessor<Integer> CHASSIS_MATERIAL =
+            SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DISPLAY_RGB =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> MOOD_ID =
@@ -156,9 +177,10 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new PanicGoal(this, 2.0D));
-        this.goalSelector.addGoal(2, new GatedGoal(this, this::isPlantEnabled, new PlantGoal(this)));
-        this.goalSelector.addGoal(3, new GatedGoal(this, this::isHarvestEnabled, new HarvestGoal(this)));
-        this.goalSelector.addGoal(4, new GatedGoal(this, this::isTillEnabled, new TillGoal(this)));
+        this.goalSelector.addGoal(1, new DepositToDockGoal(this));
+        //this.goalSelector.addGoal(2, new GatedGoal(this, this::isPlantEnabled, new PlantGoal(this)));
+        //this.goalSelector.addGoal(3, new GatedGoal(this, this::isHarvestEnabled, new HarvestGoal(this)));
+        //this.goalSelector.addGoal(4, new GatedGoal(this, this::isTillEnabled, new TillGoal(this)));
         //this.goalSelector.addGoal(2, new GatedGoal(this, this::isQuarryEnabled, new QuarryGoal(this)));
         //this.goalSelector.addGoal(3, new GatedGoal(this, this::isHarvestEnabled, new HarvestGoal(this)));
         //this.goalSelector.addGoal(4, new GatedGoal(this, this::isTillEnabled, new TillGoal(this)));
@@ -240,6 +262,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         builder.define(DATA_WORKING, false);
         builder.define(DATA_SLAMMING, false);
         builder.define(DATA_ROLE, BuddyRole.NONE.ordinal());
+        builder.define(CHASSIS_MATERIAL, ChassisMaterial.ALUMINUM.ordinal());
         builder.define(DATA_ENERGY, 0);
         builder.define(DISPLAY_RGB, DyeColor.CYAN.getFireworkColor());
         builder.define(MOOD_ID, Mood.NEUTRAL.ordinal());
@@ -317,6 +340,23 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         return this.farmingEnabled && this.tillEnabled;
     }
 
+    public void setMiningEnabled(boolean miningEnabled) {
+        this.miningEnabled = miningEnabled;
+    }
+
+    private boolean isMiningEnabled() {
+        return this.miningEnabled;
+    }
+
+    public void setHaulingEnabled(boolean haulingEnabled) {
+        this.haulingEnabled = haulingEnabled;
+    }
+
+    public boolean isHaulingEnabled() {
+        return this.haulingEnabled;
+    }
+
+
     public boolean cooldownActive(ServerLevel serverLevel) {
         return serverLevel.getGameTime() < this.cooldownUntil;
     }
@@ -325,13 +365,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         this.cooldownUntil = serverLevel.getGameTime() + ticks;
     }
 
-    public void setMiningEnabled(boolean miningEnabled) {
-        this.miningEnabled = miningEnabled;
-    }
 
-    private boolean isMiningEnabled() {
-        return this.miningEnabled;
-    }
 
     public void setQuarryEnabled(boolean quarryEnabled) {
         this.quarryEnabled = quarryEnabled;
@@ -397,7 +431,6 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     public ItemStack getHeldTool() {
         return augmentInv.getStackInSlot(0);
     }
-
 
     @Override
     public void aiStep() {
@@ -490,8 +523,40 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         DiskHooks.trySpawnHologram(this, taskType, blockPos);
     }
 
-    public enum Mood {
-        NEUTRAL, HAPPY, ANNOYED, SLEEP, CONFUSED, CRYING, EVIL, PLEASED, SAD, SURPRISED
+    public ChassisMaterial getChassisMaterial() {
+        int ordinal = this.entityData.get(CHASSIS_MATERIAL);
+        int max = ChassisMaterial.values().length - 1;
+        if (ordinal < 0) ordinal = 0;
+        if (ordinal > max) ordinal = max;
+        return ChassisMaterial.values()[ordinal];
+    }
+
+    public void setChassisMaterial(ChassisMaterial material) {
+        this.entityData.set(CHASSIS_MATERIAL, material.ordinal());
+    }
+
+    private void recomputeChassisMaterialFromAugments() {
+        ChassisMaterial computed = computeChassisFromAugments();
+        if (computed != getChassisMaterial()) {
+            setChassisMaterial(computed);
+        }
+    }
+
+    private ChassisMaterial computeChassisFromAugments() {
+        ChassisMaterial result = ChassisMaterial.ALUMINUM;
+        for (int i = 0; i < this.augmentInv.getSlots(); i++) {
+            ItemStack stack = this.augmentInv.getStackInSlot(i);
+            if (stack.is(ModItems.REINFORCED_CHARGED_STEEL_PLATING.get())) {
+                result = ChassisMaterial.CHARGED_STEEL;
+            } else if ((stack.is(ModItems.REINFORCED_NETHERITE_PLATING.get())) && result.ordinal() < ChassisMaterial.NETHERITE.ordinal()) {
+                result = ChassisMaterial.NETHERITE;
+            } else if ((stack.is(ModItems.REINFORCED_STEEL_PLATING.get())) && result.ordinal() < ChassisMaterial.STEEL.ordinal()) {
+                result = ChassisMaterial.STEEL;
+            } else if ((stack.is(ModItems.REINFORCED_IRON_PLATING.get())) && result.ordinal() < ChassisMaterial.IRON.ordinal()) {
+                result = ChassisMaterial.IRON;
+            }
+        }
+        return result;
     }
 
     public int getDisplayColorRGB() {
@@ -519,7 +584,6 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         int next = (idx + (backwards ? -1 : 1) + n) % n;
         setMood(values[next]);
     }
-
 
     public ResourceLocation getMoodTexture() {
         return switch (getMood()) {
@@ -553,12 +617,14 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         nbtData.putBoolean("TillEnabled", this.tillEnabled);
         nbtData.putBoolean("MiningEnabled", this.miningEnabled);
         nbtData.putBoolean("QuarryEnabled", this.quarryEnabled);
+        nbtData.putBoolean("HaulingEnabled", this.haulingEnabled);
 
         var provider = level().registryAccess();
         nbtData.put("MainInv", this.mainInv.serializeNBT(provider));
         nbtData.put("AugmentInv", this.augmentInv.serializeNBT(provider));
         nbtData.put("UpgradeInv", this.upgradeInv.serializeNBT(provider));
         nbtData.putInt("Energy", this.energyStorage.getEnergyStored());
+        nbtData.putInt("ChassisMaterial", this.entityData.get(CHASSIS_MATERIAL));
         nbtData.putInt("DisplayRGB", this.entityData.get(DISPLAY_RGB));
         int moodIdx = Mth.clamp(this.entityData.get(MOOD_ID), 0, Mood.values().length - 1);
         nbtData.putString("Mood", Mood.values()[moodIdx].name());
@@ -592,6 +658,9 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         if (nbtData.contains("QuarryEnabled")) {
             this.quarryEnabled = nbtData.getBoolean("QuarryEnabled");
         }
+        if (nbtData.contains("HaulingEnabled")) {
+            this.haulingEnabled = nbtData.getBoolean("HaulingEnabled");
+        }
 
         var provider = level().registryAccess();
         if (nbtData.contains("MainInv")) {
@@ -605,6 +674,16 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         }
         if (nbtData.contains("Energy")) {
             setEnergyUnsafe(nbtData.getInt("Energy"));
+        }
+
+        if (nbtData.contains("ChassisMaterial")) {
+            int ordinal = nbtData.getInt("ChassisMaterial");
+            int max = ChassisMaterial.values().length - 1;
+            if (ordinal < 0) ordinal = 0;
+            if (ordinal > max) ordinal = max;
+            this.entityData.set(CHASSIS_MATERIAL, ordinal);
+        } else {
+            this.entityData.set(CHASSIS_MATERIAL, ChassisMaterial.ALUMINUM.ordinal());
         }
 
         if (nbtData.contains("DisplayRGB")) {
@@ -652,6 +731,12 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
                 inHand.shrink(1);
                 setMiningEnabled(true);
                 setQuarryEnabled(true);
+                player.displayClientMessage(Component.literal("Set bot role to " + buddyRole), true);
+                return InteractionResult.sidedSuccess(level().isClientSide);
+            } else if (inHand.is(Items.CHEST)) {
+                setBuddyRole(BuddyRole.STORAGE);
+                inHand.shrink(1);
+                setHaulingEnabled(true);
                 player.displayClientMessage(Component.literal("Set bot role to " + buddyRole), true);
                 return InteractionResult.sidedSuccess(level().isClientSide);
             } else if (inHand.getItem() instanceof DyeItem dyeItem) {
@@ -828,7 +913,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
                 // brewing goals later
             }
             case STORAGE -> {
-                // storage goals later
+                this.roleGoals.add(new GatedGoal(this, this::isHaulingEnabled, new HaulerGoal(this)));
             }
             case ANIMAL -> {
                 // husbandry goals later
@@ -1067,6 +1152,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         PLANT,
         TILL,
         MOVE,
+        HAUL,
         MINE,
         COMBAT,
         BREW,

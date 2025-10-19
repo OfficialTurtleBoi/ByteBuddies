@@ -90,8 +90,8 @@ public class SolarPanelBlockEntity extends BlockEntity implements IEnergyStorage
 
             tickCount++;
             if (tickCount % 20 == 0) {
-                giveBatteryEnergy();
                 pushEnergyToNeighbors();
+                giveBatteryEnergy();
             }
         }
     }

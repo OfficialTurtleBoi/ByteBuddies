@@ -1,4 +1,5 @@
-// 1.21.1	2025-10-16T16:50:03.0967776	Tags for minecraft:block mod id bytebuddies
+// 1.21.1	2025-10-18T04:41:14.1009982	Tags for minecraft:block mod id bytebuddies
+bcc1002c4bc3f9ca3a170370fb40957fa45a6811 data/bytebuddies/tags/block/generators.json
 9db84bb64de1ad3f6cdd794d93a4854b8a6396bf data/minecraft/tags/block/mineable/pickaxe.json
 4b91dc02a6ab2e72c457d362e992b39c3079ab09 data/minecraft/tags/block/needs_iron_tool.json
 39132a4cb3eea5d3711a62dce4854403118ab420 data/minecraft/tags/block/needs_stone_tool.json

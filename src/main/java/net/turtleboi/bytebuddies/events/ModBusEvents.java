@@ -12,6 +12,7 @@ import net.turtleboi.bytebuddies.block.ModBlockEntities;
 import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
 import net.turtleboi.bytebuddies.block.entity.GeneratorBlockEntity;
 import net.turtleboi.bytebuddies.block.entity.SolarPanelBlockEntity;
+import net.turtleboi.bytebuddies.entity.ModEntities;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 
 import javax.annotation.Nullable;
@@ -20,6 +21,18 @@ import javax.annotation.Nullable;
 public class ModBusEvents {
     @SubscribeEvent
     public static void register(final RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(
+                Capabilities.ItemHandler.BLOCK,
+                ModBlockEntities.DOCKING_STATION_BE.get(),
+                (DockingStationBlockEntity blockEntity, @Nullable Direction side) -> blockEntity.getMainInv()
+        );
+
+        event.registerEntity(
+                Capabilities.ItemHandler.ENTITY,
+                ModEntities.BYTEBUDDY.get(),
+                (byteBuddy, side) -> byteBuddy.getMainInv()
+        );
+
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
                 ModBlockEntities.DOCKING_STATION_BE.get(),

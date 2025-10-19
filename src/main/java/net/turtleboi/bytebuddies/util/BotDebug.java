@@ -36,7 +36,7 @@ public final class BotDebug {
         INVENTORY_FULL
     }
 
-    public static boolean ENABLED = false;
+    public static boolean ENABLED = true;
     public static boolean NAMEPLATE = false;
     public static boolean ACTIONBAR = false;
     public static boolean PARTICLES = true;

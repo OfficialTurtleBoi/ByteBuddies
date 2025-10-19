@@ -63,7 +63,7 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
             if (slot == batterySlot || slot == clipboardSlot) {
                 return 1;
             }
-            return super.getSlotLimit(slot);
+            return 64;
         }
 
         @Override

@@ -26,6 +26,7 @@ import net.turtleboi.bytebuddies.util.BotDebug;
 import net.turtleboi.bytebuddies.util.BotDebug.GoalPhase;
 import net.turtleboi.bytebuddies.util.GoalUtil;
 import net.turtleboi.bytebuddies.util.InventoryUtil;
+import net.turtleboi.bytebuddies.util.ToolUtil;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -111,6 +112,10 @@ public class PlantGoal extends Goal {
             return false;
         }
 
+        if (!GoalUtil.ensureUse(byteBuddy, ToolUtil.ToolType.EMPTY_HAND, plantEnergyCost, 1)) {
+            return false;
+        }
+
         PlantRequest plantRequest = byteBuddy.pollPlantRequest();
         PlantPlan plantPlan = null;
         if (plantRequest != null) {
@@ -163,7 +168,9 @@ public class PlantGoal extends Goal {
             return true;
         }
 
-        return targetPos != null;
+        if (targetPos == null) return false;
+
+        return GoalUtil.ensureUse(byteBuddy, ToolUtil.ToolType.EMPTY_HAND, plantEnergyCost, 1);
     }
 
     @Override

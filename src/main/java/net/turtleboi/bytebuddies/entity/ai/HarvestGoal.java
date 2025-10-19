@@ -23,6 +23,7 @@ import net.turtleboi.bytebuddies.util.BotDebug;
 import net.turtleboi.bytebuddies.util.BotDebug.GoalPhase;
 import net.turtleboi.bytebuddies.util.GoalUtil;
 import net.turtleboi.bytebuddies.util.InventoryUtil;
+import net.turtleboi.bytebuddies.util.ToolUtil;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -110,6 +111,10 @@ public class HarvestGoal extends Goal {
             return false;
         }
 
+        if (!GoalUtil.ensureUse(byteBuddy, ToolUtil.ToolType.EMPTY_HAND, harvestEnergyCost, 1)) {
+            return false;
+        }
+
         var targetLock = findHarvestPlan();
         if (targetLock.isEmpty()) {
             return false;
@@ -133,7 +138,9 @@ public class HarvestGoal extends Goal {
             return true;
         }
 
-        return targetPos != null;
+        if (targetPos == null) return false;
+
+        return GoalUtil.ensureUse(byteBuddy, ToolUtil.ToolType.EMPTY_HAND, harvestEnergyCost, 1);
     }
 
     @Override
@@ -248,8 +255,7 @@ public class HarvestGoal extends Goal {
                     byteBuddy.getLookControl().setLookAt(targetCenter.x, targetPos.getBottomCenter().y, targetCenter.z, 15.0f, 15.0f);
                 } else {
                     if (!GoalUtil.actionReady(serverLevel, nextActionTick)) return;
-                    if (!verifyClaimOrAbort(serverLevel, ByteBuddyEntity.TaskType.HARVEST, claimedHarvestPos, targetPos))
-                        return;
+                    if (!verifyClaimOrAbort(serverLevel, ByteBuddyEntity.TaskType.HARVEST, claimedHarvestPos, targetPos))return;
 
                     firePos = targetPos;
                     firePreState = targetState;
@@ -258,7 +264,7 @@ public class HarvestGoal extends Goal {
                             GoalUtil.toTicks(2.6),
                             GoalUtil.toTicks(1.8),
                             targetPos,
-                            targetState
+                            firePreState
                     );
 
                     BotDebug.log(byteBuddy, "HARVEST schedule: now=" + serverLevel.getGameTime() +

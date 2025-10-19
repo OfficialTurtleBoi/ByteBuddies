@@ -5,6 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -17,11 +18,15 @@ import net.neoforged.neoforge.common.util.TriState;
 import net.turtleboi.bytebuddies.block.custom.DockingStationBlock;
 import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
+import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity.*;
+import net.turtleboi.bytebuddies.util.ToolUtil.*;
 
 import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.function.LongConsumer;
 import java.util.function.LongSupplier;
+
+import static net.turtleboi.bytebuddies.util.ToolUtil.matchesToolType;
 
 public class GoalUtil {
     public static void lockToAnchor(ByteBuddyEntity byteBuddy, Vec3 targetAnchor) {
@@ -207,4 +212,59 @@ public class GoalUtil {
             byteBuddy.releasePath(path);
         }
     }
+
+    public static boolean hasRequiredTool(ByteBuddyEntity byteBuddy, ToolType toolType) {
+        if (toolType == ToolType.EMPTY_HAND) return true;
+        var buddyAugmentInventory = byteBuddy.getAugmentInv();
+        int heldToolSlot = byteBuddy.getHeldToolSlot();
+        ItemStack toolStack = heldToolSlot >= 0 && heldToolSlot < buddyAugmentInventory.getSlots()
+                ? buddyAugmentInventory.getStackInSlot(heldToolSlot)
+                : ItemStack.EMPTY;
+
+        boolean hasRequiredTool = !toolStack.isEmpty() && matchesToolType(toolStack, toolType);
+        if (!hasRequiredTool) {
+            BotDebug.log(byteBuddy, "CHECK failed: required tool=" + toolType +
+                    " heldSlot=" + heldToolSlot +
+                    " stack=" + (toolStack.isEmpty() ? "EMPTY" : toolStack.getItem().toString()));
+        }
+        return hasRequiredTool;
+    }
+
+    public static boolean hasEnergyForUnit(ByteBuddyEntity byteBuddy, int energyPerUnit) {
+        if (energyPerUnit <= 0) return true;
+        int energyStored = byteBuddy.getEnergyStorage().getEnergyStored();
+        boolean hasEnergyForUnit = energyStored >= energyPerUnit;
+        if (!hasEnergyForUnit) {
+            BotDebug.log(byteBuddy, "CHECK failed: energy per unit=" + energyPerUnit +
+                    " energyStored=" + energyStored);
+        }
+        return hasEnergyForUnit;
+    }
+
+    public static boolean hasEnergyForMax(ByteBuddyEntity byteBuddy, int energyPerUnit, int maxUnits) {
+        long neededEnergyLong = (long)Math.max(0, energyPerUnit) * (long)Math.max(1, maxUnits);
+        int neededEnergy = neededEnergyLong > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)neededEnergyLong;
+        int energyStored = byteBuddy.getEnergyStorage().getEnergyStored();
+        boolean hasEnergyForMax = energyStored >= neededEnergy;
+        if (!hasEnergyForMax) {
+            BotDebug.log(byteBuddy, "CHECK failed: energy max batch need=" + neededEnergy +
+                    " energyStored=" + energyStored +
+                    " unit=" + energyPerUnit +
+                    " maxUnits=" + maxUnits);
+        }
+        return hasEnergyForMax;
+    }
+
+    public static boolean ensureUse(ByteBuddyEntity byteBuddy, @Nullable ToolType requiredTool, int energyPerUnit, int maxUnits) {
+        if (requiredTool != null && !hasRequiredTool(byteBuddy, requiredTool)) {
+            BotDebug.log(byteBuddy, "PRECONDITION: missing required tool for goal start");
+            return false;
+        }
+        if (!hasEnergyForMax(byteBuddy, energyPerUnit, maxUnits)) {
+            BotDebug.log(byteBuddy, "PRECONDITION: insufficient energy to complete max batch");
+            return false;
+        }
+        return true;
+    }
+
 }

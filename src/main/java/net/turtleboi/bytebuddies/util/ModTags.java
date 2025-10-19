@@ -19,6 +19,7 @@ public final class ModTags {
 
     public static final class Items {
         public static final TagKey<Item> AUGMENT = createTag("augment");
+        public static final TagKey<Item> PLATING = createTag("plating");
         public static final TagKey<Item> BATTERY = createTag("battery");
 
         private static TagKey<Item> createTag(String name){

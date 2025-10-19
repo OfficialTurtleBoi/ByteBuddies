@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -32,15 +33,51 @@ public class ClipboardItem extends Item {
     @Override
     public InteractionResult useOn(UseOnContext context) {
         Level level = context.getLevel();
-        if (level.isClientSide) return InteractionResult.SUCCESS;
         ItemStack itemStack = context.getItemInHand();
         BlockPos clickedPos = context.getClickedPos();
         var player = context.getPlayer();
+        boolean isClient = level.isClientSide;
         boolean isSneaking = player != null && player.isShiftKeyDown();
+
+        if (isSneaking) {
+            if (!isClient) {
+                clearPositions(itemStack);
+                player.displayClientMessage(Component.literal("Clipboard cleared").withStyle(ChatFormatting.YELLOW), true);
+            }
+            return InteractionResult.sidedSuccess(isClient);
+        }
+
+        if (!isClient) {
+            boolean hasFirst = hasFirstPosition(itemStack);
+            boolean hasSecond = hasSecondPosition(itemStack);
+
+            if (!hasFirst) {
+                setFirstPosition(itemStack, clickedPos);
+                if (player != null)
+                    player.displayClientMessage(Component.literal("Set first position: " + format(clickedPos)).withStyle(ChatFormatting.GREEN), true);
+            } else if (!hasSecond) {
+                setSecondPosition(itemStack, clickedPos);
+                if (player != null)
+                    player.displayClientMessage(Component.literal("Set second position: " + format(clickedPos)).withStyle(ChatFormatting.GREEN), true);
+            } else {
+                clearSecondPosition(itemStack);
+                setFirstPosition(itemStack, clickedPos);
+                if (player != null)
+                    player.displayClientMessage(Component.literal("Set first position: " + format(clickedPos)).withStyle(ChatFormatting.GREEN), true);
+            }
+        }
+
+        return InteractionResult.sidedSuccess(isClient);
+    }
+
+    public void handleClick(Player player, ItemStack itemStack, BlockPos clickedPos) {
+        boolean isSneaking = player != null && player.isShiftKeyDown();
+
         if (isSneaking) {
             clearPositions(itemStack);
-            player.displayClientMessage(Component.literal("Clipboard cleared").withStyle(ChatFormatting.YELLOW), true);
-            return InteractionResult.CONSUME;
+            player.displayClientMessage(
+                    Component.literal("Clipboard cleared").withStyle(ChatFormatting.YELLOW), true);
+            return;
         }
 
         boolean hasFirst = hasFirstPosition(itemStack);
@@ -48,29 +85,29 @@ public class ClipboardItem extends Item {
 
         if (!hasFirst) {
             setFirstPosition(itemStack, clickedPos);
-            if (player != null) player.displayClientMessage(Component.literal("Set first position: " + format(clickedPos)).withStyle(ChatFormatting.GREEN), true);
+            if (player != null) player.displayClientMessage(
+                    Component.literal("Set first position: " + format(clickedPos)).withStyle(ChatFormatting.GREEN), true);
         } else if (!hasSecond) {
             setSecondPosition(itemStack, clickedPos);
-            if (player != null) player.displayClientMessage(Component.literal("Set second position: " + format(clickedPos)).withStyle(ChatFormatting.GREEN), true);
+            if (player != null) player.displayClientMessage(
+                    Component.literal("Set second position: " + format(clickedPos)).withStyle(ChatFormatting.GREEN), true);
         } else {
             clearSecondPosition(itemStack);
             setFirstPosition(itemStack, clickedPos);
-            if (player != null) player.displayClientMessage(Component.literal("Set first position: " + format(clickedPos)).withStyle(ChatFormatting.GREEN), true);
+            if (player != null) player.displayClientMessage(
+                    Component.literal("Set first position: " + format(clickedPos)).withStyle(ChatFormatting.GREEN), true);
         }
-
-        return InteractionResult.CONSUME;
     }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, net.minecraft.world.entity.player.Player player, InteractionHand hand) {
         ItemStack itemStack = player.getItemInHand(hand);
-        if (level.isClientSide) return InteractionResultHolder.success(itemStack);
         if (player.isShiftKeyDown()) {
             clearPositions(itemStack);
             player.displayClientMessage(Component.literal("Clipboard cleared").withStyle(ChatFormatting.YELLOW), true);
             return InteractionResultHolder.consume(itemStack);
         }
-        return InteractionResultHolder.pass(itemStack);
+        return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide);
     }
 
     @Override

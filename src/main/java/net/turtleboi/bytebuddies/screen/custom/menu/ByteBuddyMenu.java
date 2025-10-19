@@ -1,13 +1,17 @@
 package net.turtleboi.bytebuddies.screen.custom.menu;
 
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.screen.ModMenuTypes;
 import net.turtleboi.bytebuddies.util.InventoryUtil;
@@ -154,24 +158,52 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
             @Override public int getMaxStackSize() {
                 return 1;
             }
+            @Override
+            public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+                return Pair.of(InventoryMenu.BLOCK_ATLAS,
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/empty_slot_tool"));
+            }
         });
 
         this.addSlot(new SlotItemHandler(buddy.getAugmentInv(), 1, startX, startY + SLOT_SIZE) {
             @Override public boolean mayPlace(ItemStack itemStack) {
-                return itemStack.is(ModTags.Items.AUGMENT);
+                if (itemStack.isEmpty()) return false;
+                if (!itemStack.is(ModTags.Items.AUGMENT)) return false;
+
+                if (itemStack.is(ModTags.Items.PLATING)) {
+                    ItemStack other = buddy.getAugmentInv().getStackInSlot(2);
+                    if (!other.isEmpty() && other.is(ModTags.Items.PLATING)) return false;
+                }
+                return true;
             }
             @Override public int getMaxStackSize() {
                 return 1;
+            }
+            @Override
+            public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+                return Pair.of(InventoryMenu.BLOCK_ATLAS,
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/empty_slot_augment"));
             }
         });
 
-
         this.addSlot(new SlotItemHandler(buddy.getAugmentInv(), 2, startX, startY + 2 * SLOT_SIZE) {
             @Override public boolean mayPlace(ItemStack itemStack) {
-                return itemStack.is(ModTags.Items.AUGMENT);
+                if (itemStack.isEmpty()) return false;
+                if (!itemStack.is(ModTags.Items.AUGMENT)) return false;
+
+                if (itemStack.is(ModTags.Items.PLATING)) {
+                    ItemStack other = buddy.getAugmentInv().getStackInSlot(1);
+                    if (!other.isEmpty() && other.is(ModTags.Items.PLATING)) return false;
+                }
+                return true;
             }
             @Override public int getMaxStackSize() {
                 return 1;
+            }
+            @Override
+            public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+                return Pair.of(InventoryMenu.BLOCK_ATLAS,
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/empty_slot_augment"));
             }
         });
 
@@ -182,6 +214,11 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
 
             @Override public int getMaxStackSize() {
                 return 1;
+            }
+            @Override
+            public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+                return Pair.of(InventoryMenu.BLOCK_ATLAS,
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/empty_slot_battery"));
             }
         });
     }
@@ -195,14 +232,17 @@ public class ByteBuddyMenu extends AbstractContainerMenu {
                     buddy.getUpgradeInv(),
                     u,
                     startX,
-                    startY + u * SLOT_SIZE
-            ) {
+                    startY + u * SLOT_SIZE) {
                 @Override public boolean mayPlace(ItemStack itemStack) {
                     return InventoryUtil.isFloppyDisk(itemStack);
                 }
-
                 @Override public int getMaxStackSize() {
                     return 1;
+                }
+                @Override
+                public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+                    return Pair.of(InventoryMenu.BLOCK_ATLAS,
+                            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/empty_slot_floppy_disk"));
                 }
             });
         }

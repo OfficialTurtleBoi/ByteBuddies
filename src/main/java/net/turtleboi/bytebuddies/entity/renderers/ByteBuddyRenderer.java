@@ -16,14 +16,21 @@ import net.turtleboi.bytebuddies.client.HueShiftTextureCache;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.entity.models.ByteBuddyModel;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.util.List;
 
 public class ByteBuddyRenderer extends MobRenderer<ByteBuddyEntity, ByteBuddyModel<ByteBuddyEntity>> {
-    private static final ResourceLocation TEXTURE =
+    private static final ResourceLocation DEFAULT_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "textures/entity/bytebuddy/bytebuddy.png");
+    private static final ResourceLocation IRON_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "textures/entity/bytebuddy/bytebuddy_iron.png");
+    private static final ResourceLocation STEEL_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "textures/entity/bytebuddy/bytebuddy_steel.png");
+    private static final ResourceLocation NETHERITE_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "textures/entity/bytebuddy/bytebuddy_netherite.png");
+    private static final ResourceLocation CHARGED_STEEL_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "textures/entity/bytebuddy/bytebuddy_charged_steel.png");
     private static final ResourceLocation DISPLAY =
             ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "textures/entity/bytebuddy/bytebuddycore.png");
     public ByteBuddyRenderer(EntityRendererProvider.Context pContext) {
@@ -34,7 +41,17 @@ public class ByteBuddyRenderer extends MobRenderer<ByteBuddyEntity, ByteBuddyMod
 
     @Override
     public @NotNull ResourceLocation getTextureLocation(@NotNull ByteBuddyEntity byteBuddy) {
-        return TEXTURE;
+        ResourceLocation chassisMaterial = DEFAULT_TEXTURE;
+        if (byteBuddy.getChassisMaterial() == ByteBuddyEntity.ChassisMaterial.CHARGED_STEEL){
+            chassisMaterial = CHARGED_STEEL_TEXTURE;
+        } else if (byteBuddy.getChassisMaterial() == ByteBuddyEntity.ChassisMaterial.NETHERITE){
+            chassisMaterial = NETHERITE_TEXTURE;
+        } else if (byteBuddy.getChassisMaterial() == ByteBuddyEntity.ChassisMaterial.STEEL){
+            chassisMaterial = STEEL_TEXTURE;
+        } else if (byteBuddy.getChassisMaterial() == ByteBuddyEntity.ChassisMaterial.IRON){
+            chassisMaterial = IRON_TEXTURE;
+        }
+        return chassisMaterial;
     }
 
     @Override

@@ -1,10 +1,12 @@
-// 1.21.1	2025-10-15T18:25:49.1645249	Loot Tables
+// 1.21.1	2025-10-18T00:15:04.1158649	Loot Tables
 6f6ed3108efff6f37fe5970973add1ddce3b8324 data/bytebuddies/loot_table/blocks/aluminum_block.json
-22a5a3f27fdacc15a73da40586286ce626e9a05e data/bytebuddies/loot_table/blocks/aluminum_ore.json
+60523613269e74f117cfda95a31439d7faa7f870 data/bytebuddies/loot_table/blocks/bauxite_ore.json
 6116df8280949f0e8947796d5399d4a64e387ef2 data/bytebuddies/loot_table/blocks/bluestone_block.json
 9e2e6467900cb09280c3b5b672963b1d67a55b0d data/bytebuddies/loot_table/blocks/bluestone_ore.json
 c240fb96394f513f89b930264aabf1c4b033913a data/bytebuddies/loot_table/blocks/charged_steel_block.json
-f7d87e164d78d79852d375550edf445384da6d7f data/bytebuddies/loot_table/blocks/deepslate_aluminum_ore.json
+7a93f8018cd2137de027bd64fb013eab194b9533 data/bytebuddies/loot_table/blocks/deepslate_bauxite_ore.json
 19778b2ef7f90b42d5f6fdee85f00eee7246f388 data/bytebuddies/loot_table/blocks/deepslate_bluestone_ore.json
 ec06804fa154bccefb87c165d8cd55ef24bc752e data/bytebuddies/loot_table/blocks/docking_station.json
+af5616cd21056d1415a6ed4ba83a8431f06c11e2 data/bytebuddies/loot_table/blocks/generator.json
+96074681361793c6e1cd471c21acbf8f229f4aa8 data/bytebuddies/loot_table/blocks/solar_panel.json
 afeb8233ac29a10b7a20d355eced8a99cc1bac69 data/bytebuddies/loot_table/blocks/steel_block.json

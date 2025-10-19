@@ -104,6 +104,10 @@ public class QuarryGoal extends Goal {
             return false;
         }
 
+        if (!GoalUtil.ensureUse(byteBuddy, ToolUtil.ToolType.PICKAXE, mineEnergyCost, 1)) {
+            return false;
+        }
+
         var plan = findMinePlan();
         if (plan.isEmpty()) return false;
 
@@ -126,7 +130,9 @@ public class QuarryGoal extends Goal {
             return true;
         }
 
-        return targetPos != null;
+        if (targetPos == null) return false;
+
+        return GoalUtil.ensureUse(byteBuddy, ToolUtil.ToolType.PICKAXE, mineEnergyCost, 1);
     }
 
     @Override

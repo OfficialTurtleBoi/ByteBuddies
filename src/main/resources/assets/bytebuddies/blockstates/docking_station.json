@@ -1,18 +1,33 @@
 {
   "variants": {
-    "facing=east": {
-      "model": "bytebuddies:block/docking_station",
+    "facing=east,open=false": {
+      "model": "bytebuddies:block/docking_station_closed",
       "y": 90
     },
-    "facing=north": {
-      "model": "bytebuddies:block/docking_station"
+    "facing=north,open=false": {
+      "model": "bytebuddies:block/docking_station_closed"
     },
-    "facing=south": {
-      "model": "bytebuddies:block/docking_station",
+    "facing=south,open=false": {
+      "model": "bytebuddies:block/docking_station_closed",
       "y": 180
     },
-    "facing=west": {
-      "model": "bytebuddies:block/docking_station",
+    "facing=west,open=false": {
+      "model": "bytebuddies:block/docking_station_closed",
+      "y": 270
+    },
+    "facing=east,open=true": {
+      "model": "bytebuddies:block/docking_station_open",
+      "y": 90
+    },
+    "facing=north,open=true": {
+      "model": "bytebuddies:block/docking_station_open"
+    },
+    "facing=south,open=true": {
+      "model": "bytebuddies:block/docking_station_open",
+      "y": 180
+    },
+    "facing=west,open=true": {
+      "model": "bytebuddies:block/docking_station_open",
       "y": 270
     }
   }

@@ -192,6 +192,11 @@ public class DockingStationMenu extends AbstractContainerMenu {
             }
 
             @Override
+            public int getMaxStackSize(ItemStack itemStack) {
+                return 1;
+            }
+
+            @Override
             public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
                 return Pair.of(InventoryMenu.BLOCK_ATLAS,
                         ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/empty_slot_battery"));
@@ -201,6 +206,11 @@ public class DockingStationMenu extends AbstractContainerMenu {
         this.addSlot(new SlotItemHandler(dockBlock.getMainInv(), DockingStationBlockEntity.clipboardSlot, 218, 53) {
             @Override public boolean mayPlace(@NotNull ItemStack itemStack) {
                 return dockBlock.getMainInv().isItemValid(DockingStationBlockEntity.clipboardSlot, itemStack);
+            }
+
+            @Override
+            public int getMaxStackSize(ItemStack itemStack) {
+                return 1;
             }
 
             @Override
@@ -216,8 +226,12 @@ public class DockingStationMenu extends AbstractContainerMenu {
                         dockBlock.getMainInv(),
                         slot++,
                         startX + col * SLOT_SIZE,
-                        startY + row * SLOT_SIZE
-                ));
+                        startY + row * SLOT_SIZE) {
+                    @Override
+                    public int getMaxStackSize(ItemStack itemStack) {
+                        return 64;
+                    }
+                });
             }
         }
     }

@@ -42,5 +42,11 @@ public class ModItemTagProvider extends ItemTagsProvider {
                 .add(ModItems.REINFORCED_STEEL_PLATING.get())
                 .add(ModItems.REINFORCED_NETHERITE_PLATING.get())
                 .add(ModItems.REINFORCED_CHARGED_STEEL_PLATING.get());
+
+        tag(ModTags.Items.PLATING)
+                .add(ModItems.REINFORCED_IRON_PLATING.get())
+                .add(ModItems.REINFORCED_STEEL_PLATING.get())
+                .add(ModItems.REINFORCED_NETHERITE_PLATING.get())
+                .add(ModItems.REINFORCED_CHARGED_STEEL_PLATING.get());
     }
 }
