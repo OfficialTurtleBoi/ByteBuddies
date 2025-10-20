@@ -167,7 +167,11 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     protected void checkInsideBlocks() {
 
     }
-
+    public void reloadBuddy(){
+        resetGoals();
+        rebuildGoalsForRole();
+        refreshEffects();
+    }
     @Override
     public @NotNull ItemStack getMainHandItem() {
         return augmentInv.getStackInSlot(0);
@@ -273,7 +277,17 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     }
 
     public void setSleeping(boolean sleeping) {
+        if (sleeping){
+            setMood(Mood.SLEEP);
+            setNoAi(true);
+        }
+        else {
+            setMood(Mood.NEUTRAL);
+            setNoAi(false);
+        }
+
         this.entityData.set(DATA_SLEEPING, sleeping);
+
     }
 
     public boolean isWaking() {
@@ -818,9 +832,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         if (newRole == null) return;
         this.buddyRole = newRole;
         this.entityData.set(DATA_ROLE, newRole.ordinal());
-        resetGoals();
-        rebuildGoalsForRole();
-        refreshEffects();
+        reloadBuddy();
     }
 
     public Optional<BlockPos> getDock() {

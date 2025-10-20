@@ -14,11 +14,14 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
+import net.turtleboi.bytebuddies.network.payloads.ReloadData;
+import net.turtleboi.bytebuddies.network.payloads.SleepData;
 import net.turtleboi.bytebuddies.screen.custom.menu.DockingStationMenu;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.NumberFormat;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class DockingStationScreen extends AbstractContainerScreen<DockingStationMenu> {
@@ -52,7 +55,7 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
     private double debugFillPct = 0.50;
 
     private int selected = 0;
-    private Button previousButton, nextButton;
+    private Button previousButton, nextButton, sleepButton, restartButton, teleportButton;
 
     public DockingStationScreen(DockingStationMenu dockingStationMenu, Inventory inventory, Component title) {
         super(dockingStationMenu, inventory, title);
@@ -78,6 +81,24 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
         nextButton = addRenderableWidget(
                 Button.builder(Component.literal(">"), button -> cycleBuddy(+1))
                         .bounds(bx + buddyPreviewWidth + 68, by + buddyPreviewHeight / 2 - 6, 12, 12)
+                        .build()
+        );
+
+        sleepButton = addRenderableWidget(
+                Button.builder(Component.literal("S"), button -> asleepBuddy(Objects.requireNonNull(this.menu.getBuddyByIndexClient(selected))))
+                        .bounds(bx+44,   by+26, 12, 12)
+                        .build()
+        );
+
+
+        restartButton = addRenderableWidget(
+                Button.builder(Component.literal("↺"), button -> restartBuddy(Objects.requireNonNull(this.menu.getBuddyByIndexClient(selected))))
+                        .bounds(bx+64,   by+26, 12, 12)
+                        .build()
+        );
+        teleportButton = addRenderableWidget(
+                Button.builder(Component.literal("TP"), button -> asleepBuddy(Objects.requireNonNull(this.menu.getBuddyByIndexClient(selected))))
+                        .bounds(bx+84,   by+26, 12, 12)
                         .build()
         );
         updateNavState();
@@ -231,12 +252,27 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
         if (selected < 0) selected += count;
         updateNavState();
     }
+    private void asleepBuddy(ByteBuddyEntity byteBuddyEntity) {
+        boolean asleep = byteBuddyEntity.isSleeping();
+        SleepData.setAsleep(byteBuddyEntity,!asleep);
+    }
+    private void restartBuddy(ByteBuddyEntity byteBuddyEntity) {
+        boolean asleep = byteBuddyEntity.isSleeping();
+        ReloadData.setreload(byteBuddyEntity);
+    }
+
+
+
+
 
     private void updateNavState() {
         int count = this.menu.getBuddyCount();
         boolean enable = count > 1;
         if (previousButton != null) previousButton.active = enable;
         if (nextButton != null) nextButton.active = enable;
+        sleepButton.active = count > 0;
+        restartButton.active = count > 0;
+        teleportButton.active = count > 0;
         if (count == 0) selected = 0;
         else if (selected >= count) selected = count - 1;
     }
