@@ -32,6 +32,7 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModBlocks.DEEPSLATE_BLUESTONE_ORE);
                         pOutput.accept(ModBlocks.BLUESTONE_BLOCK);
                         pOutput.accept(ModItems.BUSTER_SWORD);
+                        pOutput.accept(ModItems.CHARGED_STEEL_SWORD);
                         pOutput.accept(ModItems.RAW_BAUXITE);
                         pOutput.accept(ModItems.ALUMINUM_INGOT);
                         pOutput.accept(ModItems.ALUMINUM_NUGGET);

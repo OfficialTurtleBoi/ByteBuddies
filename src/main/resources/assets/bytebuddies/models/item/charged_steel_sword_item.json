@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "bytebuddies:item/charged_steel_sword_item"
+  }
+}

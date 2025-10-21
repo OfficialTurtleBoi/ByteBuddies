@@ -1,10 +1,14 @@
 package net.turtleboi.bytebuddies;
 
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.turtleboi.bytebuddies.block.ModBlockEntities;
 import net.turtleboi.bytebuddies.block.ModBlocks;
+import net.turtleboi.bytebuddies.component.ModDataComponents;
 import net.turtleboi.bytebuddies.entity.ModEntities;
 import net.turtleboi.bytebuddies.item.ModCreativeModeTabs;
 import net.turtleboi.bytebuddies.item.ModItems;
+import net.turtleboi.bytebuddies.particle.ModParticles;
+import net.turtleboi.bytebuddies.particle.custom.CyberSweepParticle;
 import net.turtleboi.bytebuddies.screen.ModMenuTypes;
 import org.slf4j.Logger;
 
@@ -34,8 +38,9 @@ public class ByteBuddies {
         ModCreativeModeTabs.register(modEventBus);
         ModEntities.register(modEventBus);
         ModMenuTypes.register(modEventBus);
+        ModDataComponents.register(modEventBus);
         modEventBus.addListener(this::addCreative);
-
+        ModParticles.register(modEventBus);
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 

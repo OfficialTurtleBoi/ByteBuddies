@@ -7,6 +7,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
+import net.turtleboi.bytebuddies.entity.entities.SwordSweepEntity;
 
 import java.util.function.Supplier;
 
@@ -17,6 +18,11 @@ public class ModEntities {
     public static final Supplier<EntityType<ByteBuddyEntity>> BYTEBUDDY =
             ENTITY_TYPES.register("bytebuddy", () -> EntityType.Builder.of(ByteBuddyEntity::new, MobCategory.CREATURE)
                     .sized(0.5f, 0.5f).build("bytebuddy"));
+
+    public static final Supplier<EntityType<SwordSweepEntity>> SWORD_SWEEP =
+            ENTITY_TYPES.register("tomahawk", () -> EntityType.Builder.<SwordSweepEntity>of(SwordSweepEntity::new, MobCategory.MISC)
+                    .sized(0.5f, 1.15f).build("sword_sweep"));
+
 
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);

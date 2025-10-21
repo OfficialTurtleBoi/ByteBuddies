@@ -1,5 +1,6 @@
 package net.turtleboi.bytebuddies.events;
 
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -12,12 +13,14 @@ import net.turtleboi.bytebuddies.entity.ModEntities;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.entity.models.ByteBuddyModel;
 import net.turtleboi.bytebuddies.entity.renderers.ByteBuddyRenderer;
+import net.turtleboi.bytebuddies.entity.renderers.SwordSweepRenderer;
 
 @EventBusSubscriber(modid = ByteBuddies.MOD_ID, value = Dist.CLIENT)
 public class ClientModBusEvents {
     @SubscribeEvent
     public static void onClientSetupEvent(FMLClientSetupEvent event) {
         EntityRenderers.register(ModEntities.BYTEBUDDY.get(), ByteBuddyRenderer::new);
+        EntityRenderers.register(ModEntities.SWORD_SWEEP.get(), SwordSweepRenderer::new);
     }
 
     @SubscribeEvent

@@ -36,6 +36,7 @@ public class ModLanguageProvider extends LanguageProvider {
         addSimpleNameBlock(ModBlocks.GENERATOR);
         addSimpleNameBlock(ModBlocks.SOLAR_PANEL);
         addSimpleItemName(ModItems.BUSTER_SWORD);
+        addSimpleItemName(ModItems.CHARGED_STEEL_SWORD);
         addSimpleItemName(ModItems.RAW_BAUXITE);
         addSimpleItemName(ModItems.ALUMINUM_INGOT);
         addSimpleItemName(ModItems.ALUMINUM_NUGGET);

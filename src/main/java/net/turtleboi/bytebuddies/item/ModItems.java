@@ -9,10 +9,7 @@ import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.entity.ModEntities;
-import net.turtleboi.bytebuddies.item.custom.BatteryItem;
-import net.turtleboi.bytebuddies.item.custom.ClipboardItem;
-import net.turtleboi.bytebuddies.item.custom.FloppyDiskItem;
-import net.turtleboi.bytebuddies.item.custom.WrenchItem;
+import net.turtleboi.bytebuddies.item.custom.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +19,9 @@ public class ModItems {
 
     public static final DeferredItem<Item> BUSTER_SWORD = ITEMS.register("buster_sword",
             () -> new SwordItem(Tiers.NETHERITE, new Item.Properties()));
+
+    public static final DeferredItem<Item> CHARGED_STEEL_SWORD = ITEMS.register("charged_steel_sword",
+            () -> new ChargedSteelSwordItem(Tiers.NETHERITE, new Item.Properties()));
 
     public static final DeferredItem<Item> RAW_BAUXITE = ITEMS.register("raw_bauxite",
             () -> new Item(new Item.Properties()));
