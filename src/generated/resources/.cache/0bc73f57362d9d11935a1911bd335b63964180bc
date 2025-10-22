@@ -1,4 +1,4 @@
-// 1.21.1	2025-10-18T04:23:06.9747153	Item Models: bytebuddies
+// 1.21.1	2025-10-22T06:14:12.1221201	Item Models: bytebuddies
 fde68b4a9cccb4090b3f13f7456ba4b9c0032691 assets/bytebuddies/models/item/advanced_battery.json
 b71fff558facdb497f2a831d9ae53f7c475f0af7 assets/bytebuddies/models/item/advanced_storage_cell.json
 b2c9dbade8f9579d9fdbd47ec39a0d6ec83bbba9 assets/bytebuddies/models/item/aluminum_ingot.json
@@ -9,7 +9,6 @@ e87afdec39f1164643fa2d97e5946bd697ba46c5 assets/bytebuddies/models/item/aluminum
 3753286c2ada21ef77b17418c0c8c67ce574c958 assets/bytebuddies/models/item/basic_storage_cell.json
 1ed3bc15389fb0295f8805afdff5419913d25c09 assets/bytebuddies/models/item/biocell_battery.json
 c307b6126355c50fed18ff6771fbebd697460a4f assets/bytebuddies/models/item/bluestone_dust.json
-63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/bytebuddies/models/item/byte_buddy_spawn_egg.json
 4b6850aa3d5fa8e2d6a8a613795afb8a4fd4b52f assets/bytebuddies/models/item/carbon_alloy.json
 105448c32f912dbd321d5e28be3595ef4f64390e assets/bytebuddies/models/item/carbon_paste.json
 881ddabb27abc5cf7ffb01b1bc17d9adab4c88b5 assets/bytebuddies/models/item/charged_steel_ingot.json
@@ -49,6 +48,7 @@ b4d0fe69d5780f083576d90c590909410b277c89 assets/bytebuddies/models/item/iron_pur
 e8e6f5e5b5d2fdb4d85edce4f93a7e1e46bcc6a8 assets/bytebuddies/models/item/iron_red_floppy.json
 773ac622b9f2a1a3058a1f6dddfcf47be0a18ef1 assets/bytebuddies/models/item/iron_yellow_floppy.json
 4517c06f5164677c79781eab34170eade1281f41 assets/bytebuddies/models/item/magnetic_crescent.json
+7d58d70b407d23f17bf59ac78797935175dd1964 assets/bytebuddies/models/item/propeller_unit.json
 f55169fa8354561efd191b7190c308537353c871 assets/bytebuddies/models/item/raw_bauxite.json
 08e6eeebf588e2dc4cc4cc36e6f6fb1ed7d59fae assets/bytebuddies/models/item/reinforced_battery.json
 bc0e1478c25611986c92f0c5efa6080b21dcd847 assets/bytebuddies/models/item/reinforced_charged_steel_plating.json

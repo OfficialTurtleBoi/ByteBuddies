@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "item": "bytebuddies:steel_block"
+    },
+    "P": {
+      "item": "bytebuddies:steel_plating"
+    }
+  },
+  "pattern": [
+    " P ",
+    "PBP",
+    " P "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:reinforced_steel_plating"
+  }
+}

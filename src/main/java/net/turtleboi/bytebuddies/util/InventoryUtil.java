@@ -3,6 +3,7 @@ package net.turtleboi.bytebuddies.util;
 import net.minecraft.world.item.*;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.turtleboi.bytebuddies.item.custom.BatteryItem;
+import net.turtleboi.bytebuddies.item.custom.ClipboardItem;
 import net.turtleboi.bytebuddies.item.custom.FloppyDiskItem;
 
 public final class InventoryUtil {
@@ -30,6 +31,11 @@ public final class InventoryUtil {
     public static boolean isFloppyDisk(ItemStack itemStack) {
         Item item = itemStack.getItem();
         return item instanceof FloppyDiskItem;
+    }
+
+    public static boolean isClipboard(ItemStack itemStack) {
+        Item item = itemStack.getItem();
+        return item instanceof ClipboardItem;
     }
 
 }

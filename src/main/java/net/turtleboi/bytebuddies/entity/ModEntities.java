@@ -20,9 +20,8 @@ public class ModEntities {
                     .sized(0.5f, 0.5f).build("bytebuddy"));
 
     public static final Supplier<EntityType<SwordSweepEntity>> SWORD_SWEEP =
-            ENTITY_TYPES.register("tomahawk", () -> EntityType.Builder.<SwordSweepEntity>of(SwordSweepEntity::new, MobCategory.MISC)
+            ENTITY_TYPES.register("sword_sweep", () -> EntityType.Builder.<SwordSweepEntity>of(SwordSweepEntity::new, MobCategory.MISC)
                     .sized(0.5f, 1.15f).build("sword_sweep"));
-
 
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);

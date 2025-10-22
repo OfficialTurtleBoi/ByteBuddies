@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": {
+      "item": "bytebuddies:reinforced_battery"
+    },
+    "L": {
+      "item": "minecraft:lava_bucket"
+    },
+    "O": {
+      "item": "minecraft:obsidian"
+    },
+    "S": {
+      "item": "bytebuddies:steel_ingot"
+    }
+  },
+  "pattern": [
+    "OSO",
+    "SBS",
+    "OLO"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:geothermal_regulator"
+  }
+}

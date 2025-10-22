@@ -1,0 +1,65 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_aluminum_plating": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bytebuddies:aluminum_plating"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_battery": {
+      "conditions": {
+        "items": [
+          {
+            "items": "#bytebuddies:battery"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_bluestone_block": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bytebuddies:bluestone_block"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_chip": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bytebuddies:chip"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "bytebuddies:spawner/byte_buddy_spawner"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_aluminum_plating",
+      "has_bluestone_block",
+      "has_chip",
+      "has_battery"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "bytebuddies:spawner/byte_buddy_spawner"
+    ]
+  }
+}

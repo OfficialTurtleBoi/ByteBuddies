@@ -36,7 +36,7 @@ public class ModLanguageProvider extends LanguageProvider {
         addSimpleNameBlock(ModBlocks.GENERATOR);
         addSimpleNameBlock(ModBlocks.SOLAR_PANEL);
         addSimpleItemName(ModItems.BUSTER_SWORD);
-        addSimpleItemName(ModItems.CHARGED_STEEL_SWORD);
+        addSimpleItemName(ModItems.TERRABLADE);
         addSimpleItemName(ModItems.RAW_BAUXITE);
         addSimpleItemName(ModItems.ALUMINUM_INGOT);
         addSimpleItemName(ModItems.ALUMINUM_NUGGET);
@@ -62,12 +62,13 @@ public class ModLanguageProvider extends LanguageProvider {
         addSimpleItemName(ModItems.SUPER_CHIP);
         addSimpleItemName(ModItems.WRENCH);
         addSimpleItemName(ModItems.CLIPBOARD);
+        addSimpleItemName(ModItems.PROPELLER_UNIT);
         addSimpleItemName(ModItems.AQUATIC_MOTOR);
         addSimpleItemName(ModItems.SOLAR_ARRAY);
         addSimpleItemName(ModItems.GYROSCOPIC_STABILIZER);
         addSimpleItemName(ModItems.ARC_WELDER);
         addSimpleItemName(ModItems.GEOTHERMAL_REGULATOR);
-        addSimpleItemName(ModItems.DYANAMO_COIL);
+        addSimpleItemName(ModItems.DYNAMO_COIL);
         addSimpleItemName(ModItems.MAGNETIC_CRESCENT);
         addSimpleItemName(ModItems.BASIC_STORAGE_CELL);
         addSimpleItemName(ModItems.ADVANCED_STORAGE_CELL);
@@ -76,7 +77,8 @@ public class ModLanguageProvider extends LanguageProvider {
         addSimpleItemName(ModItems.REINFORCED_STEEL_PLATING);
         addSimpleItemName(ModItems.REINFORCED_NETHERITE_PLATING);
         addSimpleItemName(ModItems.REINFORCED_CHARGED_STEEL_PLATING);
-        add(ModItems.BYTEBUDDY_SPAWN_EGG.get(), "ByteBuddy Spawn Egg");
+        //add(ModItems.BYTEBUDDY_SPAWN_EGG.get(), "ByteBuddy Spawn Egg");
+        add(ModItems.BYTEBUDDY_SPAWN_EGG.get(), "ByteBuddy");
 
         ModItems.FLOPPY_DISKS.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())

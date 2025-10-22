@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "C": {
+      "item": "bytebuddies:super_chip"
+    },
+    "D": {
+      "item": "minecraft:ender_chest"
+    },
+    "E": {
+      "item": "minecraft:ender_eye"
+    },
+    "O": {
+      "item": "minecraft:obsidian"
+    },
+    "S": {
+      "item": "bytebuddies:advanced_storage_cell"
+    }
+  },
+  "pattern": [
+    "OEO",
+    "SCS",
+    "ODO"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:enderlink_storage_cell"
+  }
+}

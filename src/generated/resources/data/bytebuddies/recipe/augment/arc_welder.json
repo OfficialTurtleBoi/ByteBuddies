@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": {
+      "item": "bytebuddies:advanced_battery"
+    },
+    "C": {
+      "item": "bytebuddies:chip"
+    },
+    "D": {
+      "item": "bytebuddies:bluestone_dust"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "R": {
+      "item": "minecraft:blaze_rod"
+    }
+  },
+  "pattern": [
+    "RI ",
+    "DCI",
+    " B "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:arc_welder"
+  }
+}

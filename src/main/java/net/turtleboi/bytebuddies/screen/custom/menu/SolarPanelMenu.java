@@ -1,32 +1,29 @@
 package net.turtleboi.bytebuddies.screen.custom.menu;
 
-import it.unimi.dsi.fastutil.ints.IntList;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.block.entity.SolarPanelBlockEntity;
-import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.screen.ModMenuTypes;
 import org.jetbrains.annotations.NotNull;
-
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class SolarPanelMenu extends AbstractContainerMenu {
     public final SolarPanelBlockEntity solarPanelBlock;
     public final Level level;
     private int clientEnergy;
     private int clientMaxEnergy;
+    private int clientGenerating;
 
     public SolarPanelMenu(int containerId, Inventory playerInv, BlockEntity blockEntity) {
         super(ModMenuTypes.SOLAR_PANEL_MENU.get(), containerId);
@@ -53,6 +50,15 @@ public class SolarPanelMenu extends AbstractContainerMenu {
             }
             @Override public void set(int value) {
                 clientMaxEnergy = value;
+            }
+        });
+
+        this.addDataSlot(new DataSlot() {
+            @Override public int get() {
+                return solarPanelBlock.isGeneratingBinary();
+            }
+            @Override public void set(int value) {
+                clientGenerating = value;
             }
         });
     }
@@ -157,7 +163,13 @@ public class SolarPanelMenu extends AbstractContainerMenu {
                 0,
                 80,
                 79
-        ));
+        ){
+            @Override
+            public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+                return Pair.of(InventoryMenu.BLOCK_ATLAS,
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/empty_slot_battery"));
+            }
+        });
     }
 
     public int getEnergyStored() {
@@ -166,5 +178,9 @@ public class SolarPanelMenu extends AbstractContainerMenu {
 
     public int getMaxEnergyStored() {
         return clientMaxEnergy;
+    }
+
+    public boolean getGeneratingBinary() {
+        return clientGenerating == 1;
     }
 }

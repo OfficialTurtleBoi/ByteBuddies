@@ -160,7 +160,6 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
         return ClipboardItem.getSecondPosition(clipboard).orElse(null);
     }
 
-
     public IEnergyStorage getEnergyStorage() {
         return this.energyStorage;
     }

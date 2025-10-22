@@ -2,7 +2,6 @@ package net.turtleboi.bytebuddies.util;
 
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.*;
-import net.neoforged.neoforge.items.ItemStackHandler;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 
 public final class ToolUtil {
@@ -20,7 +19,7 @@ public final class ToolUtil {
         ItemStack heldTool = byteBuddy.getHeldTool();
         if (!heldTool.isEmpty() && heldTool.isDamageableItem()) {
             heldTool.hurtAndBreak(damageValue, byteBuddy, EquipmentSlot.MAINHAND);
-            byteBuddy.getAugmentInv().setStackInSlot(slot, heldTool);
+            byteBuddy.getMainInv().setStackInSlot(slot, heldTool);
         }
     }
 

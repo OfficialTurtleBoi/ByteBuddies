@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "E": {
+      "item": "bytebuddies:steel_block"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "S": {
+      "item": "bytebuddies:steel_ingot"
+    },
+    "T": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    " S ",
+    "IEI",
+    " T "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:buster_sword"
+  }
+}

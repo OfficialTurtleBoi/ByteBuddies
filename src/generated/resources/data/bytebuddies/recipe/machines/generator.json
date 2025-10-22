@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "A": {
+      "item": "bytebuddies:aluminum_ingot"
+    },
+    "B": {
+      "item": "bytebuddies:bluestone_block"
+    },
+    "C": {
+      "item": "bytebuddies:chip"
+    },
+    "F": {
+      "item": "minecraft:furnace"
+    },
+    "T": {
+      "item": "bytebuddies:advanced_battery"
+    }
+  },
+  "pattern": [
+    "AFA",
+    "TBT",
+    "ACA"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:generator"
+  }
+}

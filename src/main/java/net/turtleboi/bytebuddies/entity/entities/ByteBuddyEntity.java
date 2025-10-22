@@ -1,66 +1,122 @@
 package net.turtleboi.bytebuddies.entity.entities;
 
-import com.mojang.logging.LogUtils;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundTakeItemEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.ByIdMap;
 import net.minecraft.util.Mth;
 import net.minecraft.world.*;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.AbstractFurnaceBlock;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
 import net.turtleboi.bytebuddies.entity.ai.*;
+import net.turtleboi.bytebuddies.entity.ai.combat.BuddyOwnerHurtByTargetGoal;
+import net.turtleboi.bytebuddies.entity.ai.combat.BuddyMeleeAttackGoal;
+import net.turtleboi.bytebuddies.entity.ai.combat.BuddyOwnerHurtTargetGoal;
+import net.turtleboi.bytebuddies.entity.ai.farmer.HarvestGoal;
+import net.turtleboi.bytebuddies.entity.ai.farmer.PlantGoal;
+import net.turtleboi.bytebuddies.entity.ai.farmer.TillGoal;
+import net.turtleboi.bytebuddies.entity.ai.miner.QuarryGoal;
+import net.turtleboi.bytebuddies.entity.ai.storage.HaulerGoal;
+import net.turtleboi.bytebuddies.init.ModTags;
 import net.turtleboi.bytebuddies.item.ModItems;
+import net.turtleboi.bytebuddies.item.custom.AugmentItem.*;
 import net.turtleboi.bytebuddies.item.custom.BatteryItem;
+import net.turtleboi.bytebuddies.item.custom.ClipboardItem;
 import net.turtleboi.bytebuddies.item.custom.FloppyDiskItem.*;
+import net.turtleboi.bytebuddies.screen.custom.menu.ByteBuddyDoubleMenu;
 import net.turtleboi.bytebuddies.screen.custom.menu.ByteBuddyMenu;
-import net.turtleboi.bytebuddies.util.InventoryUtil;
-import net.turtleboi.bytebuddies.util.ModTags;
-import net.turtleboi.bytebuddies.util.ToolUtil;
+import net.turtleboi.bytebuddies.screen.custom.menu.ByteBuddyTripleMenu;
+import net.turtleboi.bytebuddies.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BooleanSupplier;
+import java.util.function.Function;
+import java.util.function.IntFunction;
 
 public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
+    public ByteBuddyEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
+        super(entityType, level);
+    }
     public enum BuddyRole {
-        NONE, FARMER, MINER, COMBAT, POTION, STORAGE, ANIMAL
+        NONE(0),
+        FARMER(1),
+        MINER(2),
+        COMBAT(3),
+        POTION(4),
+        STORAGE(5),
+        ANIMAL(6);
+
+        private final int id;
+        BuddyRole(int id) {
+            this.id = id;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        private static final IntFunction<BuddyRole> BY_ID =
+                ByIdMap.continuous(BuddyRole::getId, values(), ByIdMap.OutOfBoundsStrategy.ZERO);
+
+        public static BuddyRole byId(int id) {
+            return BY_ID.apply(id);
+        }
     }
     public enum ChassisMaterial {
         ALUMINUM, IRON, STEEL, NETHERITE, CHARGED_STEEL
     }
+    public enum StorageCellsTier {
+        NONE, BASIC, ADVANCED, ENDER_LINK
+    }
     public enum Mood {
         NEUTRAL, HAPPY, ANNOYED, SLEEP, CONFUSED, CRYING, EVIL, PLEASED, SAD, SURPRISED
     }
-    private final ItemStackHandler mainInv = new ItemStackHandler(9);
-    private final ItemStackHandler augmentInv = new ItemStackHandler(4) {
+    public enum AttackMode {
+        PASSIVE, ASSIST, AGGRESSIVE
+    }
+    private final ItemStackHandler mainInv = new ItemStackHandler(36){
         @Override
         public boolean isItemValid(int slot, ItemStack itemStack) {
             if (itemStack.isEmpty()) return false;
@@ -74,38 +130,38 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
                         ItemStack otherStack = getStackInSlot(otherAugmentSlot);
                         if (!otherStack.isEmpty() && otherStack.is(ModTags.Items.PLATING)) yield false;
                     }
+                    boolean isStorageCell = itemStack.is(ModTags.Items.STORAGE_CELL);
+                    if (isStorageCell) {
+                        int otherAugmentSlot = (slot == 1) ? 2 : 1;
+                        ItemStack otherStack = getStackInSlot(otherAugmentSlot);
+                        if (!otherStack.isEmpty() && otherStack.is(ModTags.Items.STORAGE_CELL)) yield false;
+                    }
                     yield true;
                 }
                 case 3 -> InventoryUtil.isBattery(itemStack);
+                case 4,5,6,7 -> InventoryUtil.isFloppyDisk(itemStack);
+                case 8 -> InventoryUtil.isClipboard(itemStack);
+                case 9,10,11,12,13,14,15,16,17 -> true;
+                case 18,19,20,21,22,23,24,25,26 -> getStorageCellsExtraSlots() >= 9;
+                case 27,28,29,30,31,32,33,34,35 -> getStorageCellsExtraSlots() >= 18;
                 default -> false;
             };
         }
 
         @Override
         protected int getStackLimit(int slot, ItemStack itemStack) {
-            return 1;
+            return switch (slot) {
+                case 0,1,2,3,4,5,6,7,8 -> 1;
+                default -> 64;
+            };
         }
 
         @Override
         protected void onContentsChanged(int slot) {
-            ByteBuddyEntity.this.refreshEffects();
-            recomputeChassisMaterialFromAugments();
-        }
-    };
-    private final ItemStackHandler upgradeInv = new ItemStackHandler(4) {
-        @Override
-        public boolean isItemValid(int slot, ItemStack itemStack) {
-            return InventoryUtil.isFloppyDisk(itemStack);
-        }
-
-        @Override
-        protected int getStackLimit(int slot, ItemStack itemStack) {
-            return 1;
-        }
-
-        @Override
-        protected void onContentsChanged(int slot) {
-            ByteBuddyEntity.this.refreshEffects();
+            if (!level().isClientSide) {
+                refreshEffects();
+                computeChassis();
+            }
         }
     };
     private final EnergyStorage energyStorage = new EnergyStorage(16000, 256, 256);
@@ -113,6 +169,14 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     private final Set<Goal> roleGoals = new HashSet<>();
     @Nullable private BlockPos dockPos;
     private final DiskEffects diskEffects = new DiskEffects();
+    private final AugmentEffects augmentEffects = new AugmentEffects();
+    private static final ChassisMaterial defaultChassis = ChassisMaterial.ALUMINUM;
+    private boolean postLoadInitDone = false;
+    private double augmentPrevX;
+    private double augmentPrevY;
+    private double augmentPrevZ;
+    private double augmentMoveAccumMeters;
+    private static final String momentumUntil = "dynamo_momentum_until";
 
     private boolean farmingEnabled = false;
     private boolean harvestEnabled = false;
@@ -127,6 +191,9 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     private static final int baseCooldown = 20;
     private long cooldownUntil = 0L;
 
+    private static final EntityDataAccessor<Optional<UUID>> OWNER_UUID =
+            SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+
     private static final EntityDataAccessor<Boolean> DATA_SLEEPING =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_WAKING =
@@ -137,6 +204,8 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_SLAMMING =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SLICING =
+            SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Integer> DATA_ROLE =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.INT);
 
@@ -145,76 +214,161 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
 
     private static final EntityDataAccessor<Integer> CHASSIS_MATERIAL =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> STORAGE_CELLS_TIER =
+            SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DISPLAY_RGB =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> MOOD_ID =
             SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.INT);
 
-    private final NonNullList<ItemStack> armorItems = NonNullList.withSize(4, ItemStack.EMPTY);
-    public ByteBuddyEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
-        super(entityType, level);
+    private static final EntityDataAccessor<Integer> ATTACK_MODE =
+            SynchedEntityData.defineId(ByteBuddyEntity.class, EntityDataSerializers.INT);
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(OWNER_UUID, Optional.empty());
+        builder.define(DATA_SLEEPING, true);
+        builder.define(DATA_WAKING, false);
+        builder.define(DATA_WAVING, false);
+        builder.define(DATA_WORKING, false);
+        builder.define(DATA_SLAMMING, false);
+        builder.define(DATA_SLICING, false);
+        builder.define(DATA_ROLE, BuddyRole.NONE.ordinal());
+        builder.define(CHASSIS_MATERIAL, defaultChassis.ordinal());
+        builder.define(STORAGE_CELLS_TIER, StorageCellsTier.NONE.ordinal());
+        builder.define(DATA_ENERGY, 0);
+        builder.define(DISPLAY_RGB, DyeColor.CYAN.getFireworkColor());
+        builder.define(MOOD_ID, Mood.NEUTRAL.ordinal());
+        builder.define(ATTACK_MODE, AttackMode.PASSIVE.ordinal());
     }
 
-    public static AttributeSupplier.Builder createAttributes(){
+    private final NonNullList<ItemStack> armorItems = NonNullList.withSize(4, ItemStack.EMPTY);
+
+    public static AttributeSupplier.Builder createAttributes() {
         return Animal.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 12D)
-                .add(Attributes.MOVEMENT_SPEED, 0.25D)
-                .add(Attributes.FOLLOW_RANGE, 24D)
+                .add(Attributes.MAX_HEALTH, 16.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.24D)
+                .add(Attributes.FOLLOW_RANGE, 18.0D)
+                .add(Attributes.ATTACK_DAMAGE, 1.0D)
+                .add(Attributes.ATTACK_SPEED, 1.6D)
+                .add(Attributes.ATTACK_KNOCKBACK, 0.5D)
+                .add(Attributes.ARMOR, 0.0D)
+                .add(Attributes.ARMOR_TOUGHNESS, 0.0D)
+                .add(Attributes.KNOCKBACK_RESISTANCE, 0.05D)
                 .add(Attributes.SAFE_FALL_DISTANCE, Integer.MAX_VALUE);
+    }
+
+    @Override
+    public void onAddedToLevel() {
+        super.onAddedToLevel();
+        if (!level().isClientSide) {
+            augmentPrevX = this.getX();
+            augmentPrevY = this.getY();
+            augmentPrevZ = this.getZ();
+            if (!postLoadInitDone) {
+                refreshEffects();
+                refreshCombatGoals();
+                postLoadInitDone = true;
+            }
+        }
     }
 
     @Override
     protected void checkInsideBlocks() {
 
     }
+
     public void reloadBuddy(){
-        resetGoals();
+        disableTasks();
         rebuildGoalsForRole();
         refreshEffects();
     }
+
     @Override
     public @NotNull ItemStack getMainHandItem() {
-        return augmentInv.getStackInSlot(0);
+        return mainInv.getStackInSlot(0);
     }
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new PanicGoal(this, 2.0D));
-        this.goalSelector.addGoal(1, new DepositToDockGoal(this));
-        //this.goalSelector.addGoal(2, new GatedGoal(this, this::isPlantEnabled, new PlantGoal(this)));
-        //this.goalSelector.addGoal(3, new GatedGoal(this, this::isHarvestEnabled, new HarvestGoal(this)));
-        //this.goalSelector.addGoal(4, new GatedGoal(this, this::isTillEnabled, new TillGoal(this)));
-        //this.goalSelector.addGoal(2, new GatedGoal(this, this::isQuarryEnabled, new QuarryGoal(this)));
-        //this.goalSelector.addGoal(3, new GatedGoal(this, this::isHarvestEnabled, new HarvestGoal(this)));
-        //this.goalSelector.addGoal(4, new GatedGoal(this, this::isTillEnabled, new TillGoal(this)));
-        this.goalSelector.addGoal(5, new RandomStrollGoal(this, 0.75D));
-        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 3f));
-        this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
-        this.goalSelector.addGoal(8, new RandomWaveAtFriendGoal(this, 6.0D, 120, 40));
+        this.goalSelector.addGoal(0, new AccessInventoryGoal(this));
+        this.goalSelector.addGoal(0, new GatedGoal(
+                this, this::canAct, new FloatGoal(this), 0));
+        this.goalSelector.addGoal(1, new GatedGoal(
+                this, () -> this.canAct() && this.canPanic(), new PanicGoal(this, 2.0D), 0));
+        this.goalSelector.addGoal(2, new GatedGoal(
+                this, () -> this.canAct() && this.getDock().isEmpty(), new BuddyFollowOwnerGoal(this, 1.05, 4.0, 16.0, true), 0));
+        this.goalSelector.addGoal(5, new GatedGoal(
+                this, this::canAct, new BuddyPickUpItemGoal(this, 1.2, 6.0, 0.9, 10), 8));
+        this.goalSelector.addGoal(6, new GatedGoal(
+                this, () -> this.canAct() && this.isInventoryFull(), new DepositToDockGoal(this), 0));
+        this.goalSelector.addGoal(7, new GatedGoal(
+                this, this::canAct, new RandomStrollGoal(this, 0.75D), 0));
+        this.goalSelector.addGoal(8, new GatedGoal(
+                this, this::canAct, new LookAtPlayerGoal(this, Player.class, 3f), 0));
+        this.goalSelector.addGoal(9, new GatedGoal(
+                this, this::canAct, new RandomLookAroundGoal(this), 0));
+        this.goalSelector.addGoal(10, new GatedGoal(this, this::canAct, new RandomWaveAtFriendGoal(this, 6.0D, 120, 40), 0));
     }
 
     private static final class GatedGoal extends Goal {
         private final ByteBuddyEntity byteBuddy;
         private final BooleanSupplier requirement;
         private final Goal lockedGoal;
+        private final int cooldownTicks;
 
-        GatedGoal(ByteBuddyEntity byteBuddy, BooleanSupplier requirement, Goal lockedGoal) {
+        GatedGoal(ByteBuddyEntity byteBuddy, BooleanSupplier requirement, Goal lockedGoal, int cooldownTicks) {
             this.byteBuddy = byteBuddy;
             this.requirement = requirement;
             this.lockedGoal = lockedGoal;
+            this.cooldownTicks = cooldownTicks;
             this.setFlags(lockedGoal.getFlags());
         }
 
         @Override public boolean canUse() {
-            if (!(byteBuddy.level() instanceof ServerLevel sl)) return false;
-            if (!requirement.getAsBoolean()) return false;
-            if (byteBuddy.cooldownActive(sl)) return false;
-            return lockedGoal.canUse();
+            if (byteBuddy.level() instanceof ServerLevel serverLevel) {
+                if (!byteBuddy.canAct()) return false;
+                if (!requirement.getAsBoolean()) {
+                    BotDebug.log(byteBuddy,"[ByteBuddy: " + byteBuddy.getId() + "] GatedGoal " + lockedGoal.getClass().getSimpleName() + ": requirement = false");
+                    return false;
+                }
+
+                if (byteBuddy.cooldownActive(serverLevel)) {
+                    BotDebug.log(byteBuddy,"[ByteBuddy: " + byteBuddy.getId() + "] GatedGoal " + lockedGoal.getClass().getSimpleName() + ": cooldown active");
+                    return false;
+                }
+
+                boolean canUse = lockedGoal.canUse();
+                if (!canUse) {
+                    BotDebug.log(byteBuddy,"[ByteBuddy: " + byteBuddy.getId() + "] GatedGoal " + lockedGoal.getClass().getSimpleName() + ": inner canUse = false");
+                }
+                return canUse;
+            }
+            return false;
         }
 
         @Override public boolean canContinueToUse() {
-            return lockedGoal.canContinueToUse();
+            if (byteBuddy.level() instanceof ServerLevel serverLevel) {
+                if (!byteBuddy.canAct()) {
+                    return false;
+                }
+
+                if (!requirement.getAsBoolean()) {
+                    return false;
+                }
+
+                if (byteBuddy.cooldownActive(serverLevel)) {
+                    return false;
+                }
+
+                boolean continueToUse = lockedGoal.canContinueToUse();
+                if (!continueToUse) {
+                    BotDebug.log(byteBuddy,"[ByteBuddy: " + byteBuddy.getId() + "] GatedGoal " + lockedGoal.getClass().getSimpleName() + ": canContinueToUse = false");
+                }
+                return continueToUse;
+            }
+            return false;
         }
 
         @Override public void start() {
@@ -222,13 +376,19 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         }
 
         @Override public void tick() {
-            lockedGoal.tick();
+            if (byteBuddy.level() instanceof ServerLevel serverLevel) {
+                if (!byteBuddy.canAct() || byteBuddy.cooldownActive(serverLevel) || !requirement.getAsBoolean()) {
+                    lockedGoal.stop();
+                    return;
+                }
+                lockedGoal.tick();
+            }
         }
 
         @Override public void stop() {
             lockedGoal.stop();
             if (byteBuddy.level() instanceof ServerLevel serverLevel) {
-                byteBuddy.armCooldown(serverLevel, 8);
+                byteBuddy.armCooldown(serverLevel, cooldownTicks);
             }
         }
 
@@ -244,6 +404,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     private int wakingAnimationTimeout = 0;
     public final AnimationState workingState = new AnimationState();
     public final AnimationState slamState = new AnimationState();
+    public final AnimationState sliceState = new AnimationState();
     public final AnimationState waveState = new AnimationState();
 
     @Override
@@ -257,19 +418,39 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         this.walkAnimation.update(f, 0.2f);
     }
 
+    public Optional<UUID> getOwnerUUID() {
+        return this.entityData.get(OWNER_UUID);
+    }
+
+    public void setOwnerUUID(@Nullable UUID uuid) {
+        this.entityData.set(OWNER_UUID, Optional.ofNullable(uuid));
+    }
+
+    public void clearOwner() {
+        this.entityData.set(OWNER_UUID, Optional.empty());
+    }
+
+    public boolean hasOwner() {
+        return this.entityData.get(OWNER_UUID).isPresent();
+    }
+
+    public boolean isOwnedBy(@Nullable LivingEntity entity) {
+        if (entity == null) return false;
+        return getOwnerUUID().map(entity.getUUID()::equals).orElse(false);
+    }
+
+    public ServerPlayer getOwner(ServerLevel serverLevel) {
+        var id = getOwnerUUID();
+        return id.map(buddyId -> serverLevel.getServer().getPlayerList().getPlayer(buddyId)).orElse(null);
+    }
+
+    public void setOwner(@Nullable Player player) {
+        setOwnerUUID(player == null ? null : player.getUUID());
+    }
+
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        super.defineSynchedData(builder);
-        builder.define(DATA_SLEEPING, true);
-        builder.define(DATA_WAKING, false);
-        builder.define(DATA_WAVING, false);
-        builder.define(DATA_WORKING, false);
-        builder.define(DATA_SLAMMING, false);
-        builder.define(DATA_ROLE, BuddyRole.NONE.ordinal());
-        builder.define(CHASSIS_MATERIAL, ChassisMaterial.ALUMINUM.ordinal());
-        builder.define(DATA_ENERGY, 0);
-        builder.define(DISPLAY_RGB, DyeColor.CYAN.getFireworkColor());
-        builder.define(MOOD_ID, Mood.NEUTRAL.ordinal());
+    public boolean isEffectiveAi() {
+        return super.isEffectiveAi() && canAct();
     }
 
     public boolean isSleeping() {
@@ -277,17 +458,22 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     }
 
     public void setSleeping(boolean sleeping) {
-        if (sleeping){
-            setMood(Mood.SLEEP);
-            setNoAi(true);
-        }
-        else {
-            setMood(Mood.NEUTRAL);
-            setNoAi(false);
-        }
-
         this.entityData.set(DATA_SLEEPING, sleeping);
-
+        if (level() instanceof ServerLevel serverLevel) {
+            if (sleeping) {
+                armCooldown(serverLevel, Integer.MAX_VALUE);
+                setMood(Mood.SLEEP);
+                getNavigation().stop();
+                setDeltaMovement(0, getDeltaMovement().y * 0.0, 0);
+                setAggressive(false);
+                setWorking(false);
+                setSlamming(false);
+                setMood(Mood.SLEEP);
+            } else {
+                armCooldown(serverLevel, 8);
+                setMood(Mood.NEUTRAL);
+            }
+        }
     }
 
     public boolean isWaking() {
@@ -322,6 +508,14 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         this.entityData.set(DATA_SLAMMING, slamming);
     }
 
+    public boolean isSlicing() {
+        return this.entityData.get(DATA_SLICING);
+    }
+
+    public void setSlicing(boolean slicing) {
+        this.entityData.set(DATA_SLICING, slicing);
+    }
+
     public void setFarmingEnabled(boolean farmingEnabled) {
         this.farmingEnabled = farmingEnabled;
     }
@@ -346,11 +540,11 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         return this.farmingEnabled && this.harvestEnabled;
     }
 
-    public boolean isPlantEnabled()   {
+    public boolean isPlantEnabled() {
         return this.farmingEnabled && this.plantEnabled;
     }
 
-    public boolean isTillEnabled()    {
+    public boolean isTillEnabled() {
         return this.farmingEnabled && this.tillEnabled;
     }
 
@@ -370,7 +564,6 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         return this.haulingEnabled;
     }
 
-
     public boolean cooldownActive(ServerLevel serverLevel) {
         return serverLevel.getGameTime() < this.cooldownUntil;
     }
@@ -379,8 +572,6 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         this.cooldownUntil = serverLevel.getGameTime() + ticks;
     }
 
-
-
     public void setQuarryEnabled(boolean quarryEnabled) {
         this.quarryEnabled = quarryEnabled;
     }
@@ -388,6 +579,35 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     private boolean isQuarryEnabled() {
         return this.miningEnabled & this.quarryEnabled;
     }
+
+    public boolean canAct() {
+        return !isSleeping();
+    }
+
+    public boolean canPanic()   {
+        return getBuddyRole() != BuddyRole.COMBAT;
+    }
+
+    public AttackMode getAttackMode() {
+        int i = entityData.get(ATTACK_MODE);
+        return AttackMode.values()[Mth.clamp(i, 0, AttackMode.values().length - 1)];
+    }
+
+    public void setAttackMode(AttackMode mode) {
+        entityData.set(ATTACK_MODE, mode.ordinal());
+        if (!level().isClientSide) {
+            refreshCombatGoals();
+        }
+    }
+
+    private static AttackMode cycleAttackMode(AttackMode attackMode, boolean backwards) {
+        AttackMode[] attackValues = AttackMode.values();
+        int attackModes = attackValues.length;
+        int i = attackMode.ordinal();
+        int next = backwards ? (i - 1 + attackModes) % attackModes : (i + 1) % attackModes;
+        return attackValues[next];
+    }
+
 
     @Override
     public @Nullable SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
@@ -406,7 +626,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
 
     @Override
     public ItemStack getItemBySlot(EquipmentSlot slot) {
-        if (slot == EquipmentSlot.MAINHAND) return augmentInv.getStackInSlot(0);
+        if (slot == EquipmentSlot.MAINHAND) return mainInv.getStackInSlot(0);
         if (slot == EquipmentSlot.OFFHAND)  return ItemStack.EMPTY;
         return this.armorItems.get(slot.getIndex());
     }
@@ -415,10 +635,10 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     public void setItemSlot(EquipmentSlot slot, ItemStack itemStack) {
         if (slot == EquipmentSlot.MAINHAND) {
             if (isAnyTool(itemStack)) {
-                ItemStack originalItemStack = augmentInv.getStackInSlot(0);
+                ItemStack originalItemStack = mainInv.getStackInSlot(0);
                 ItemStack newItemStack = itemStack.copy();
                 newItemStack.setCount(1);
-                augmentInv.setStackInSlot(0, newItemStack);
+                mainInv.setStackInSlot(0, newItemStack);
                 this.onEquipItem(slot, originalItemStack, newItemStack);
                 return;
             }
@@ -443,7 +663,57 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     }
 
     public ItemStack getHeldTool() {
-        return augmentInv.getStackInSlot(0);
+        return mainInv.getStackInSlot(0);
+    }
+
+    public int getBatterySlot() {
+        return 3;
+    }
+
+    public ItemStack getBattery() {
+        return mainInv.getStackInSlot(3);
+    }
+
+    private boolean isInventoryFull() {
+        IItemHandler inventory = getMainInv();
+        for (int i = 0; i < inventory.getSlots(); i++) {
+            if (inventory.getStackInSlot(i).isEmpty()) return false;
+        }
+        return true;
+    }
+
+    public boolean canFitInInventory(ItemStack incoming) {
+        if (incoming == null || incoming.isEmpty()) {
+            return false;
+        }
+        ItemStackHandler inv = getMainInv();
+        ItemStack toInsert = incoming.copy();
+        for (int i = 0; i < inv.getSlots(); i++) {
+            toInsert = inv.insertItem(i, toInsert, true);
+            if (toInsert.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    @Override
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
+        super.dropCustomDeathLoot(level, damageSource, recentlyHit);
+        dropAllFromHandler(getMainInv());
+    }
+
+    private void dropAllFromHandler(IItemHandler itemHandler) {
+        for (int slotIndex = 0; slotIndex < itemHandler.getSlots(); slotIndex++) {
+            ItemStack itemStack = itemHandler.getStackInSlot(slotIndex);
+            if (!itemStack.isEmpty()) {
+                spawnAtLocation(itemStack.copy());
+                if (itemHandler instanceof ItemStackHandler mutableHandler) {
+                    mutableHandler.setStackInSlot(slotIndex, ItemStack.EMPTY);
+                } else {
+                    itemHandler.extractItem(slotIndex, itemStack.getCount(), false);
+                }
+            }
+        }
     }
 
     @Override
@@ -458,11 +728,12 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
             }
 
             if (tickCount % 10 == 0) {
-                consumeEnergy(1);
+                consumeEnergy(5);
             }
 
             if (tickCount % 20 == 0) {
                 BatteryItem.buddyDrainBatteries(this);
+                tickAugmentRuntime();
                 if (supportAuraEnabled()) {
                     SupportAuras.tickSupportLattice(this);
                 }
@@ -473,6 +744,9 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
                 setSyncedEnergy(currentEnergy);
             }
 
+            tickDynamoMovement();
+            tickMomentumExpiry();
+            tickMagnet();
         } else {
             setupAnimationStates();
         }
@@ -530,6 +804,14 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         } else {
             if (this.slamState.isStarted()) this.slamState.stop();
         }
+
+        if (isSlicing()) {
+            if (!this.sliceState.isStarted()) {
+                this.sliceState.start(this.tickCount);
+            }
+        } else {
+            if (this.sliceState.isStarted()) this.sliceState.stop();
+        }
     }
 
     public void onTaskSuccess(TaskType taskType, BlockPos blockPos) {
@@ -540,37 +822,86 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     public ChassisMaterial getChassisMaterial() {
         int ordinal = this.entityData.get(CHASSIS_MATERIAL);
         int max = ChassisMaterial.values().length - 1;
-        if (ordinal < 0) ordinal = 0;
-        if (ordinal > max) ordinal = max;
-        return ChassisMaterial.values()[ordinal];
+        int clamped = Mth.clamp(ordinal, 0, max);
+        return ChassisMaterial.values()[clamped];
     }
 
     public void setChassisMaterial(ChassisMaterial material) {
         this.entityData.set(CHASSIS_MATERIAL, material.ordinal());
     }
 
-    private void recomputeChassisMaterialFromAugments() {
-        ChassisMaterial computed = computeChassisFromAugments();
-        if (computed != getChassisMaterial()) {
+    private void computeChassis() {
+        if (level().isClientSide) return;
+        ChassisMaterial computed = computeChassisTier();
+        ChassisMaterial current = getChassisMaterial();
+        if (computed != current) {
             setChassisMaterial(computed);
         }
     }
 
-    private ChassisMaterial computeChassisFromAugments() {
-        ChassisMaterial result = ChassisMaterial.ALUMINUM;
-        for (int i = 0; i < this.augmentInv.getSlots(); i++) {
-            ItemStack stack = this.augmentInv.getStackInSlot(i);
+    private ChassisMaterial computeChassisTier() {
+        ChassisMaterial chassisMaterial = ChassisMaterial.ALUMINUM;
+        for (int i = 1; i < 3; i++) {
+            ItemStack stack = this.mainInv.getStackInSlot(i);
             if (stack.is(ModItems.REINFORCED_CHARGED_STEEL_PLATING.get())) {
-                result = ChassisMaterial.CHARGED_STEEL;
-            } else if ((stack.is(ModItems.REINFORCED_NETHERITE_PLATING.get())) && result.ordinal() < ChassisMaterial.NETHERITE.ordinal()) {
-                result = ChassisMaterial.NETHERITE;
-            } else if ((stack.is(ModItems.REINFORCED_STEEL_PLATING.get())) && result.ordinal() < ChassisMaterial.STEEL.ordinal()) {
-                result = ChassisMaterial.STEEL;
-            } else if ((stack.is(ModItems.REINFORCED_IRON_PLATING.get())) && result.ordinal() < ChassisMaterial.IRON.ordinal()) {
-                result = ChassisMaterial.IRON;
+                chassisMaterial = ChassisMaterial.CHARGED_STEEL;
+            } else if (stack.is(ModItems.REINFORCED_NETHERITE_PLATING.get())) {
+                if (chassisMaterial.ordinal() < ChassisMaterial.NETHERITE.ordinal()) {
+                    chassisMaterial = ChassisMaterial.NETHERITE;
+                }
+            } else if (stack.is(ModItems.REINFORCED_STEEL_PLATING.get())) {
+                if (chassisMaterial.ordinal() < ChassisMaterial.STEEL.ordinal()) {
+                    chassisMaterial = ChassisMaterial.STEEL;
+                }
+            } else if (stack.is(ModItems.REINFORCED_IRON_PLATING.get())) {
+                if (chassisMaterial.ordinal() < ChassisMaterial.IRON.ordinal()) {
+                    chassisMaterial = ChassisMaterial.IRON;
+                }
             }
         }
-        return result;
+
+        return chassisMaterial;
+    }
+
+    public StorageCellsTier getStorageCellsTier() {
+        int ordinal = entityData.get(STORAGE_CELLS_TIER);
+        return StorageCellsTier.values()[Mth.clamp(ordinal, 0, StorageCellsTier.values().length-1)];
+    }
+
+    public void setStorageCellsTier(StorageCellsTier tier) {
+        entityData.set(STORAGE_CELLS_TIER, tier.ordinal());
+    }
+
+    public int getStorageCellsExtraSlots() {
+        return switch (getStorageCellsTier()) {
+            case BASIC -> 9;
+            case ADVANCED, ENDER_LINK -> 18;
+            default -> 0;
+        };
+    }
+
+    private StorageCellsTier computeStorageCellsTierFromMainInv() {
+        StorageCellsTier best = StorageCellsTier.NONE;
+        for (int slot = 1; slot <= 2; slot++) {
+            ItemStack storageCellInSlot = mainInv.getStackInSlot(slot);
+            if (storageCellInSlot.isEmpty()) continue;
+            if (storageCellInSlot.is(ModItems.ENDERLINK_STORAGE_CELL.get())) {
+                best = StorageCellsTier.ENDER_LINK;
+            } else if (storageCellInSlot.is(ModItems.ADVANCED_STORAGE_CELL.get())) {
+                if (best.ordinal() < StorageCellsTier.ADVANCED.ordinal()) best = StorageCellsTier.ADVANCED;
+            } else if (storageCellInSlot.is(ModItems.BASIC_STORAGE_CELL.get())) {
+                if (best.ordinal() < StorageCellsTier.BASIC.ordinal()) best = StorageCellsTier.BASIC;
+            }
+        }
+        return best;
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> dataAccessor) {
+        super.onSyncedDataUpdated(dataAccessor);
+        if (CHASSIS_MATERIAL.equals(dataAccessor)) {
+
+        }
     }
 
     public int getDisplayColorRGB() {
@@ -621,10 +952,14 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     @Override
     public void addAdditionalSaveData(CompoundTag nbtData) {
         super.addAdditionalSaveData(nbtData);
+        getOwnerUUID().ifPresent(uuid -> nbtData.putUUID("Owner", uuid));
         nbtData.putInt("role", this.buddyRole.ordinal());
+
         if (this.dockPos != null) {
             nbtData.put("dockPos", NbtUtils.writeBlockPos(this.dockPos));
         }
+
+        nbtData.putBoolean("Sleeping", this.isSleeping());
         nbtData.putBoolean("FarmingEnabled", this.farmingEnabled);
         nbtData.putBoolean("HarvestEnabled", this.harvestEnabled);
         nbtData.putBoolean("PlantEnabled", this.plantEnabled);
@@ -635,11 +970,13 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
 
         var provider = level().registryAccess();
         nbtData.put("MainInv", this.mainInv.serializeNBT(provider));
-        nbtData.put("AugmentInv", this.augmentInv.serializeNBT(provider));
-        nbtData.put("UpgradeInv", this.upgradeInv.serializeNBT(provider));
+
         nbtData.putInt("Energy", this.energyStorage.getEnergyStored());
         nbtData.putInt("ChassisMaterial", this.entityData.get(CHASSIS_MATERIAL));
+        nbtData.putInt("StorageTier", this.entityData.get(STORAGE_CELLS_TIER));
+        nbtData.putInt("AttackMode", this.entityData.get(ATTACK_MODE));
         nbtData.putInt("DisplayRGB", this.entityData.get(DISPLAY_RGB));
+
         int moodIdx = Mth.clamp(this.entityData.get(MOOD_ID), 0, Mood.values().length - 1);
         nbtData.putString("Mood", Mood.values()[moodIdx].name());
     }
@@ -647,83 +984,78 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag nbtData) {
         super.readAdditionalSaveData(nbtData);
+        if (nbtData.hasUUID("Owner")) setOwnerUUID(nbtData.getUUID("Owner")); else clearOwner();
 
-        setSleeping(nbtData.getBoolean("Sleeping"));
-        setNoAi(isSleeping());
-        this.buddyRole = BuddyRole.values()[nbtData.getInt("role")];
-        setBuddyRole(this.buddyRole);
+        boolean sleeping = nbtData.getBoolean("Sleeping");
+        setSleeping(sleeping);
+        setNoAi(sleeping);
+
+        int roleOrdinal = Mth.clamp(nbtData.getInt("role"), 0, BuddyRole.values().length - 1);
+        this.buddyRole = BuddyRole.values()[roleOrdinal];
+        this.entityData.set(DATA_ROLE, roleOrdinal);
+
         this.dockPos = NbtUtils.readBlockPos(nbtData, "dockPos").orElse(null);
 
-        if (nbtData.contains("FarmingEnabled")) {
-            this.farmingEnabled = nbtData.getBoolean("FarmingEnabled");
-        }
-        if (nbtData.contains("HarvestEnabled")) {
-            this.harvestEnabled = nbtData.getBoolean("HarvestEnabled");
-        }
-        if (nbtData.contains("PlantEnabled")) {
-            this.plantEnabled = nbtData.getBoolean("PlantEnabled");
-        }
-        if (nbtData.contains("TillEnabled")) {
-            this.tillEnabled = nbtData.getBoolean("TillEnabled");
-        }
-        if (nbtData.contains("MiningEnabled")) {
-            this.miningEnabled = nbtData.getBoolean("MiningEnabled");
-        }
-        if (nbtData.contains("QuarryEnabled")) {
-            this.quarryEnabled = nbtData.getBoolean("QuarryEnabled");
-        }
-        if (nbtData.contains("HaulingEnabled")) {
-            this.haulingEnabled = nbtData.getBoolean("HaulingEnabled");
-        }
+        if (nbtData.contains("FarmingEnabled")) this.farmingEnabled = nbtData.getBoolean("FarmingEnabled");
+        if (nbtData.contains("HarvestEnabled")) this.harvestEnabled = nbtData.getBoolean("HarvestEnabled");
+        if (nbtData.contains("PlantEnabled")) this.plantEnabled = nbtData.getBoolean("PlantEnabled");
+        if (nbtData.contains("TillEnabled")) this.tillEnabled = nbtData.getBoolean("TillEnabled");
+        if (nbtData.contains("MiningEnabled")) this.miningEnabled = nbtData.getBoolean("MiningEnabled");
+        if (nbtData.contains("QuarryEnabled")) this.quarryEnabled = nbtData.getBoolean("QuarryEnabled");
+        if (nbtData.contains("HaulingEnabled")) this.haulingEnabled = nbtData.getBoolean("HaulingEnabled");
 
         var provider = level().registryAccess();
-        if (nbtData.contains("MainInv")) {
-            this.mainInv.deserializeNBT(provider, nbtData.getCompound("MainInv"));
-        }
-        if (nbtData.contains("AugmentInv")) {
-            this.augmentInv.deserializeNBT(provider, nbtData.getCompound("AugmentInv"));
-        }
-        if (nbtData.contains("UpgradeInv")) {
-            this.upgradeInv.deserializeNBT(provider, nbtData.getCompound("UpgradeInv"));
-        }
+        if (nbtData.contains("MainInv")) this.mainInv.deserializeNBT(provider, nbtData.getCompound("MainInv"));
+
         if (nbtData.contains("Energy")) {
             setEnergyUnsafe(nbtData.getInt("Energy"));
+            setSyncedEnergy(this.energyStorage.getEnergyStored());
         }
 
         if (nbtData.contains("ChassisMaterial")) {
-            int ordinal = nbtData.getInt("ChassisMaterial");
-            int max = ChassisMaterial.values().length - 1;
-            if (ordinal < 0) ordinal = 0;
-            if (ordinal > max) ordinal = max;
+            int ordinal = Mth.clamp(nbtData.getInt("ChassisMaterial"), 0, ChassisMaterial.values().length - 1);
             this.entityData.set(CHASSIS_MATERIAL, ordinal);
         } else {
-            this.entityData.set(CHASSIS_MATERIAL, ChassisMaterial.ALUMINUM.ordinal());
+            this.entityData.set(CHASSIS_MATERIAL, defaultChassis.ordinal());
         }
 
-        if (nbtData.contains("DisplayRGB")) {
-            this.entityData.set(DISPLAY_RGB, nbtData.getInt("DisplayRGB"));
+        if (nbtData.contains("StorageTier")) {
+            int ordinal = Mth.clamp(nbtData.getInt("StorageTier"), 0, StorageCellsTier.values().length - 1);
+            this.entityData.set(STORAGE_CELLS_TIER, ordinal);
+        } else {
+            this.entityData.set(STORAGE_CELLS_TIER, StorageCellsTier.NONE.ordinal());
         }
+
+        if (nbtData.contains("AttackMode")) {
+            int ordinal = Mth.clamp(nbtData.getInt("AttackMode"), 0, AttackMode.values().length - 1);
+            this.entityData.set(ATTACK_MODE, ordinal);
+        }
+
+        if (nbtData.contains("DisplayRGB")) this.entityData.set(DISPLAY_RGB, nbtData.getInt("DisplayRGB"));
 
         int moodOrdinal = 0;
         if (nbtData.contains("Mood")) {
             try {
-                Mood mood = Mood.valueOf(nbtData.getString("Mood"));
-                moodOrdinal = mood.ordinal();
-            } catch (IllegalArgumentException ignored) {
-
-            }
+                moodOrdinal = Mood.valueOf(nbtData.getString("Mood")).ordinal();
+            } catch (IllegalArgumentException ignored) {}
         } else if (nbtData.contains("MoodId")) {
             moodOrdinal = nbtData.getInt("MoodId");
         }
-        moodOrdinal = Mth.clamp(moodOrdinal, 0, Mood.values().length - 1);
-        this.entityData.set(MOOD_ID, moodOrdinal);
-    }
+        this.entityData.set(MOOD_ID, Mth.clamp(moodOrdinal, 0, Mood.values().length - 1));
 
+        if (!level().isClientSide) {
+            refreshEffects();
+            refreshCombatGoals();
+        }
+        postLoadInitDone = true;
+    }
 
     @Override
     protected @NotNull InteractionResult mobInteract(Player player, InteractionHand interactionHand) {
         if (!level().isClientSide) {
-            if (isSleeping()) {
+            if (isSleeping() && !hasOwner()) {
+                setOwner(player);
+                player.displayClientMessage(Component.literal("Buddy bound to " + player.getName().getString()), true);
                 awaken();
                 return InteractionResult.CONSUME;
             }
@@ -753,6 +1085,12 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
                 setHaulingEnabled(true);
                 player.displayClientMessage(Component.literal("Set bot role to " + buddyRole), true);
                 return InteractionResult.sidedSuccess(level().isClientSide);
+            } else if (inHand.is(Items.SHIELD)) {
+                setBuddyRole(BuddyRole.COMBAT);
+                inHand.shrink(1);
+                setHaulingEnabled(true);
+                player.displayClientMessage(Component.literal("Set bot role to " + buddyRole), true);
+                return InteractionResult.sidedSuccess(level().isClientSide);
             } else if (inHand.getItem() instanceof DyeItem dyeItem) {
                 DyeColor dye = dyeItem.getDyeColor();
                 int rgb = dye.getFireworkColor();
@@ -775,20 +1113,70 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
                 }
                 return InteractionResult.sidedSuccess(level().isClientSide);
             }
+            else if (inHand.getItem() instanceof SwordItem) {
+                if (!level().isClientSide) {
+                    boolean backwards = player.isShiftKeyDown();
+                    AttackMode next = cycleAttackMode(getAttackMode(), backwards);
+                    setAttackMode(next);
+                    player.displayClientMessage(Component.literal("Mode: " + next.name()), true);
+                }
+                return InteractionResult.sidedSuccess(level().isClientSide);
+            }
 
-            if (!isSleeping() && mainHand.isEmpty() && offHand.isEmpty()) {
+
+            if (!isSleeping() && !isWaking() && mainHand.isEmpty() && offHand.isEmpty()) {
                 if (player instanceof ServerPlayer serverPlayer) {
-                    serverPlayer.openMenu(new SimpleMenuProvider((containerId, inventory, interactingPlayer) ->
-                                    new ByteBuddyMenu(containerId, inventory, this),
-                                    Component.literal("ByteBuddy")),
-                            buf -> buf.writeInt(this.getId())
-                    );
+                    openStorageMenu(serverPlayer, this);
                     return InteractionResult.sidedSuccess(level().isClientSide);
                 }
             }
-
         }
         return super.mobInteract(player, interactionHand);
+    }
+
+    public static void openStorageMenu(ServerPlayer serverPlayer, ByteBuddyEntity byteBuddy) {
+        byteBuddy.refreshEffects();
+        serverPlayer.openMenu(
+                new SimpleMenuProvider((containerId, inventory, player) -> {
+                    int slots = byteBuddy.getStorageCellsExtraSlots();
+                    if (slots == 18) {
+                        return new ByteBuddyTripleMenu(containerId, inventory, byteBuddy);
+                    } else if (slots == 9) {
+                        return new ByteBuddyDoubleMenu(containerId, inventory, byteBuddy);
+                    } else {
+                        return new ByteBuddyMenu(containerId, inventory, byteBuddy);
+                    }
+                }, Component.literal("ByteBuddy")),
+                buf -> buf.writeInt(byteBuddy.getId())
+        );
+    }
+
+    private int openGuiCount = 0;
+    @Nullable private UUID currentViewerId = null;
+
+    public void onMenuOpened(Player player) {
+        if (player == null || player.level().isClientSide) { return; }
+        openGuiCount++;
+        currentViewerId = player.getUUID();
+    }
+
+    public void onMenuClosed(Player player) {
+        if (player == null || player.level().isClientSide) { return; }
+        openGuiCount = Math.max(0, openGuiCount - 1);
+        if (openGuiCount == 0) {
+            currentViewerId = null;
+        }
+    }
+
+    public boolean isInteracting() {
+        return openGuiCount > 0;
+    }
+
+    @Nullable
+    public Player getCurrentViewer() {
+        if (!(level() instanceof ServerLevel serverLevel)) { return null; }
+        if (currentViewerId == null) { return null; }
+        return serverLevel.getPlayerByUUID(currentViewerId);
     }
 
     public void awaken() {
@@ -803,14 +1191,6 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         return this.mainInv;
     }
 
-    public ItemStackHandler getUpgradeInv() {
-        return this.upgradeInv;
-    }
-
-    public ItemStackHandler getAugmentInv() {
-        return this.augmentInv;
-    }
-
     public IEnergyStorage getEnergyStorage() {
         return this.energyStorage;
     }
@@ -823,16 +1203,20 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         } catch (Exception ignored) {}
     }
 
-    public BuddyRole getBuddyRole() {
-        int roleData = this.entityData.get(DATA_ROLE);
-        return BuddyRole.values()[Mth.clamp(roleData, 0, BuddyRole.values().length-1)];
-    }
 
     public void setBuddyRole(BuddyRole newRole) {
         if (newRole == null) return;
         this.buddyRole = newRole;
-        this.entityData.set(DATA_ROLE, newRole.ordinal());
+        this.entityData.set(DATA_ROLE, newRole.getId());
         reloadBuddy();
+    }
+
+    public BuddyRole getBuddyRole() {
+        return BuddyRole.byId(this.entityData.get(DATA_ROLE));
+    }
+
+    public void setBuddyRoleById(int id) {
+        setBuddyRole(BuddyRole.byId(id));
     }
 
     public Optional<BlockPos> getDock() {
@@ -842,7 +1226,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     public void setDock(BlockPos blockPos) {
         this.dockPos = blockPos.immutable();
         if (!level().isClientSide) {
-            LogUtils.getLogger().info("[ByteBuddies] bot id={} dock set to {}", this.getId(), blockPos);
+            BotDebug.log(this, "[ByteBuddies] bot id=" + this.getId() + "dock set to " + blockPos);
         }
     }
 
@@ -851,7 +1235,135 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     }
 
     public void refreshEffects() {
-        this.diskEffects.recomputeFrom(upgradeInv);
+        this.diskEffects.recomputeFrom(mainInv);
+        this.augmentEffects.recomputeFrom(this.mainInv, this);
+        StorageCellsTier tierBefore = getStorageCellsTier();
+        StorageCellsTier tierAfter  = computeStorageCellsTierFromMainInv();
+        if (!level().isClientSide ) {
+            if (tierBefore != tierAfter) {
+                setStorageCellsTier(tierAfter);
+                enforceStorageCapacity();
+            }
+        }
+    }
+
+    private void enforceStorageCapacity() {
+        if (level() instanceof ServerLevel serverLevel) {
+            int extraSlots = getStorageCellsExtraSlots();
+
+            final int coreStart = 9, coreEnd = 17;
+            final int firstUpgradeStart = 18, firstUpgradeEnd = 26;
+            final int secondUpgradeStart = 27, secondUpgradeEnd = 35;
+
+            IItemHandler coreDestination = new RangeItemHandler(mainInv, coreStart, coreEnd);
+            IItemHandler firstUpgradeDestination = (extraSlots >= 9) ? new RangeItemHandler(mainInv, firstUpgradeStart, firstUpgradeEnd) : null;
+            IItemHandler secondUpgradeDestination = (extraSlots >= 18) ? new RangeItemHandler(mainInv, secondUpgradeStart, secondUpgradeEnd) : null;
+
+            Function<ItemStack, ItemStack> tryInsert = itemStack -> {
+                if (itemStack.isEmpty()) return ItemStack.EMPTY;
+                ItemStack leftoverItems = ItemHandlerHelper.insertItemStacked(coreDestination, itemStack, false);
+                if (leftoverItems.isEmpty()) return ItemStack.EMPTY;
+                if (firstUpgradeDestination != null) {
+                    leftoverItems = ItemHandlerHelper.insertItemStacked(firstUpgradeDestination, leftoverItems, false);
+                    if (leftoverItems.isEmpty()) return ItemStack.EMPTY;
+                }
+                if (secondUpgradeDestination != null) {
+                    leftoverItems = ItemHandlerHelper.insertItemStacked(secondUpgradeDestination, leftoverItems, false);
+                }
+                return leftoverItems;
+            };
+
+            if (extraSlots < 18) {
+                for (int slot = secondUpgradeStart; slot <= secondUpgradeEnd; slot++) {
+                    ItemStack stackInSlot = mainInv.getStackInSlot(slot);
+                    if (stackInSlot.isEmpty()) continue;
+
+                    mainInv.setStackInSlot(slot, ItemStack.EMPTY);
+                    ItemStack leftover = tryInsert.apply(stackInSlot.copy());
+                    if (!leftover.isEmpty()) {
+                        Containers.dropItemStack(serverLevel, getX() + 0.5, getY() + 0.75, getZ() + 0.5, leftover);
+                    }
+                }
+            }
+
+            if (extraSlots < 9) {
+                for (int slot = firstUpgradeStart; slot <= firstUpgradeEnd; slot++) {
+                    ItemStack stackInSlot = mainInv.getStackInSlot(slot);
+                    if (stackInSlot.isEmpty()) continue;
+
+                    mainInv.setStackInSlot(slot, ItemStack.EMPTY);
+                    ItemStack leftover = tryInsert.apply(stackInSlot.copy());
+                    if (!leftover.isEmpty()) {
+                        Containers.dropItemStack(serverLevel, getX() + 0.5, getY() + 0.75, getZ() + 0.5, leftover);
+                    }
+                }
+            }
+        }
+    }
+
+    private static final class RangeItemHandler implements IItemHandler {
+        private final ItemStackHandler itemStackHandler;
+        private final int startSlot, endSlot;
+
+        RangeItemHandler(ItemStackHandler itemStackHandler, int startSlot, int end) {
+            this.itemStackHandler = itemStackHandler;
+            this.startSlot = startSlot;
+            this.endSlot = end;
+        }
+
+        @Override public int getSlots() {
+            return (endSlot - startSlot + 1);
+        }
+
+        private int map(int slot) {
+            return startSlot + slot;
+        }
+
+        @Override public @NotNull ItemStack getStackInSlot(int slot) {
+            if (slot < 0 || slot >= getSlots()) return ItemStack.EMPTY;
+            return itemStackHandler.getStackInSlot(map(slot));
+        }
+
+        @Override public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack itemStack, boolean simulate) {
+            if (slot < 0 || slot >= getSlots()) return itemStack;
+            return itemStackHandler.insertItem(map(slot), itemStack, simulate);
+        }
+
+        @Override public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            if (slot < 0 || slot >= getSlots()) return ItemStack.EMPTY;
+            return itemStackHandler.extractItem(map(slot), amount, simulate);
+        }
+
+        @Override public int getSlotLimit(int slot) {
+            if (slot < 0 || slot >= getSlots()) return 0;
+            return itemStackHandler.getSlotLimit(map(slot));
+        }
+
+        @Override public boolean isItemValid(int slot, @NotNull ItemStack itemStack) {
+            if (slot < 0 || slot >= getSlots()) return false;
+            return itemStackHandler.isItemValid(map(slot), itemStack);
+        }
+    }
+
+    @Override
+    public boolean fireImmune() {
+        return augmentEffects.fireResistant();
+    }
+
+    public ItemStack getClipboardStack() {
+        return mainInv.getStackInSlot(8);
+    }
+
+    @Nullable
+    public BlockPos getFirstPos() {
+        ItemStack clipboard = getClipboardStack();
+        return ClipboardItem.getFirstPosition(clipboard).orElse(null);
+    }
+
+    @Nullable
+    public BlockPos getSecondPos() {
+        ItemStack clipboard = getClipboardStack();
+        return ClipboardItem.getSecondPosition(clipboard).orElse(null);
     }
 
     public int effectiveRadius() {
@@ -911,12 +1423,14 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
 
         switch (getBuddyRole()) {
             case FARMER -> {
-                this.roleGoals.add(new GatedGoal(this, this::isPlantEnabled, new PlantGoal(this)));
-                this.roleGoals.add(new GatedGoal(this, this::isHarvestEnabled, new HarvestGoal(this)));
-                this.roleGoals.add(new GatedGoal(this, this::isTillEnabled, new TillGoal(this)));
+                enableFarming();
+                this.roleGoals.add(new GatedGoal(this, () -> this.canAct() && this.isPlantEnabled(), new PlantGoal(this), scaledCooldownTicks()));
+                this.roleGoals.add(new GatedGoal(this, () ->  this.canAct() && this.isHarvestEnabled(), new HarvestGoal(this), scaledCooldownTicks()));
+                this.roleGoals.add(new GatedGoal(this, () -> this.canAct() && this.isTillEnabled(), new TillGoal(this), scaledCooldownTicks()));
             }
             case MINER -> {
-                this.roleGoals.add(new GatedGoal(this, this::isQuarryEnabled, new QuarryGoal(this)));
+                enableMining();
+                this.roleGoals.add(new GatedGoal(this, () -> this.canAct() && this.isQuarryEnabled(), new QuarryGoal(this), scaledCooldownTicks()));
             }
             case COMBAT -> {
                 // combat goals later
@@ -925,7 +1439,8 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
                 // brewing goals later
             }
             case STORAGE -> {
-                this.roleGoals.add(new GatedGoal(this, this::isHaulingEnabled, new HaulerGoal(this)));
+                enabledStorage();
+                this.roleGoals.add(new GatedGoal(this, () -> this.canAct() && this.isHaulingEnabled(), new HaulerGoal(this), scaledCooldownTicks()));
             }
             case ANIMAL -> {
                 // husbandry goals later
@@ -936,13 +1451,30 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         for (Goal goals : roleGoals) this.goalSelector.addGoal(priority++, goals);
     }
 
-    private void resetGoals () {
+    private void disableTasks() {
         setFarmingEnabled(false);
         setHarvestEnabled(false);
         setPlantEnabled(false);
         setTillEnabled(false);
         setMiningEnabled(false);
         setQuarryEnabled(false);
+        setHaulingEnabled(false);
+    }
+
+    private void enableFarming() {
+        setFarmingEnabled(true);
+        setHarvestEnabled(true);
+        setPlantEnabled(true);
+        setTillEnabled(true);
+    }
+
+    private void enableMining() {
+        setMiningEnabled(true);
+        setQuarryEnabled(true);
+    }
+
+    private void enabledStorage() {
+        setHaulingEnabled(true);
     }
 
     public static final class PlantRequest {
@@ -1119,6 +1651,233 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         }
     }
 
+    private void tickAugmentRuntime() {
+        if (augmentEffects.solarEnabled()) {
+            if (this.level().isDay() && this.level().canSeeSky(this.blockPosition())) {
+                this.getEnergyStorage().receiveEnergy((int)Math.round(augmentEffects.solarChargePerSecond()), false);
+            }
+        }
+
+        if (augmentEffects.geothermalEnabled()) {
+            if (isNearHeatSource()) {
+                this.getEnergyStorage().receiveEnergy((int)Math.round(augmentEffects.geothermalChargePerSecond()), false);
+            }
+        }
+
+        if (augmentEffects.arcWelderEnabled()) {
+            if (this.getHealth() < this.getMaxHealth()) {
+                if (this.getEnergyStorage().extractEnergy(5, true) > 0) {
+                    this.getEnergyStorage().extractEnergy(5, false);
+                    this.heal((float) augmentEffects.selfRepairPerSecond());
+                }
+            }
+        }
+    }
+
+    private boolean isNearHeatSource() {
+        BlockPos origin = this.blockPosition();
+        int radius = 2;
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -1; dy <= 2; dy++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    BlockPos blockPos = origin.offset(dx, dy, dz);
+                    BlockState blockState = this.level().getBlockState(blockPos);
+                    if (blockState.is(Blocks.LAVA) || blockState.is(Blocks.LAVA_CAULDRON) || blockState.is(Blocks.MAGMA_BLOCK)) {
+                        return true;
+                    }
+                    if (blockState.getBlock() instanceof AbstractFurnaceBlock && blockState.getValue(AbstractFurnaceBlock.LIT)) {
+                        return true;
+                    }
+                    if (blockState.getBlock() instanceof CampfireBlock && blockState.getValue(CampfireBlock.LIT)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private void tickDynamoMovement() {
+        if (!augmentEffects.dynamoEnabled()) {
+            return;
+        }
+
+        double dx = this.getX() - augmentPrevX;
+        double dy = this.getY() - augmentPrevY;
+        double dz = this.getZ() - augmentPrevZ;
+
+        augmentPrevX = this.getX();
+        augmentPrevY = this.getY();
+        augmentPrevZ = this.getZ();
+
+        double moved = Math.sqrt(dx*dx + dy*dy + dz*dz);
+        augmentMoveAccumMeters += moved;
+
+        if (augmentMoveAccumMeters >= 1.0) {
+            int meters = (int)Math.floor(augmentMoveAccumMeters);
+            augmentMoveAccumMeters -= meters;
+            int charge = (int)Math.round(augmentEffects.dynamoChargePerMeter() * meters);
+            if (charge > 0) {
+                this.getEnergyStorage().receiveEnergy(charge, false);
+            }
+        }
+    }
+
+    public void onWorkActionResolved() {
+        if (augmentEffects.dynamoEnabled()) {
+            addMomentum(augmentEffects.momentumTicks(), augmentEffects.momentumSpeedMultiplier());
+        }
+    }
+
+    private void addMomentum(int ticks, double speedMultiplier) {
+        if (ticks <= 0) {
+            return;
+        }
+
+        if (Math.abs(speedMultiplier - 1.0) <= 1.0e-4) {
+            return;
+        }
+
+        AttributeModifierUtil.applyTransientModifier(
+                this,
+                Attributes.MOVEMENT_SPEED,
+                "dynamo_momentum",
+                speedMultiplier - 1.0,
+                AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL
+        );
+        this.getPersistentData().putInt(momentumUntil, this.tickCount + ticks);
+    }
+
+    private void tickMomentumExpiry() {
+        int until = this.getPersistentData().getInt(momentumUntil);
+        if (until > 0 && this.tickCount >= until) {
+            AttributeModifierUtil.removeModifier(this, Attributes.MOVEMENT_SPEED, "dynamo_momentum");
+            this.getPersistentData().remove(momentumUntil);
+        }
+    }
+
+    private void tickMagnet() {
+        if (!augmentEffects.magnetEnabled()) {
+            return;
+        }
+        if (this.level().isClientSide) {
+            return;
+        }
+
+        double radius = augmentEffects.magnetRadiusBlocks();
+        if (radius <= 0.0) {
+            return;
+        }
+
+        AABB boundingBox = new AABB(
+                this.getX() - radius, this.getY() - radius, this.getZ() - radius,
+                this.getX() + radius, this.getY() + radius, this.getZ() + radius
+        );
+
+        List<ItemEntity> items = this.level().getEntitiesOfClass(ItemEntity.class, boundingBox);
+        for (ItemEntity item : items) {
+            if (!item.isAlive()) {
+                continue;
+            }
+
+            Vec3 toBuddy = new Vec3(
+                    this.getX() - item.getX(),
+                    (this.getY() + (this.getBbHeight()/2)) - item.getY(),
+                    this.getZ() - item.getZ()
+            );
+            double distance = toBuddy.length();
+            if (distance < 0.01) {
+                continue;
+            }
+
+            if (distance <= 0.9) {
+                pickupItem(item);
+            }
+
+            double pullFactor = Mth.clamp((radius - distance) / radius, 0.08, 0.9);
+            double accel = 0.10 * pullFactor;
+            Vec3 push = toBuddy.normalize().scale(accel);
+
+            Vec3 newVelocity = item.getDeltaMovement().add(push);
+
+            double maxSpeed = 0.35;
+            double lenSq = newVelocity.lengthSqr();
+            if (lenSq > (maxSpeed * maxSpeed)) {
+                newVelocity = newVelocity.normalize().scale(maxSpeed);
+            }
+
+            item.setDeltaMovement(newVelocity);
+            item.hasImpulse = true;
+        }
+    }
+
+    private void pickupItem(ItemEntity itemEntity) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        ItemStack stack = itemEntity.getItem();
+        int before = stack.getCount();
+
+        ItemStack leftover = InventoryUtil.mergeInto(this.getMainInv(), stack);
+        int taken = before - leftover.getCount();
+
+        if (taken <= 0) {
+            return;
+        }
+
+        serverLevel.getChunkSource().broadcastAndSend(
+                this,
+                new ClientboundTakeItemEntityPacket(itemEntity.getId(), this.getId(), taken)
+        );
+
+        serverLevel.playSound(
+                null,
+                this.getX(), this.getY(), this.getZ(),
+                SoundEvents.ITEM_PICKUP,
+                SoundSource.PLAYERS,
+                0.2F,
+                1.0F + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 0.4F
+        );
+
+        if (leftover.isEmpty()) {
+            itemEntity.discard();
+        } else {
+            itemEntity.setItem(leftover);
+        }
+    }
+
+    public void onMeleeHit(LivingEntity victim) {
+        if (augmentEffects.shockOnHit()) {
+            victim.hurt(this.damageSources().generic(), 2.0F);
+            victim.knockback(0.4, this.getX() - victim.getX(), this.getZ() - victim.getZ());
+        }
+    }
+
+    public float rangedInaccuracyMultiplier() {
+        if (augmentEffects.gyroEnabled()) {
+            return 0.80F;
+        } else {
+            return 1.00F;
+        }
+    }
+
+    public boolean augmentCanLowFly() {
+        return augmentEffects.propellerEnabled();
+    }
+
+    public boolean augmentCanSwimWork() {
+        return augmentEffects.aquaEnabled();
+    }
+
+    public boolean augmentEnderLinkEnabled() {
+        return augmentEffects.enderLinkEnabled();
+    }
+
+    public AugmentEffects getAugmentEffects() {
+        return augmentEffects;
+    }
+
     public static final class SupportAuras {
         public static void tickSupportLattice(ByteBuddyEntity byteBuddy) {
             Level level = byteBuddy.level();
@@ -1142,6 +1901,18 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
             List<Player> players = level.getEntitiesOfClass(Player.class, new AABB(buddyPos).inflate(5));
             for (Player player : players) {
                 player.addEffect(
+                        new MobEffectInstance(
+                                MobEffects.MOVEMENT_SPEED,
+                                40,
+                                0,
+                                true,
+                                false)
+                );
+            }
+
+            List<ByteBuddyEntity> byteBuddies = level.getEntitiesOfClass(ByteBuddyEntity.class, new AABB(buddyPos).inflate(5));
+            for (ByteBuddyEntity buddyEntity : byteBuddies) {
+                buddyEntity.addEffect(
                         new MobEffectInstance(
                                 MobEffects.MOVEMENT_SPEED,
                                 40,
@@ -1177,5 +1948,63 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         BREED,
         WRANGLE,
         NONE
+    }
+
+    private Goal followOwnerGoal;
+    private Goal ownerHurtBY;
+    private Goal ownerHurt;
+    private Goal hurtAnythingHostile;
+    private Goal meleeAttackGoal;
+
+    public void refreshCombatGoals() {
+        if (followOwnerGoal != null) goalSelector.removeGoal(followOwnerGoal);
+        if (ownerHurtBY != null) targetSelector.removeGoal(ownerHurtBY);
+        if (ownerHurt != null) targetSelector.removeGoal(ownerHurt);
+        if (hurtAnythingHostile != null) targetSelector.removeGoal(hurtAnythingHostile);
+        if (meleeAttackGoal != null) goalSelector.removeGoal(meleeAttackGoal);
+
+        boolean ableToFight = getBuddyRole() == BuddyRole.COMBAT;
+        boolean hasOwner = getOwnerUUID().isPresent();
+        boolean hasDock = getDock().isPresent();
+        if (!(ableToFight && hasOwner && !hasDock)) return;
+
+        followOwnerGoal = new BuddyFollowOwnerGoal(this, 1.05, 4.0, 18.0, true);
+        goalSelector.addGoal(4, followOwnerGoal);
+
+        meleeAttackGoal = new BuddyMeleeAttackGoal(this, 1.2, 1.5,true);
+        goalSelector.addGoal(3, meleeAttackGoal);
+
+        switch (getAttackMode()) {
+            case PASSIVE -> {
+
+            }
+            case ASSIST -> {
+                ownerHurtBY = new BuddyOwnerHurtByTargetGoal(this);
+                ownerHurt = new BuddyOwnerHurtTargetGoal(this);
+                targetSelector.addGoal(1, ownerHurtBY);
+                targetSelector.addGoal(2, ownerHurt);
+            }
+            case AGGRESSIVE -> {
+                hurtAnythingHostile = new NearestAttackableTargetGoal<>(
+                        this,
+                        Monster.class,
+                        10,
+                        true,
+                        false,
+                        this::isValidAggressiveTarget
+                );
+                targetSelector.addGoal(1, hurtAnythingHostile);
+            }
+        }
+    }
+
+    private boolean isValidAggressiveTarget(LivingEntity livingEntity) {
+        if (livingEntity instanceof Player player) {
+            if (getOwnerUUID().map(player.getUUID()::equals).orElse(false)) {
+                return false;
+            }
+            return !player.isCreative() && !player.isSpectator();
+        }
+        return true;
     }
 }

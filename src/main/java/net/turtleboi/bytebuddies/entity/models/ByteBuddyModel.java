@@ -81,28 +81,34 @@ public class ByteBuddyModel <T extends Entity> extends HierarchicalModel<T> impl
 
         ByteBuddyEntity byteBuddy = (ByteBuddyEntity) entity;
 
-        if (byteBuddy.isWaking()) {
-            this.animate(byteBuddy.wakeUpState, ByteBuddyAnimations.WAKE_UP_ANIMATION, ageInTicks, 1f);
-        }
+        if (!byteBuddy.isSleeping()) {
+            if (byteBuddy.isWaking()) {
+                this.animate(byteBuddy.wakeUpState, ByteBuddyAnimations.WAKE_UP_ANIMATION, ageInTicks, 1f);
+            }
 
-        if (!byteBuddy.isSleeping() && !byteBuddy.isWaking() ) {
-            this.applyHeadRotation(netHeadYaw, headPitch);
-            this.animateWalk(ByteBuddyAnimations.WALKING_ANIMATION, limbSwing, limbSwingAmount, 2f, 2.4f);
-            this.animate(byteBuddy.idleAnimationState, ByteBuddyAnimations.IDLE_ANIMATION, ageInTicks, 1f);
+            if (!byteBuddy.isWaking()) {
+                this.applyHeadRotation(netHeadYaw, headPitch);
+                this.animateWalk(ByteBuddyAnimations.WALKING_ANIMATION, limbSwing, limbSwingAmount, 2f, 2.4f);
+                this.animate(byteBuddy.idleAnimationState, ByteBuddyAnimations.IDLE_ANIMATION, ageInTicks, 1f);
+            }
+
+            if (byteBuddy.isWaving()) {
+                this.animate(byteBuddy.waveState, ByteBuddyAnimations.WAVING_ANIMATION, ageInTicks, 1f);
+            }
+
+            if (byteBuddy.isWorking()) {
+                this.animate(byteBuddy.workingState, ByteBuddyAnimations.WORK_ANIMATION, ageInTicks, 1f);
+            }
+
+            if (byteBuddy.isSlamming()) {
+                this.animate(byteBuddy.slamState, ByteBuddyAnimations.SLAM_ANIMATION, ageInTicks, 1f);
+            }
+
+            if (byteBuddy.isSlicing()) {
+                this.animate(byteBuddy.sliceState, ByteBuddyAnimations.SLICE_ANIMATION, ageInTicks, 1f);
+            }
         } else {
             this.animate(byteBuddy.sleepPoseState, ByteBuddyAnimations.INACTIVE_ANIMATION, ageInTicks, 1f);
-        }
-
-        if (byteBuddy.isWaving()) {
-            this.animate(byteBuddy.waveState, ByteBuddyAnimations.WAVING_ANIMATION, ageInTicks, 1f);
-        }
-
-        if (byteBuddy.isWorking()) {
-            this.animate(byteBuddy.workingState, ByteBuddyAnimations.WORK_ANIMATION, ageInTicks, 1f);
-        }
-
-        if (byteBuddy.isSlamming()) {
-            this.animate(byteBuddy.slamState, ByteBuddyAnimations.SLAM_ANIMATION, ageInTicks, 1f);
         }
     }
 

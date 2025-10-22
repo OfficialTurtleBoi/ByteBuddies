@@ -1,14 +1,19 @@
 {
   "values": [
+    "bytebuddies:propeller_unit",
     "bytebuddies:aquatic_motor",
     "bytebuddies:solar_array",
     "bytebuddies:gyroscopic_stabilizer",
     "bytebuddies:arc_welder",
     "bytebuddies:geothermal_regulator",
     "bytebuddies:dynamo_coil",
+    "bytebuddies:magnetic_crescent",
     "bytebuddies:reinforced_iron_plating",
     "bytebuddies:reinforced_steel_plating",
     "bytebuddies:reinforced_netherite_plating",
-    "bytebuddies:reinforced_charged_steel_plating"
+    "bytebuddies:reinforced_charged_steel_plating",
+    "bytebuddies:basic_storage_cell",
+    "bytebuddies:advanced_storage_cell",
+    "bytebuddies:enderlink_storage_cell"
   ]
 }

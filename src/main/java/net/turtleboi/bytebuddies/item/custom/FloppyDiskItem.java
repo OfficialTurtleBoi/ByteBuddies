@@ -7,10 +7,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Containers;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CropBlock;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -19,13 +16,14 @@ import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity.*;
 import net.turtleboi.bytebuddies.util.InventoryUtil;
 
 import java.util.List;
+import java.util.Locale;
 
 public class FloppyDiskItem extends Item {
     private final String tierKey;
     private final String colorKey;
 
     public FloppyDiskItem(Properties properties, String tierKey, String colorKey) {
-        super(properties);
+        super(properties.rarity(FloppyTier.fromName(tierKey).rarity()));
         this.tierKey = tierKey;
         this.colorKey = colorKey;
     }
@@ -51,6 +49,30 @@ public class FloppyDiskItem extends Item {
 
         tooltip.add(Component.translatable("tooltip.bytebuddies.floppy.desc." + colorKey)
                 .withStyle(ChatFormatting.DARK_GRAY));
+    }
+
+    public enum FloppyTier {
+        COPPER(Rarity.COMMON),
+        IRON(Rarity.UNCOMMON),
+        GOLD(Rarity.RARE);
+
+        private final Rarity rarity;
+        FloppyTier(Rarity rarity) {
+            this.rarity = rarity;
+        }
+
+        public Rarity rarity() {
+            return rarity;
+        }
+
+        public static FloppyTier fromName(String name) {
+            return switch (name.toLowerCase(Locale.ROOT)) {
+                case "copper" -> COPPER;
+                case "iron" -> IRON;
+                case "gold" -> GOLD;
+                default -> COPPER;
+            };
+        }
     }
 
     static final class TierColors {
@@ -170,8 +192,6 @@ public class FloppyDiskItem extends Item {
                     }
                 }
             }
-
-            //more
         }
 
         public static void tryGiveByproduct(ByteBuddyEntity byteBuddy, TaskType taskType, BlockPos blockPos) {

@@ -83,7 +83,7 @@ public class DepositToDockGoal extends Goal {
         }
 
         if (byteBuddy.getDock().isEmpty()) {
-            failTask(BotDebug.FailReason.NO_DOCK, "no station bound");
+            //failTask(BotDebug.FailReason.NO_DOCK, "no station bound");
             return false;
         }
 
@@ -462,7 +462,7 @@ public class DepositToDockGoal extends Goal {
         if (dockInventory == null) return;
 
         int totalMoved = 0;
-        for (int slot = 0; slot < byteBuddy.getMainInv().getSlots(); slot++) {
+        for (int slot = 9; slot < byteBuddy.getMainInv().getSlots(); slot++) {
             ItemStack stackInSlot = byteBuddy.getMainInv().getStackInSlot(slot);
             if (stackInSlot.isEmpty()) continue;
 

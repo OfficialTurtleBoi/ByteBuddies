@@ -1,7 +1,6 @@
 package net.turtleboi.bytebuddies.screen.custom;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -16,7 +15,9 @@ import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.network.payloads.ReloadData;
 import net.turtleboi.bytebuddies.network.payloads.SleepData;
+import net.turtleboi.bytebuddies.network.payloads.TeleportData;
 import net.turtleboi.bytebuddies.screen.custom.menu.DockingStationMenu;
+import net.turtleboi.bytebuddies.screen.custom.widget.TinyIconButton;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.NumberFormat;
@@ -85,22 +86,44 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
         );
 
         sleepButton = addRenderableWidget(
-                Button.builder(Component.literal("S"), button -> asleepBuddy(Objects.requireNonNull(this.menu.getBuddyByIndexClient(selected))))
-                        .bounds(bx+44,   by+26, 12, 12)
-                        .build()
+                Button.builder(Component.empty(),
+                                b -> setSleepStatus(Objects.requireNonNull(this.menu.getBuddyByIndexClient(selected))))
+                        .bounds(bx + 44, by + 26, 12, 12)
+                        .tooltip(net.minecraft.client.gui.components.Tooltip.create(
+                                net.minecraft.network.chat.Component.literal("Sleep Buddy")))
+                        .build(TinyIconButton.buttonFactory(
+                                GUI_ADDONS_TEXTURE, 128, 128,
+                                32, 24,
+                                this::isSleepLocked
+                        ))
         );
-
 
         restartButton = addRenderableWidget(
-                Button.builder(Component.literal("↺"), button -> restartBuddy(Objects.requireNonNull(this.menu.getBuddyByIndexClient(selected))))
-                        .bounds(bx+64,   by+26, 12, 12)
-                        .build()
+                Button.builder(Component.empty(),
+                                b -> reloadBuddy(Objects.requireNonNull(this.menu.getBuddyByIndexClient(selected))))
+                        .bounds(bx + 64, by + 26, 12, 12)
+                        .tooltip(net.minecraft.client.gui.components.Tooltip.create(
+                                net.minecraft.network.chat.Component.literal("Reset Job")))
+                        .build(TinyIconButton.buttonFactory(
+                                GUI_ADDONS_TEXTURE, 128, 128,
+                                32, 72,
+                                this::isRestartLocked
+                        ))
         );
+
         teleportButton = addRenderableWidget(
-                Button.builder(Component.literal("TP"), button -> asleepBuddy(Objects.requireNonNull(this.menu.getBuddyByIndexClient(selected))))
-                        .bounds(bx+84,   by+26, 12, 12)
-                        .build()
+                Button.builder(Component.empty(),
+                                b -> teleportBuddy(Objects.requireNonNull(this.menu.getBuddyByIndexClient(selected))))
+                        .bounds(bx + 84, by + 26, 12, 12)
+                        .tooltip(net.minecraft.client.gui.components.Tooltip.create(
+                                net.minecraft.network.chat.Component.literal("Teleport to Dock")))
+                        .build(TinyIconButton.buttonFactory(
+                                GUI_ADDONS_TEXTURE, 128, 128,
+                                32, 96,
+                                this::isTeleportLocked
+                        ))
         );
+
         updateNavState();
 
 
@@ -252,18 +275,22 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
         if (selected < 0) selected += count;
         updateNavState();
     }
-    private void asleepBuddy(ByteBuddyEntity byteBuddyEntity) {
+
+    private void setSleepStatus(ByteBuddyEntity byteBuddyEntity) {
         boolean asleep = byteBuddyEntity.isSleeping();
-        SleepData.setAsleep(byteBuddyEntity,!asleep);
-    }
-    private void restartBuddy(ByteBuddyEntity byteBuddyEntity) {
-        boolean asleep = byteBuddyEntity.isSleeping();
-        ReloadData.setreload(byteBuddyEntity);
+        SleepData.setSleepingStatus(byteBuddyEntity, !asleep);
     }
 
+    private void reloadBuddy(ByteBuddyEntity byteBuddyEntity) {
+        ReloadData.reloadBuddy(byteBuddyEntity);
+    }
 
-
-
+    private void teleportBuddy(ByteBuddyEntity byteBuddyEntity) {
+        TeleportData.teleportBuddy(byteBuddyEntity,
+                this.menu.dockBlock.getBlockPos().getX() + 0.5,
+                this.menu.dockBlock.getBlockPos().getY() + 1,
+                this.menu.dockBlock.getBlockPos().getZ() + 0.5);
+    }
 
     private void updateNavState() {
         int count = this.menu.getBuddyCount();
@@ -276,4 +303,17 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
         if (count == 0) selected = 0;
         else if (selected >= count) selected = count - 1;
     }
+
+    private boolean isSleepLocked() {
+        return menu.getBuddyByIndexClient(selected) == null;
+    }
+
+    private boolean isRestartLocked() {
+        return menu.getBuddyByIndexClient(selected) == null;
+    }
+
+    private boolean isTeleportLocked() {
+        return menu.getBuddyByIndexClient(selected) == null || getEnergyStoredSafe() < 50;
+    }
+
 }

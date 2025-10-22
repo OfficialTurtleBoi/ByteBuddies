@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": {
+      "item": "minecraft:blaze_rod"
+    },
+    "C": {
+      "item": "bytebuddies:chip"
+    },
+    "G": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "P": {
+      "item": "bytebuddies:gold_plating"
+    },
+    "S": {
+      "item": "bytebuddies:basic_storage_cell"
+    }
+  },
+  "pattern": [
+    "PBP",
+    "SCS",
+    "PGP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:advanced_storage_cell"
+  }
+}

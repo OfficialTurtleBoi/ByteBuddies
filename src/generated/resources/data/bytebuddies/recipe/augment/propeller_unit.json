@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "A": {
+      "item": "bytebuddies:aluminum_ingot"
+    },
+    "F": {
+      "item": "minecraft:feather"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "pattern": [
+    " F ",
+    "AIA",
+    " F "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:propeller_unit"
+  }
+}

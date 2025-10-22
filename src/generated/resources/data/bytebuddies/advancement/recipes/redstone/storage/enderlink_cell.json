@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_adv_cell": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bytebuddies:advanced_storage_cell"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "bytebuddies:storage/enderlink_cell"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_adv_cell"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "bytebuddies:storage/enderlink_cell"
+    ]
+  }
+}

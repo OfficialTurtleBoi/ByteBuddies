@@ -7,7 +7,7 @@ import net.neoforged.neoforge.common.data.BlockTagsProvider;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.block.ModBlocks;
-import net.turtleboi.bytebuddies.util.ModTags;
+import net.turtleboi.bytebuddies.init.ModTags;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;

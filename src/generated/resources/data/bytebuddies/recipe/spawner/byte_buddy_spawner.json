@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "bytebuddies:aluminum_plating"
+    },
+    "B": {
+      "tag": "bytebuddies:battery"
+    },
+    "C": {
+      "item": "bytebuddies:chip"
+    },
+    "S": {
+      "item": "bytebuddies:bluestone_block"
+    }
+  },
+  "pattern": [
+    "ACA",
+    "ASA",
+    "ABA"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:byte_buddy_spawner"
+  }
+}

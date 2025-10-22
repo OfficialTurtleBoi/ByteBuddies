@@ -2,6 +2,7 @@ package net.turtleboi.bytebuddies.entity.renderers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -12,9 +13,7 @@ import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.entity.entities.SwordSweepEntity;
 
 public class SwordSweepRenderer extends EntityRenderer<SwordSweepEntity> {
-
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "textures/entity/sword_sweep.png");
-
     public SwordSweepRenderer(EntityRendererProvider.Context context) {
         super(context);
     }
@@ -23,18 +22,13 @@ public class SwordSweepRenderer extends EntityRenderer<SwordSweepEntity> {
     public void render(SwordSweepEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
 
-        // Rotate to face camera (billboarding)
         poseStack.translate(0.0F, 0.1F, 0.0F);
-        poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
+        poseStack.mulPose(Axis.ZP.rotationDegrees(45));
 
-        // Scale the sprite
+
         float scale = 1.0F;
         poseStack.scale(scale, scale, scale);
-
-        // Get texture
-        VertexConsumer builder = buffer.getBuffer(RenderType.entityCutout(TEXTURE));
-
-        // Draw a square quad (centered)
+        VertexConsumer builder = buffer.getBuffer(RenderType.entityTranslucentEmissive(TEXTURE));
         drawQuad(builder, poseStack, packedLight);
 
         poseStack.popPose();

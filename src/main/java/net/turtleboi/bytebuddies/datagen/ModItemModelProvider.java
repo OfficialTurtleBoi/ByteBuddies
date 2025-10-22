@@ -44,12 +44,13 @@ public class ModItemModelProvider extends ItemModelProvider {
         basicItem(ModItems.SUPER_CHIP.get());
         handheldItem(ModItems.WRENCH.get());
         basicItem(ModItems.CLIPBOARD.get());
+        basicItem(ModItems.PROPELLER_UNIT.get());
         basicItem(ModItems.AQUATIC_MOTOR.get());
         basicItem(ModItems.SOLAR_ARRAY.get());
         basicItem(ModItems.GYROSCOPIC_STABILIZER.get());
         basicItem(ModItems.ARC_WELDER.get());
         basicItem(ModItems.GEOTHERMAL_REGULATOR.get());
-        basicItem(ModItems.DYANAMO_COIL.get());
+        basicItem(ModItems.DYNAMO_COIL.get());
         basicItem(ModItems.MAGNETIC_CRESCENT.get());
         basicItem(ModItems.BASIC_STORAGE_CELL.get());
         basicItem(ModItems.ADVANCED_STORAGE_CELL.get());
@@ -59,7 +60,7 @@ public class ModItemModelProvider extends ItemModelProvider {
         basicItem(ModItems.REINFORCED_NETHERITE_PLATING.get());
         basicItem(ModItems.REINFORCED_CHARGED_STEEL_PLATING.get());
         ModItems.FLOPPY_DISKS.values().forEach(this::layeredFloppyModel);
-        withExistingParent(ModItems.BYTEBUDDY_SPAWN_EGG.getId().getPath(), mcLoc("item/template_spawn_egg"));
+        //withExistingParent(ModItems.BYTEBUDDY_SPAWN_EGG.getId().getPath(), mcLoc("item/template_spawn_egg"));
     }
 
     private ItemModelBuilder layeredFloppyModel(DeferredItem<Item> itemObject) {

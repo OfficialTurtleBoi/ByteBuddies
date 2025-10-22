@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.TriState;
+import net.neoforged.neoforge.items.ItemStackHandler;
 import net.turtleboi.bytebuddies.block.custom.DockingStationBlock;
 import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
@@ -172,18 +173,24 @@ public class GoalUtil {
             Blocks.COARSE_DIRT
     );
 
-    public static boolean canTillAt(Level level, BlockPos blockPos) {
+
+    public static boolean canTillAt(Level level, @Nullable BlockPos blockPos) {
+        if (level == null || blockPos == null) return false;
         if (!level.isLoaded(blockPos)) return false;
+        if (!level.isInWorldBounds(blockPos)) return false;
+
         BlockState soilCandidate = level.getBlockState(blockPos);
 
         if (soilCandidate.is(Blocks.FARMLAND)) return false;
         if (!TILLABLE.contains(soilCandidate.getBlock())) return false;
 
         BlockPos aboveSoil = blockPos.above();
-        BlockState aboveSoilState = level.getBlockState(aboveSoil);
+        if (!level.isLoaded(aboveSoil)) return false;
 
+        BlockState aboveSoilState = level.getBlockState(aboveSoil);
         return (aboveSoilState.isAir() || aboveSoilState.canBeReplaced()) && level.getFluidState(aboveSoil).isEmpty();
     }
+
 
     public static boolean canMineAt(Level level, BlockPos pos) {
         if (!level.isLoaded(pos)) return false;
@@ -215,10 +222,10 @@ public class GoalUtil {
 
     public static boolean hasRequiredTool(ByteBuddyEntity byteBuddy, ToolType toolType) {
         if (toolType == ToolType.EMPTY_HAND) return true;
-        var buddyAugmentInventory = byteBuddy.getAugmentInv();
+        ItemStackHandler buddyInventory = byteBuddy.getMainInv();
         int heldToolSlot = byteBuddy.getHeldToolSlot();
-        ItemStack toolStack = heldToolSlot >= 0 && heldToolSlot < buddyAugmentInventory.getSlots()
-                ? buddyAugmentInventory.getStackInSlot(heldToolSlot)
+        ItemStack toolStack = heldToolSlot >= 0 && heldToolSlot < buddyInventory.getSlots()
+                ? buddyInventory.getStackInSlot(heldToolSlot)
                 : ItemStack.EMPTY;
 
         boolean hasRequiredTool = !toolStack.isEmpty() && matchesToolType(toolStack, toolType);

@@ -25,7 +25,7 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import net.turtleboi.bytebuddies.block.ModBlockEntities;
 import net.turtleboi.bytebuddies.item.custom.BatteryItem;
 import net.turtleboi.bytebuddies.util.InventoryUtil;
-import net.turtleboi.bytebuddies.util.ModTags;
+import net.turtleboi.bytebuddies.init.ModTags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

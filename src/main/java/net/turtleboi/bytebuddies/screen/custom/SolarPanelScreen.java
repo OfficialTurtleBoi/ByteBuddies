@@ -67,6 +67,7 @@ public class SolarPanelScreen extends AbstractContainerScreen<SolarPanelMenu> {
         int x = (width - this.imageWidth) / 2;
         int y = (height - this.imageHeight) / 2;
         drawEnergyBar(guiGraphics, x + energyX, y + energyY);
+        drawGenerationBolt(guiGraphics, x + 82, y + 5);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
         drawEnergyToolTip(guiGraphics, mouseX, mouseY);
     }
@@ -105,6 +106,14 @@ public class SolarPanelScreen extends AbstractContainerScreen<SolarPanelMenu> {
         }
     }
 
+    private void drawGenerationBolt(GuiGraphics guiGraphics, int x, int y) {
+        if (getGenerating()) {
+            guiGraphics.blit(GUI_TEXTURE, x, y, 176, 0, 12, 15, 256, 256);
+        } else {
+            guiGraphics.blit(GUI_TEXTURE, x, y, 188, 0, 12, 15, 256, 256);
+        }
+    }
+
     private long getEnergyStoredSafe() {
         try {
             return Math.max(0, this.menu.getEnergyStored());
@@ -118,6 +127,14 @@ public class SolarPanelScreen extends AbstractContainerScreen<SolarPanelMenu> {
             return Math.max(1, this.menu.getMaxEnergyStored());
         } catch (Throwable t) {
             return 1;
+        }
+    }
+
+    private boolean getGenerating() {
+        try {
+            return this.menu.getGeneratingBinary();
+        } catch (Throwable t) {
+            return false;
         }
     }
 

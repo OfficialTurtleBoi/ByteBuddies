@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bytebuddies:charged_steel_ingot"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "bytebuddies:charged_steel_nugget"
+  }
+}

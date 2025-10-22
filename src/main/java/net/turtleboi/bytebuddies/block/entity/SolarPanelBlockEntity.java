@@ -4,11 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
@@ -21,20 +17,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.turtleboi.bytebuddies.block.ModBlockEntities;
-import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.item.custom.BatteryItem;
 import net.turtleboi.bytebuddies.util.InventoryUtil;
-import net.turtleboi.bytebuddies.util.ModTags;
+import net.turtleboi.bytebuddies.init.ModTags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.UUID;
 
 public class SolarPanelBlockEntity extends BlockEntity implements IEnergyStorage, MenuProvider {
     private final EnergyStorage energyStorage = new EnergyStorage(48000, 640, 640);
@@ -59,6 +51,7 @@ public class SolarPanelBlockEntity extends BlockEntity implements IEnergyStorage
         }
     };
     private int tickCount = 0;
+    private boolean generating = false;
 
     public SolarPanelBlockEntity(BlockPos pos, BlockState blockState) {
         super(ModBlockEntities.SOLAR_PANEL_BE.get(), pos, blockState);
@@ -85,6 +78,9 @@ public class SolarPanelBlockEntity extends BlockEntity implements IEnergyStorage
                         energyGenerated = energyGenerated / 2;
                     }
                     generateEnergy(energyGenerated);
+                    setGenerating(true);
+                } else {
+                    setGenerating(false);
                 }
             }
 
@@ -162,6 +158,21 @@ public class SolarPanelBlockEntity extends BlockEntity implements IEnergyStorage
 
     @Override public boolean canReceive() {
         return energyStorage.canReceive();
+    }
+
+    public boolean isGenerating() {
+        return generating;
+    }
+
+    public void setGenerating(boolean generating) {
+        this.generating = generating;
+    }
+
+    public int isGeneratingBinary() {
+        if (generating) {
+            return 1;
+        }
+        return 0;
     }
 
     public int generateEnergy(int energyGenerated) {

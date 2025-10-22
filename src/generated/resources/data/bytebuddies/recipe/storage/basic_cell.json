@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "C": {
+      "item": "bytebuddies:chip"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "bytebuddies:iron_plating"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "S": {
+      "item": "bytebuddies:bluestone_dust"
+    }
+  },
+  "pattern": [
+    "PIP",
+    "SCS",
+    "PRP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:basic_storage_cell"
+  }
+}

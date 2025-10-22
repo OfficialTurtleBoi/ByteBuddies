@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": {
+      "item": "bytebuddies:bluestone_dust"
+    },
+    "C": {
+      "item": "bytebuddies:chip"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    }
+  },
+  "pattern": [
+    " G ",
+    "BCB",
+    " G "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:gyroscopic_stabilizer"
+  }
+}

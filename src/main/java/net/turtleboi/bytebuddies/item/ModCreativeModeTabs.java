@@ -20,6 +20,7 @@ public class ModCreativeModeTabs {
             () -> CreativeModeTab.builder().icon(() -> new ItemStack(ModItems.CHIP.get()))
                     .title(Component.translatable("creativetab.bytebuddies.bytebuddies_tab"))
                     .displayItems((itemDisplayParameters, pOutput) -> {
+                        pOutput.accept(ModItems.BYTEBUDDY_SPAWN_EGG);
                         pOutput.accept(ModBlocks.DOCKING_STATION);
                         pOutput.accept(ModBlocks.GENERATOR);
                         pOutput.accept(ModBlocks.SOLAR_PANEL);
@@ -32,7 +33,7 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModBlocks.DEEPSLATE_BLUESTONE_ORE);
                         pOutput.accept(ModBlocks.BLUESTONE_BLOCK);
                         pOutput.accept(ModItems.BUSTER_SWORD);
-                        pOutput.accept(ModItems.CHARGED_STEEL_SWORD);
+                        pOutput.accept(ModItems.TERRABLADE);
                         pOutput.accept(ModItems.RAW_BAUXITE);
                         pOutput.accept(ModItems.ALUMINUM_INGOT);
                         pOutput.accept(ModItems.ALUMINUM_NUGGET);
@@ -68,12 +69,13 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.SUPER_CHIP);
                         pOutput.accept(ModItems.WRENCH);
                         pOutput.accept(ModItems.CLIPBOARD);
+                        pOutput.accept(ModItems.PROPELLER_UNIT);
                         pOutput.accept(ModItems.AQUATIC_MOTOR);
                         pOutput.accept(ModItems.SOLAR_ARRAY);
                         pOutput.accept(ModItems.GYROSCOPIC_STABILIZER);
                         pOutput.accept(ModItems.ARC_WELDER);
                         pOutput.accept(ModItems.GEOTHERMAL_REGULATOR);
-                        pOutput.accept(ModItems.DYANAMO_COIL);
+                        pOutput.accept(ModItems.DYNAMO_COIL);
                         pOutput.accept(ModItems.MAGNETIC_CRESCENT);
                         pOutput.accept(ModItems.BASIC_STORAGE_CELL);
                         pOutput.accept(ModItems.ADVANCED_STORAGE_CELL);
@@ -89,7 +91,6 @@ public class ModCreativeModeTabs {
                                 if (itemRegistryObject != null) pOutput.accept(itemRegistryObject.get());
                             }
                         }
-                        pOutput.accept(ModItems.BYTEBUDDY_SPAWN_EGG);
                     }).build());
 
     public static void register(IEventBus eventBus){

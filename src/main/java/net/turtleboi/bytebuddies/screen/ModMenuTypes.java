@@ -9,10 +9,7 @@ import net.neoforged.neoforge.network.IContainerFactory;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.bytebuddies.ByteBuddies;
-import net.turtleboi.bytebuddies.screen.custom.menu.ByteBuddyMenu;
-import net.turtleboi.bytebuddies.screen.custom.menu.DockingStationMenu;
-import net.turtleboi.bytebuddies.screen.custom.menu.GeneratorMenu;
-import net.turtleboi.bytebuddies.screen.custom.menu.SolarPanelMenu;
+import net.turtleboi.bytebuddies.screen.custom.menu.*;
 
 public class ModMenuTypes {
     public static final DeferredRegister<MenuType<?>> MENUS =
@@ -20,6 +17,12 @@ public class ModMenuTypes {
 
     public static final DeferredHolder<MenuType<?>, MenuType<ByteBuddyMenu>> BUDDY_MENU =
             registerMenuType("buddy_menu", ByteBuddyMenu::clientFactory);
+
+    public static final DeferredHolder<MenuType<?>, MenuType<ByteBuddyDoubleMenu>> BUDDY_DOUBLE_MENU =
+            registerMenuType("buddy_double_menu", ByteBuddyDoubleMenu::clientFactory);
+
+    public static final DeferredHolder<MenuType<?>, MenuType<ByteBuddyTripleMenu>> BUDDY_TRIPLE_MENU =
+            registerMenuType("buddy_triple_menu", ByteBuddyTripleMenu::clientFactory);
 
     public static final DeferredHolder<MenuType<?>, MenuType<DockingStationMenu>> DOCKING_STATION_MENU =
             registerMenuType("docking_station_menu", DockingStationMenu::clientFactory);

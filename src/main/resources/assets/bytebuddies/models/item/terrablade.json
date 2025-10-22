@@ -1,0 +1,18 @@
+{
+  "parent": "minecraft:item/handheld",
+  "loader": "neoforge:separate_transforms",
+  "base": {
+    "parent": "bytebuddies:item/terrablade_held"
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "bytebuddies:item/terrablade_item"
+    },
+    "ground": {
+      "parent": "bytebuddies:item/terrablade_item"
+    },
+    "fixed": {
+      "parent": "bytebuddies:item/terrablade_item"
+    }
+  }
+}

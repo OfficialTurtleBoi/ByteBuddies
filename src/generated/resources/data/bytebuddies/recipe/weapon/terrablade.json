@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "bytebuddies:charged_steel_ingot"
+    },
+    "E": {
+      "item": "bytebuddies:charged_steel_block"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "T": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    " C ",
+    "GEG",
+    " T "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bytebuddies:terrablade"
+  }
+}
