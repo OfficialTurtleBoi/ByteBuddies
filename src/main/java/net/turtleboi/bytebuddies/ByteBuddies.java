@@ -4,6 +4,7 @@ import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.turtleboi.bytebuddies.block.ModBlockEntities;
 import net.turtleboi.bytebuddies.block.ModBlocks;
 import net.turtleboi.bytebuddies.component.ModDataComponents;
+import net.turtleboi.bytebuddies.effects.ModEffects;
 import net.turtleboi.bytebuddies.entity.ModEntities;
 import net.turtleboi.bytebuddies.item.ModCreativeModeTabs;
 import net.turtleboi.bytebuddies.item.ModItems;
@@ -40,6 +41,7 @@ public class ByteBuddies {
         ModMenuTypes.register(modEventBus);
         ModDataComponents.register(modEventBus);
         modEventBus.addListener(this::addCreative);
+        ModEffects.register(modEventBus);
         ModParticles.register(modEventBus);
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
