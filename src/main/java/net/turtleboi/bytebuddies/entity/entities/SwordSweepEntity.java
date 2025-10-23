@@ -54,7 +54,7 @@ public class SwordSweepEntity extends AbstractArrow {
             if (entity == this.getOwner() || !(entity instanceof LivingEntity target)) continue;
             if (hitEntities.contains(entity.getUUID())) continue;
 
-            target.hurt(this.damageSources().thrown(this, this.getOwner()), 6.0F);
+            target.hurt(this.damageSources().thrown(this, this.getOwner()), 15.0F);
             hitEntities.add(entity.getUUID());
         }
 

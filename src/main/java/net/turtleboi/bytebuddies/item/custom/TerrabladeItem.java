@@ -14,22 +14,14 @@ import net.turtleboi.bytebuddies.entity.entities.SwordSweepEntity;
 import java.util.List;
 
 public class TerrabladeItem extends SwordItem {
-    private static final int MAX_CHARGE = 5;
+    public static final int MAX_CHARGE = 100;
 
     public TerrabladeItem(Tier tier, Properties properties) {
         super(tier, properties);
     }
 
-    @Override
-    public boolean hurtEnemy(ItemStack itemStack, LivingEntity livingEntity, LivingEntity attacker) {
-        if (!attacker.level().isClientSide) {
-            int charge = itemStack.getOrDefault(ModDataComponents.CHARGE.get(), 0);
-            if (charge < MAX_CHARGE) {
-                itemStack.set(ModDataComponents.CHARGE.get(), charge + 1);
-            }
-        }
-        return super.hurtEnemy(itemStack, livingEntity, attacker);
-    }
+
+
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand interactionHand) {
@@ -45,9 +37,13 @@ public class TerrabladeItem extends SwordItem {
 
                 player.getCooldowns().addCooldown(this, 40);
                 player.swing(interactionHand, true);
+                player.getItemInHand(interactionHand).set(ModDataComponents.CHARGE.get(), 0);
+
+                return InteractionResultHolder.sidedSuccess(player.getItemInHand(interactionHand), level.isClientSide());
+
             }
         }
-        return InteractionResultHolder.sidedSuccess(player.getItemInHand(interactionHand), level.isClientSide());
+        return InteractionResultHolder.pass(player.getItemInHand(interactionHand));
     }
 
 
