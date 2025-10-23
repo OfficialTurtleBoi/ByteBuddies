@@ -2,6 +2,7 @@ package net.turtleboi.bytebuddies.item.custom;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
@@ -19,9 +20,6 @@ public class TerrabladeItem extends SwordItem {
     public TerrabladeItem(Tier tier, Properties properties) {
         super(tier, properties);
     }
-
-
-
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand interactionHand) {
@@ -54,7 +52,18 @@ public class TerrabladeItem extends SwordItem {
         tooltip.add(Component.literal("Charge: " + charge + " / " + MAX_CHARGE).withStyle(ChatFormatting.AQUA));
     }
 
+    public static int getCharge(ItemStack itemStack) {
+        Integer charge = itemStack.get(ModDataComponents.CHARGE);
+        return charge == null ? 0 : Mth.clamp(charge, 0, 100);
+    }
 
+    public static void setCharge(ItemStack itemStack, int charge) {
+        itemStack.set(ModDataComponents.CHARGE, Mth.clamp(charge, 0, 100));
+    }
+
+    public static void addCharge(ItemStack itemStack, int delta) {
+        setCharge(itemStack, getCharge(itemStack) + delta);
+    }
 
 
 }

@@ -14,6 +14,7 @@ import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.entity.models.ByteBuddyModel;
 import net.turtleboi.bytebuddies.entity.renderers.ByteBuddyRenderer;
 import net.turtleboi.bytebuddies.entity.renderers.SwordSweepRenderer;
+import net.turtleboi.bytebuddies.init.ModItemProperties;
 
 @EventBusSubscriber(modid = ByteBuddies.MOD_ID, value = Dist.CLIENT)
 public class ClientModBusEvents {
@@ -21,6 +22,7 @@ public class ClientModBusEvents {
     public static void onClientSetupEvent(FMLClientSetupEvent event) {
         EntityRenderers.register(ModEntities.BYTEBUDDY.get(), ByteBuddyRenderer::new);
         EntityRenderers.register(ModEntities.SWORD_SWEEP.get(), SwordSweepRenderer::new);
+        ModItemProperties.addCustomItemProperties();
     }
 
     @SubscribeEvent
