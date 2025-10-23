@@ -21,6 +21,7 @@ public class ClientModBusEvents {
     public static void onClientSetupEvent(FMLClientSetupEvent event) {
         EntityRenderers.register(ModEntities.BYTEBUDDY.get(), ByteBuddyRenderer::new);
         EntityRenderers.register(ModEntities.SWORD_SWEEP.get(), SwordSweepRenderer::new);
+
     }
 
     @SubscribeEvent

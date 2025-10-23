@@ -30,6 +30,7 @@ public class ClientModEvents {
     @SubscribeEvent
     public static void registerParticleFactories(RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(ModParticles.CYBER_SWEEP_PARTICLE.get(), AttackSweepParticle.Provider::new);
+        event.registerSpriteSet(ModParticles.OVERCHARGED_PARTICLE.get(), SpellParticle.Provider::new);
 
 
     }
