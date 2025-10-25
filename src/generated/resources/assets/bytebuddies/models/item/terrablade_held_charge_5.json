@@ -1,0 +1,7 @@
+{
+  "parent": "bytebuddies:item/terrablade_held",
+  "textures": {
+    "layer0": "bytebuddies:item/terrablade_sword",
+    "layer1": "bytebuddies:item/terrablade/terracharge_5"
+  }
+}

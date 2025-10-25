@@ -1,10 +1,14 @@
 package net.turtleboi.bytebuddies.datagen;
 
+import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.neoforged.neoforge.client.model.generators.ItemModelBuilder;
 import net.neoforged.neoforge.client.model.generators.ItemModelProvider;
+import net.neoforged.neoforge.client.model.generators.ModelFile;
+import net.neoforged.neoforge.client.model.generators.loaders.SeparateTransformsModelBuilder;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.turtleboi.bytebuddies.ByteBuddies;
@@ -15,6 +19,14 @@ import java.util.Optional;
 public class ModItemModelProvider extends ItemModelProvider {
     public ModItemModelProvider(PackOutput output, ExistingFileHelper existingFileHelper) {
         super(output, ByteBuddies.MOD_ID, existingFileHelper);
+    }
+
+    private static ResourceLocation minecraftLocation(String path)  {
+        return ResourceLocation.withDefaultNamespace(path);
+    }
+
+    private static ResourceLocation modLocation(String path) {
+        return ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, path);
     }
 
     @Override
@@ -61,6 +73,8 @@ public class ModItemModelProvider extends ItemModelProvider {
         basicItem(ModItems.REINFORCED_CHARGED_STEEL_PLATING.get());
         ModItems.FLOPPY_DISKS.values().forEach(this::layeredFloppyModel);
         //withExistingParent(ModItems.BYTEBUDDY_SPAWN_EGG.getId().getPath(), mcLoc("item/template_spawn_egg"));
+
+        generateTerrabladeModels();
     }
 
     private ItemModelBuilder layeredFloppyModel(DeferredItem<Item> itemObject) {
@@ -102,4 +116,102 @@ public class ModItemModelProvider extends ItemModelProvider {
     public static ResourceLocation overlayTexture(String modId, String tier) {
         return ResourceLocation.fromNamespaceAndPath(modId, "item/floppy/" + tier + "_floppy_tier");
     }
+
+    private void generateTerrabladeModels() {
+        ItemModelBuilder gui = getBuilder("terrablade_item")
+                .parent(new ModelFile.UncheckedModelFile(minecraftLocation("item/generated")))
+                .guiLight(BlockModel.GuiLight.FRONT)
+                .texture("layer0", ByteBuddies.MOD_ID + ":item/terrablade_item");
+
+        ItemModelBuilder heldBase = getBuilder("terrablade_held")
+                .parent(new ModelFile.UncheckedModelFile(minecraftLocation("item/handheld")))
+                .texture("layer0", ByteBuddies.MOD_ID + ":item/terrablade_sword");
+
+        heldBase.transforms()
+                .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND).rotation(0,-90,25).translation(3.5f,7f,1.13f).scale(1.5f,1.5f,1.0f).end()
+                .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND ).rotation(0, 90,-25).translation(3.5f,7f,1.13f).scale(1.5f,1.5f,1.0f).end()
+                .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND).rotation(0,-90,45).translation(0f,14f,1.5f).scale(2.0f,2.0f,1.0f).end()
+                .transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND ).rotation(0, 90,-45).translation(0f,14f,1.5f).scale(2.0f,2.0f,1.0f).end();
+
+        for (int i = 1; i <= 14; i++) {
+            getBuilder("terrablade_held_charge_" + i)
+                    .parent(new ModelFile.UncheckedModelFile(modLocation("item/terrablade_held")))
+                    .texture("layer0", ByteBuddies.MOD_ID + ":item/terrablade_sword")
+                    .texture("layer1", ByteBuddies.MOD_ID + ":item/terrablade/terracharge_" + i);
+        }
+
+        for (int i = 1; i <= 14; i++) {
+            ItemModelBuilder step = getBuilder("terrablade_step_" + i)
+                    .guiLight(BlockModel.GuiLight.FRONT);
+
+            step.customLoader(SeparateTransformsModelBuilder::begin)
+                    .base(getParentModel(
+                            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/_inline/step_" + i + "/base"),
+                            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/terrablade_held_charge_" + i))
+                    )
+
+                    .perspective(ItemDisplayContext.GUI, getItemModel(
+                            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/_inline/step_" + i + "/gui"),
+                            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/terrablade_item"))
+                    )
+                    .perspective(ItemDisplayContext.GROUND, getItemModel(
+                            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/_inline/step_" + i + "/ground"),
+                            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/terrablade_item"))
+                    )
+                    .perspective(ItemDisplayContext.FIXED, getItemModel(
+                            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/_inline/step_" + i + "/fixed"),
+                            ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/terrablade_item"))
+                    )
+                    .end();
+        }
+
+        ItemModelBuilder top = getBuilder("terrablade")
+                .guiLight(BlockModel.GuiLight.FRONT);
+        top.customLoader(SeparateTransformsModelBuilder::begin)
+                .base(getParentModel(
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/_inline/top/base"),
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/terrablade_held"))
+                )
+
+                .perspective(ItemDisplayContext.GUI, getItemModel(
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/_inline/top/gui"),
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/terrablade_item"))
+                )
+                .perspective(ItemDisplayContext.GROUND, getItemModel(
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/_inline/top/ground"),
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/terrablade_item"))
+                )
+                .perspective(ItemDisplayContext.FIXED, getItemModel(
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/_inline/top/fixed"),
+                        ResourceLocation.fromNamespaceAndPath(ByteBuddies.MOD_ID, "item/terrablade_item"))
+                )
+                .end();
+
+        for (int i = 1; i <= 14; i++) {
+            float threshold = i / 14f;
+            top.override()
+                    .predicate(modLocation("charge"), clampPredicate(threshold))
+                    .model(new ModelFile.UncheckedModelFile(modLocation("item/terrablade_step_" + i)));
+        }
+    }
+
+    private ItemModelBuilder getItemModel(ResourceLocation itemModel, ResourceLocation itemTexture) {
+        ItemModelBuilder itemModelBuilder = new ItemModelBuilder(itemModel, existingFileHelper);
+        itemModelBuilder.parent(new ModelFile.UncheckedModelFile(ResourceLocation.withDefaultNamespace("item/generated")));
+        itemModelBuilder.texture("layer0", itemTexture);
+        return itemModelBuilder;
+    }
+
+    private ItemModelBuilder getParentModel(ResourceLocation inlineModel, ResourceLocation parentModel) {
+        ItemModelBuilder itemModelBuilder = new ItemModelBuilder(inlineModel, existingFileHelper);
+        itemModelBuilder.parent(new ModelFile.UncheckedModelFile(parentModel));
+        return itemModelBuilder;
+    }
+
+    private static float clampPredicate(float value) {
+        float x = (value >= 1f) ? 0.999f : value;
+        return Math.round(x * 1000f) / 1000f;
+    }
+
+
 }

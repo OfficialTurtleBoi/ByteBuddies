@@ -1,5 +1,5 @@
 {
-  "parent": "minecraft:item/handheld",
+  "parent": "minecraft:item/generated",
   "gui_light": "front",
   "textures": {
     "layer0": "bytebuddies:item/terrablade_item"

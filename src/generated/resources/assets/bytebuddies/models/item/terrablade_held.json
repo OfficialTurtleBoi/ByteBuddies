@@ -1,0 +1,77 @@
+{
+  "parent": "minecraft:item/handheld",
+  "gui_light": "front",
+  "display": {
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        90,
+        -25
+      ],
+      "scale": [
+        1.5,
+        1.5,
+        1
+      ],
+      "translation": [
+        3.5,
+        7,
+        1.13
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        -90,
+        25
+      ],
+      "scale": [
+        1.5,
+        1.5,
+        1
+      ],
+      "translation": [
+        3.5,
+        7,
+        1.13
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        0,
+        90,
+        -45
+      ],
+      "scale": [
+        2,
+        2,
+        1
+      ],
+      "translation": [
+        0,
+        14,
+        1.5
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        0,
+        -90,
+        45
+      ],
+      "scale": [
+        2,
+        2,
+        1
+      ],
+      "translation": [
+        0,
+        14,
+        1.5
+      ]
+    }
+  },
+  "textures": {
+    "layer0": "bytebuddies:item/terrablade_sword"
+  }
+}
