@@ -17,8 +17,9 @@ public class ModParticles {
     public static final Supplier<SimpleParticleType> CYBER_SWEEP_PARTICLE =
             PARTICLE_TYPES.register("cyber_sweep", () -> new SimpleParticleType(true));
 
-    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> OVERCHARGED_PARTICLE =
-            PARTICLE_TYPES.register("overcharged_particle", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SUPERCHARGED_PARTICLE =
+            PARTICLE_TYPES.register("supercharged_particle", () -> new SimpleParticleType(false));
+
     public static void register(IEventBus eventBus) {
         PARTICLE_TYPES.register(eventBus);
     }

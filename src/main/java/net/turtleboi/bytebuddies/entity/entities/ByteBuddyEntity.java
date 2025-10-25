@@ -80,13 +80,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         super(entityType, level);
     }
     public enum BuddyRole {
-        NONE(0),
-        FARMER(1),
-        MINER(2),
-        COMBAT(3),
-        POTION(4),
-        STORAGE(5),
-        ANIMAL(6);
+        NONE(0), FARMER(1), MINER(2), COMBAT(3), POTION(4), STORAGE(5), ANIMAL(6);
 
         private final int id;
         BuddyRole(int id) {

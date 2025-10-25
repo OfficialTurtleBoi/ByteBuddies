@@ -3,7 +3,9 @@ package net.turtleboi.bytebuddies.events;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
@@ -21,6 +23,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.block.ModBlocks;
 import net.turtleboi.bytebuddies.component.ModDataComponents;
+import net.turtleboi.bytebuddies.effects.ModEffects;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.item.ModItems;
 import net.turtleboi.bytebuddies.item.custom.ClipboardItem;
@@ -44,17 +47,17 @@ public class ModEvents {
         if (event.getSource().getEntity() instanceof ByteBuddyEntity byteBuddy) {
             //ByteBuddies.LOGGER.warn("[ByteBuddies] DAMAGED buddy={} damage={} entity={}", byteBuddy.getId(), event.getOriginalDamage(), event.getEntity());
         }
+
         DamageSource source = event.getSource();
-        if (!(source.getEntity() instanceof LivingEntity attacker)) return;
-
-        ItemStack weapon = attacker.getMainHandItem();
-        if (!(weapon.getItem() instanceof TerrabladeItem)) return;
-
-        float damageDealt = event.getOriginalDamage();
-
-        int charge = weapon.getOrDefault(ModDataComponents.CHARGE.get(), 0);
-        int newCharge = Math.min(charge + Math.round(damageDealt), TerrabladeItem.MAX_CHARGE);
-        weapon.set(ModDataComponents.CHARGE.get(), newCharge);
+        if (source.getEntity() instanceof LivingEntity attacker) {
+            ItemStack weapon = attacker.getMainHandItem();
+            if (weapon.getItem() instanceof TerrabladeItem) {
+                float damageDealt = event.getOriginalDamage();
+                int charge = weapon.getOrDefault(ModDataComponents.CHARGE.get(), 0);
+                int newCharge = Math.min(charge + Math.round(damageDealt), TerrabladeItem.MAX_CHARGE);
+                weapon.set(ModDataComponents.CHARGE.get(), newCharge);
+            }
+        }
     }
 
     @SubscribeEvent

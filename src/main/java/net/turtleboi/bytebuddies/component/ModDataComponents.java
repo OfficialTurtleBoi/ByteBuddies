@@ -8,6 +8,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.bytebuddies.ByteBuddies;
 
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 public class ModDataComponents {
@@ -17,7 +18,8 @@ public class ModDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> CHARGE = register("charge",
             builder -> builder.persistent(Codec.INT));
 
-
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> SUPER_CHARGED = register("super_charged",
+            builder -> builder.persistent(Codec.BOOL));
 
     private static <T>DeferredHolder<DataComponentType<?>, DataComponentType<T>> register(String name,
                                                                                           UnaryOperator<DataComponentType.Builder<T>> builderOperator) {

@@ -1,13 +1,17 @@
 package net.turtleboi.bytebuddies.datagen;
 
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.PackOutput;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.block.ModBlocks;
+import net.turtleboi.bytebuddies.effects.ModEffects;
 import net.turtleboi.bytebuddies.entity.ModEntities;
 import net.turtleboi.bytebuddies.item.ModItems;
 
@@ -24,6 +28,7 @@ public class ModLanguageProvider extends LanguageProvider {
     protected void addTranslations() {
         add("creativetab.bytebuddies.bytebuddies_tab", "ByteBuddies");
         addEntityType(ModEntities.BYTEBUDDY, "ByteBuddy");
+        addSimpleNameEffect(ModEffects.SUPERCHARGED.value());
         addSimpleNameBlock(ModBlocks.BAUXITE_ORE);
         addSimpleNameBlock(ModBlocks.DEEPSLATE_BAUXITE_ORE);
         addSimpleNameBlock(ModBlocks.ALUMINUM_BLOCK);
@@ -114,6 +119,14 @@ public class ModLanguageProvider extends LanguageProvider {
         Block block = supplier.get();
         var blockId = BuiltInRegistries.BLOCK.getKey(block);
         add(block, toName(blockId.getPath()));
+    }
+
+    private void addSimpleNameEffect(MobEffect effect) {
+        ResourceLocation id = BuiltInRegistries.MOB_EFFECT
+                .getResourceKey(effect)
+                .orElseThrow(() -> new IllegalStateException("MobEffect not registered: " + effect))
+                .location();
+        add(effect, toName(id.getPath()));
     }
 
     private static String toName(String registryPath) {

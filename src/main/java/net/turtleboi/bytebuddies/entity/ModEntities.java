@@ -21,7 +21,7 @@ public class ModEntities {
 
     public static final Supplier<EntityType<SwordSweepEntity>> SWORD_SWEEP =
             ENTITY_TYPES.register("sword_sweep", () -> EntityType.Builder.<SwordSweepEntity>of(SwordSweepEntity::new, MobCategory.MISC)
-                    .sized(0.5f, 1.15f).build("sword_sweep"));
+                    .sized(0.625f, 2f).build("sword_sweep"));
 
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);
