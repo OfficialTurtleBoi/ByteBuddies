@@ -19,7 +19,8 @@ public class ModParticles {
 
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SUPERCHARGED_PARTICLE =
             PARTICLE_TYPES.register("supercharged_particle", () -> new SimpleParticleType(false));
-
+    public static final Supplier<SimpleParticleType> STUNNED_PARTICLES =
+            PARTICLE_TYPES.register("stunned_particles", () -> new SimpleParticleType(true));
     public static void register(IEventBus eventBus) {
         PARTICLE_TYPES.register(eventBus);
     }

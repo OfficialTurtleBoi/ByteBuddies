@@ -10,8 +10,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -49,13 +51,29 @@ public class ModEvents {
         }
 
         DamageSource source = event.getSource();
+
         if (source.getEntity() instanceof LivingEntity attacker) {
             ItemStack weapon = attacker.getMainHandItem();
+            //TERRABLADE CHARGING
             if (weapon.getItem() instanceof TerrabladeItem) {
                 float damageDealt = event.getOriginalDamage();
                 int charge = weapon.getOrDefault(ModDataComponents.CHARGE.get(), 0);
                 int newCharge = Math.min(charge + Math.round(damageDealt), TerrabladeItem.MAX_CHARGE);
                 weapon.set(ModDataComponents.CHARGE.get(), newCharge);
+            }
+            //STUN ATTACKER
+            if (event.getEntity() instanceof LivingEntity victim){
+                Level level = victim.level();
+                if (victim.hasEffect(ModEffects.SUPERCHARGED)){
+                    if (victim instanceof Player player) {
+                        attacker.hurt(level.damageSources().playerAttack(player), 6);
+                    }
+                    else{
+                        attacker.hurt(level.damageSources().mobAttack(victim),6);
+                    }
+                    MobEffectInstance mobEffectInstance = new MobEffectInstance(ModEffects.STUNNED,100);
+                    attacker.addEffect(mobEffectInstance,victim);
+                }
             }
         }
     }

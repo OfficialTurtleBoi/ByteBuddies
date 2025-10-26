@@ -9,6 +9,7 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.particle.ModParticles;
+import net.turtleboi.bytebuddies.particle.custom.StunnedParticles;
 import net.turtleboi.bytebuddies.screen.ModMenuTypes;
 import net.turtleboi.bytebuddies.screen.custom.*;
 
@@ -28,5 +29,7 @@ public class ClientModEvents {
     public static void registerParticleFactories(RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(ModParticles.CYBER_SWEEP_PARTICLE.get(), AttackSweepParticle.Provider::new);
         event.registerSpriteSet(ModParticles.SUPERCHARGED_PARTICLE.get(), SpellParticle.Provider::new);
+        event.registerSpriteSet(ModParticles.STUNNED_PARTICLES.get(), StunnedParticles.Provider::new);
+
     }
 }
