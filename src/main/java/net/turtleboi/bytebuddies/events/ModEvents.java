@@ -30,6 +30,7 @@ import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.item.ModItems;
 import net.turtleboi.bytebuddies.item.custom.ClipboardItem;
 import net.turtleboi.bytebuddies.item.custom.TerrabladeItem;
+import net.turtleboi.bytebuddies.util.StunThornsHandler;
 
 @EventBusSubscriber(modid = ByteBuddies.MOD_ID)
 public class ModEvents {
@@ -63,16 +64,10 @@ public class ModEvents {
             }
             //STUN ATTACKER
             if (event.getEntity() instanceof LivingEntity victim){
-                Level level = victim.level();
                 if (victim.hasEffect(ModEffects.SUPERCHARGED)){
-                    if (victim instanceof Player player) {
-                        attacker.hurt(level.damageSources().playerAttack(player), 6);
+                    if (victim.distanceTo(attacker)<=5.0F) {
+                        StunThornsHandler.stunByEntity(attacker, victim);
                     }
-                    else{
-                        attacker.hurt(level.damageSources().mobAttack(victim),6);
-                    }
-                    MobEffectInstance mobEffectInstance = new MobEffectInstance(ModEffects.STUNNED,100);
-                    attacker.addEffect(mobEffectInstance,victim);
                 }
             }
         }
