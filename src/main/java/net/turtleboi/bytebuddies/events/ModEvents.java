@@ -54,25 +54,32 @@ public class ModEvents {
 
         if (source.getEntity() instanceof LivingEntity attacker) {
             ItemStack weapon = attacker.getMainHandItem();
-            //TERRABLADE CHARGING
+
             if (weapon.getItem() instanceof TerrabladeItem) {
                 float damageDealt = event.getOriginalDamage();
                 int charge = weapon.getOrDefault(ModDataComponents.CHARGE.get(), 0);
                 int newCharge = Math.min(charge + Math.round(damageDealt), TerrabladeItem.MAX_CHARGE);
                 weapon.set(ModDataComponents.CHARGE.get(), newCharge);
             }
-            //STUN ATTACKER
+
             if (event.getEntity() instanceof LivingEntity victim){
                 Level level = victim.level();
                 if (victim.hasEffect(ModEffects.SUPERCHARGED)){
                     if (victim instanceof Player player) {
                         attacker.hurt(level.damageSources().playerAttack(player), 6);
-                    }
-                    else{
+                    } else {
                         attacker.hurt(level.damageSources().mobAttack(victim),6);
                     }
                     MobEffectInstance mobEffectInstance = new MobEffectInstance(ModEffects.STUNNED,100);
                     attacker.addEffect(mobEffectInstance,victim);
+                }
+
+                if (victim instanceof ByteBuddyEntity byteBuddy){
+                    if (byteBuddy.getAugmentEffects().shockOnHit()){
+                        byteBuddy.onMeleeHit(attacker);
+                        MobEffectInstance mobEffectInstance = new MobEffectInstance(ModEffects.STUNNED,100);
+                        attacker.addEffect(mobEffectInstance,victim);
+                    }
                 }
             }
         }

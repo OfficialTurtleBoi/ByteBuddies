@@ -43,6 +43,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -165,7 +166,6 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     private final DiskEffects diskEffects = new DiskEffects();
     private final AugmentEffects augmentEffects = new AugmentEffects();
     private static final ChassisMaterial defaultChassis = ChassisMaterial.ALUMINUM;
-    private boolean postLoadInitDone = false;
     private double augmentPrevX;
     private double augmentPrevY;
     private double augmentPrevZ;
@@ -260,11 +260,8 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
             augmentPrevX = this.getX();
             augmentPrevY = this.getY();
             augmentPrevZ = this.getZ();
-            if (!postLoadInitDone) {
-                refreshEffects();
-                refreshCombatGoals();
-                postLoadInitDone = true;
-            }
+            refreshEffects();
+            refreshCombatGoals();
         }
     }
 
@@ -288,7 +285,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new AccessInventoryGoal(this));
         this.goalSelector.addGoal(0, new GatedGoal(
-                this, this::canAct, new FloatGoal(this), 0));
+                this, () -> this.canAct() && this.canSwim(), new FloatGoal(this), 0));
         this.goalSelector.addGoal(1, new GatedGoal(
                 this, () -> this.canAct() && this.canPanic(), new PanicGoal(this, 2.0D), 0));
         this.goalSelector.addGoal(2, new GatedGoal(
@@ -738,6 +735,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
                 setSyncedEnergy(currentEnergy);
             }
 
+            tickPropellerPhysics();
             tickDynamoMovement();
             tickMomentumExpiry();
             tickMagnet();
@@ -808,9 +806,26 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         }
     }
 
+    @Override
+    public void jumpFromGround() {
+        super.jumpFromGround();
+        if (this.canFly()) {
+            Vec3 currentDelta = this.getDeltaMovement();
+
+            double boostedY = currentDelta.y + 0.25D;
+            if (boostedY > 0.70D) {
+                boostedY = 0.70D;
+            }
+
+            this.setDeltaMovement(currentDelta.x, boostedY, currentDelta.z);
+            this.hasImpulse = true;
+        }
+    }
+
     public void onTaskSuccess(TaskType taskType, BlockPos blockPos) {
         DiskHooks.tryGiveByproduct(this, taskType, blockPos);
-        DiskHooks.trySpawnHologram(this, taskType, blockPos);
+        DiskHooks.trySpawnHologram(this, taskType);
+        addDynamoEffect();
     }
 
     public ChassisMaterial getChassisMaterial() {
@@ -1038,10 +1053,10 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         this.entityData.set(MOOD_ID, Mth.clamp(moodOrdinal, 0, Mood.values().length - 1));
 
         if (!level().isClientSide) {
+            rebuildGoalsForRole();
             refreshEffects();
             refreshCombatGoals();
         }
-        postLoadInitDone = true;
     }
 
     @Override
@@ -1230,6 +1245,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
 
     public void refreshEffects() {
         this.diskEffects.recomputeFrom(mainInv);
+        DiskHooks.applyDiskHealthBoost(this, diskEffects.healthBoostPercent());
         this.augmentEffects.recomputeFrom(this.mainInv, this);
         StorageCellsTier tierBefore = getStorageCellsTier();
         StorageCellsTier tierAfter  = computeStorageCellsTierFromMainInv();
@@ -1400,6 +1416,10 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
 
     public boolean hologramEnabled() {
         return this.diskEffects.hologramEnabled();
+    }
+
+    public float hologramChance() {
+        return this.diskEffects.hologramChance();
     }
 
     public boolean consumeEnergy(int energyCost) {
@@ -1668,6 +1688,33 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         }
     }
 
+    private void tickPropellerPhysics() {
+        if (this.canFly()) {
+            boolean isOnGround = this.onGround();
+            boolean isInWater = this.isInWater();
+            boolean isInLava  = this.isInLava();
+
+            if (!isOnGround && !isInWater && !isInLava) {
+                Vec3 currentDelta = this.getDeltaMovement();
+
+                if (currentDelta.y < 0.0D) {
+                    double newY = currentDelta.y * 0.60D;
+
+                    if (newY < -0.12D) {
+                        newY = -0.12D;
+                    }
+
+                    double newX = currentDelta.x * 0.98D;
+                    double newZ = currentDelta.z * 0.98D;
+
+                    this.setDeltaMovement(newX, newY, newZ);
+                    this.hasImpulse = true;
+                }
+            }
+        }
+    }
+
+
     private boolean isNearHeatSource() {
         BlockPos origin = this.blockPosition();
         int radius = 2;
@@ -1717,7 +1764,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         }
     }
 
-    public void onWorkActionResolved() {
+    public void addDynamoEffect() {
         if (augmentEffects.dynamoEnabled()) {
             addMomentum(augmentEffects.momentumTicks(), augmentEffects.momentumSpeedMultiplier());
         }
@@ -1856,12 +1903,17 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         }
     }
 
-    public boolean augmentCanLowFly() {
+    public boolean canFly() {
         return augmentEffects.propellerEnabled();
     }
 
-    public boolean augmentCanSwimWork() {
+    public boolean canSwim() {
         return augmentEffects.aquaEnabled();
+    }
+
+    @Override
+    public boolean canDrownInFluidType(FluidType type) {
+        return false;
     }
 
     public boolean augmentEnderLinkEnabled() {
@@ -1965,7 +2017,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         followOwnerGoal = new BuddyFollowOwnerGoal(this, 1.05, 4.0, 18.0, true);
         goalSelector.addGoal(4, followOwnerGoal);
 
-        meleeAttackGoal = new BuddyMeleeAttackGoal(this, 1.2, 1.5,true);
+        meleeAttackGoal = new BuddyMeleeAttackGoal(this, 1.2, 2,true);
         goalSelector.addGoal(3, meleeAttackGoal);
 
         switch (getAttackMode()) {

@@ -29,6 +29,7 @@ public class ModLanguageProvider extends LanguageProvider {
         add("creativetab.bytebuddies.bytebuddies_tab", "ByteBuddies");
         addEntityType(ModEntities.BYTEBUDDY, "ByteBuddy");
         addSimpleNameEffect(ModEffects.SUPERCHARGED.value());
+        addSimpleNameEffect(ModEffects.STUNNED.value());
         addSimpleNameBlock(ModBlocks.BAUXITE_ORE);
         addSimpleNameBlock(ModBlocks.DEEPSLATE_BAUXITE_ORE);
         addSimpleNameBlock(ModBlocks.ALUMINUM_BLOCK);
@@ -40,8 +41,8 @@ public class ModLanguageProvider extends LanguageProvider {
         addSimpleNameBlock(ModBlocks.DOCKING_STATION);
         addSimpleNameBlock(ModBlocks.GENERATOR);
         addSimpleNameBlock(ModBlocks.SOLAR_PANEL);
-        addSimpleItemName(ModItems.BUSTER_SWORD);
-        addSimpleItemName(ModItems.TERRABLADE);
+        addItem(ModItems.BUSTER_SWORD, "Steel Breaker");
+        addItem(ModItems.TERRABLADE, "World Splitter");
         addSimpleItemName(ModItems.RAW_BAUXITE);
         addSimpleItemName(ModItems.ALUMINUM_INGOT);
         addSimpleItemName(ModItems.ALUMINUM_NUGGET);
@@ -99,7 +100,7 @@ public class ModLanguageProvider extends LanguageProvider {
         add("tooltip." + ByteBuddies.MOD_ID + ".floppy_tier.iron", "Iron");
         add("tooltip." + ByteBuddies.MOD_ID + ".floppy_tier.gold", "Gold");
 
-        add("tooltip.bytebuddies.floppy.desc.black", "Reduces tool wear, increases chassis toughness, and adds limited self-repair.");
+        add("tooltip.bytebuddies.floppy.desc.black", "Reduces tool wear and increases bot's durability (Health)");
         add("tooltip.bytebuddies.floppy.desc.blue", "Expands sensing and action radius around the bot’s station or active job.");
         add("tooltip.bytebuddies.floppy.desc.cyan", "On a successful action, there’s a chance to spawn a short-lived hologram that performs parallel tasks");
         add("tooltip.bytebuddies.floppy.desc.green", "Reduces battery drain and consumable use where applicable.");

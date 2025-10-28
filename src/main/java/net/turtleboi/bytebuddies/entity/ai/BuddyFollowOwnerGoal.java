@@ -59,11 +59,6 @@ public class BuddyFollowOwnerGoal extends Goal {
         }
     }
 
-    @Override
-    public boolean isInterruptable() {
-        return true;
-    }
-
     private boolean tryTeleportNearOwner(LivingEntity owner, int minRadius, int maxRadius) {
         final int tries = 12;
         final double ownerX = owner.getX();

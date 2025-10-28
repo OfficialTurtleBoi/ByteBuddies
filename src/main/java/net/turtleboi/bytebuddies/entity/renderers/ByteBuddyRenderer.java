@@ -1,7 +1,10 @@
 package net.turtleboi.bytebuddies.entity.renderers;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -11,10 +14,14 @@ import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.turtleboi.bytebuddies.ByteBuddies;
 import net.turtleboi.bytebuddies.client.HueShiftTextureCache;
+import net.turtleboi.bytebuddies.client.renderer.util.TintingBuffer;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
+import net.turtleboi.bytebuddies.entity.entities.HologramBuddyEntity;
 import net.turtleboi.bytebuddies.entity.models.ByteBuddyModel;
 import net.turtleboi.bytebuddies.init.ModTags;
 import net.turtleboi.bytebuddies.item.ModItems;
@@ -40,7 +47,7 @@ public class ByteBuddyRenderer extends MobRenderer<ByteBuddyEntity, ByteBuddyMod
     public ByteBuddyRenderer(EntityRendererProvider.Context pContext) {
         super(pContext, new ByteBuddyModel<>(pContext.bakeLayer(ByteBuddyModel.BYTEBUDDY_LAYER)),0.5f);
         this.addLayer(new DisplayLayer(this));
-        this.addLayer(new ItemInHandLayer<>(this, pContext.getItemInHandRenderer()));
+        this.addLayer(new BuddyItemInHandLayer(this, pContext.getItemInHandRenderer()));
     }
 
     @Override
@@ -79,8 +86,13 @@ public class ByteBuddyRenderer extends MobRenderer<ByteBuddyEntity, ByteBuddyMod
             model.translateToDisplay(pose);
             int targetRGB = entity.getDisplayColorRGB();
             ResourceLocation tintedSheet = BG_CACHE.getOrCreate(targetRGB);
-            VertexConsumer baseBuf = buffers.getBuffer(RenderType.entityCutoutNoCull(tintedSheet));
-            model.renderDisplayBg(pose, baseBuf, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
+            if (entity instanceof HologramBuddyEntity) {
+                VertexConsumer holoBuf = buffers.getBuffer(RenderType.entityTranslucentCull(DISPLAY));
+                model.renderDisplayBg(pose, holoBuf, packedLight, OverlayTexture.NO_OVERLAY, 0x73FFFFFF);
+            } else {
+                VertexConsumer baseBuf = buffers.getBuffer(RenderType.entityCutoutNoCull(tintedSheet));
+                model.renderDisplayBg(pose, baseBuf, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
+            }
 
             ResourceLocation faceTex = entity.getMoodTexture();
             VertexConsumer faceBuf = buffers.getBuffer(RenderType.entityTranslucentCull(faceTex));
@@ -133,4 +145,70 @@ public class ByteBuddyRenderer extends MobRenderer<ByteBuddyEntity, ByteBuddyMod
                     DISPLAY_BG_UVS
             );
 
+    private static final class BuddyItemInHandLayer extends RenderLayer<ByteBuddyEntity, ByteBuddyModel<ByteBuddyEntity>> {
+        private final ItemInHandRenderer itemInHandRenderer;
+        BuddyItemInHandLayer(RenderLayerParent<ByteBuddyEntity, ByteBuddyModel<ByteBuddyEntity>> parent, ItemInHandRenderer itemInHandRenderer) {
+            super(parent);
+            this.itemInHandRenderer = itemInHandRenderer;
+        }
+
+        @Override
+        public void render(PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, ByteBuddyEntity byteBuddy,
+                           float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
+            boolean rightHanded = byteBuddy.getMainArm() == HumanoidArm.RIGHT;
+            ItemStack leftStack  = rightHanded ? byteBuddy.getOffhandItem() : byteBuddy.getMainHandItem();
+            ItemStack rightStack = rightHanded ? byteBuddy.getMainHandItem() : byteBuddy.getOffhandItem();
+
+            if (!leftStack.isEmpty() || !rightStack.isEmpty()) {
+                poseStack.pushPose();
+                if (this.getParentModel().young) {
+                    poseStack.translate(0.0F, 0.75F, 0.0F);
+                    poseStack.scale(0.5F, 0.5F, 0.5F);
+                }
+
+                this.renderArmWithItem(byteBuddy, rightStack, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
+                        HumanoidArm.RIGHT, poseStack, multiBufferSource, packedLight);
+
+                this.renderArmWithItem(byteBuddy, leftStack, ItemDisplayContext.THIRD_PERSON_LEFT_HAND,
+                        HumanoidArm.LEFT, poseStack, multiBufferSource, packedLight);
+
+                poseStack.popPose();
+            }
+        }
+
+        private void renderArmWithItem(ByteBuddyEntity byteBuddy, ItemStack itemStack, ItemDisplayContext displayContext,
+                                       HumanoidArm humanoidArm, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight) {
+            if (!itemStack.isEmpty()) {
+                poseStack.pushPose();
+                this.getParentModel().translateToHand(humanoidArm, poseStack);
+                poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+                poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+
+                boolean isLeft = (humanoidArm == HumanoidArm.LEFT);
+                poseStack.translate((float)(isLeft ? -1 : 1) / 16.0F, 0.125F, -0.625F);
+
+                boolean hologram = (byteBuddy instanceof HologramBuddyEntity);
+                MultiBufferSource actualBuffer = multiBufferSource;
+
+                if (hologram) {
+                    float red = 81 / 255f;
+                    float green = 240 / 255f;
+                    float blue = 255 / 255f;
+                    float alpha = 0.45f;
+
+                    RenderSystem.enableBlend();
+                    RenderSystem.defaultBlendFunc();
+                    actualBuffer = new TintingBuffer(multiBufferSource, red, green, blue, alpha);
+                }
+
+                this.itemInHandRenderer.renderItem(byteBuddy, itemStack, displayContext, isLeft, poseStack, actualBuffer, packedLight);
+
+                if (hologram) {
+                    RenderSystem.disableBlend();
+                }
+
+                poseStack.popPose();
+            }
+        }
+    }
 }

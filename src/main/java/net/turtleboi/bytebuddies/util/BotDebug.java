@@ -18,30 +18,17 @@ import java.util.Optional;
 
 public final class BotDebug {
     public enum GoalPhase {
-        IDLE,
-        SEEKING,
-        MOVING,
-        ACTING,
-        COOLDOWN
+        IDLE, SEEKING, MOVING, ACTING, COOLDOWN
     }
 
     public enum FailReason {
-        NONE,
-        WRONG_ROLE,
-        NO_DOCK,
-        NO_TARGET,
-        OUT_OF_ENERGY,
-        NOT_CROP,
-        PATH_FAIL,
-        INVENTORY_FULL
+        NONE, WRONG_ROLE, NO_DOCK, NO_TARGET, OUT_OF_ENERGY, NOT_CROP, PATH_FAIL, INVENTORY_FULL
     }
 
     public static boolean ENABLED = false;
     public static boolean NAMEPLATE = false;
     public static boolean ACTIONBAR = false;
     public static boolean PARTICLES = true;
-
-    private BotDebug() {}
 
     public static void log(ByteBuddyEntity byteBuddy, String logMessage) {
         if (ENABLED) {

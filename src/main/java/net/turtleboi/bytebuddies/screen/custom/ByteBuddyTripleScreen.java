@@ -2,6 +2,8 @@ package net.turtleboi.bytebuddies.screen.custom;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.GameRenderer;
@@ -11,8 +13,11 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.turtleboi.bytebuddies.ByteBuddies;
+import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
+import net.turtleboi.bytebuddies.network.payloads.RoleData;
 import net.turtleboi.bytebuddies.screen.custom.menu.ByteBuddyMenu;
 import net.turtleboi.bytebuddies.screen.custom.menu.ByteBuddyTripleMenu;
+import net.turtleboi.bytebuddies.screen.custom.widget.TinyIconButton;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DecimalFormat;
@@ -59,6 +64,83 @@ public class ByteBuddyTripleScreen extends AbstractContainerScreen<ByteBuddyTrip
         super(buddyMenu, inventory, title);
         this.imageWidth = 298;
         this.imageHeight = 227;
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+
+        int x = (width - this.imageWidth) / 2;
+        int y = (height - this.imageHeight) / 2;
+
+        addRenderableWidget(
+                Button.builder(Component.empty(),
+                                button -> setFarmer(menu.byteBuddy))
+                        .bounds(x + 120, y + 124, 12, 12)
+                        .tooltip(Tooltip.create(
+                                Component.literal("Farmer")))
+                        .build(TinyIconButton.buttonFactoryWithIcon(
+                                GUI_ADDONS_TEXTURE, 128, 128,
+                                32, 0,
+                                null,
+                                new TinyIconButton.MiniIcon(
+                                        GUI_ADDONS_TEXTURE, 128, 128,
+                                        8, 112, 8, 104, 2, 2
+                                )
+                        ))
+        );
+
+        addRenderableWidget(
+                Button.builder(Component.empty(),
+                                button -> setMiner(menu.byteBuddy))
+                        .bounds(x + 135, y + 124, 12, 12)
+                        .tooltip(Tooltip.create(
+                                Component.literal("Miner")))
+                        .build(TinyIconButton.buttonFactoryWithIcon(
+                                GUI_ADDONS_TEXTURE, 128, 128,
+                                32, 0,
+                                null,
+                                new TinyIconButton.MiniIcon(
+                                        GUI_ADDONS_TEXTURE, 128, 128,
+                                        0, 112,0, 104, 2, 2
+                                )
+                        ))
+        );
+
+        addRenderableWidget(
+                Button.builder(Component.empty(),
+                                button -> setHauler(menu.byteBuddy))
+                        .bounds(x + 151, y + 124, 12, 12)
+                        .tooltip(Tooltip.create(
+                                Component.literal("Hauler")))
+                        .build(TinyIconButton.buttonFactoryWithIcon(
+                                GUI_ADDONS_TEXTURE, 128, 128,
+                                32, 0,
+                                null,
+                                new TinyIconButton.MiniIcon(
+                                        GUI_ADDONS_TEXTURE, 128, 128,
+                                        16, 112,16, 104, 2, 2
+                                )
+                        ))
+        );
+
+        addRenderableWidget(
+                Button.builder(Component.empty(),
+                                button -> setFighter(menu.byteBuddy))
+                        .bounds(x + 166, y + 124, 12, 12)
+                        .tooltip(Tooltip.create(
+                                Component.literal("Fighter")))
+                        .build(TinyIconButton.buttonFactoryWithIcon(
+                                GUI_ADDONS_TEXTURE, 128, 128,
+                                32, 0,
+                                null,
+                                new TinyIconButton.MiniIcon(
+                                        GUI_ADDONS_TEXTURE, 128, 128,
+                                        24, 112,24, 104, 2, 2
+                                )
+                        ))
+
+        );
     }
 
     @Override
@@ -217,5 +299,21 @@ public class ByteBuddyTripleScreen extends AbstractContainerScreen<ByteBuddyTrip
             return this.menu.getByteBuddy();
         } catch (Throwable ignored) {}
         return null;
+    }
+
+    private void setFarmer(ByteBuddyEntity byteBuddy) {
+        RoleData.setBuddyRole(byteBuddy, 1);
+    }
+
+    private void setMiner(ByteBuddyEntity byteBuddy) {
+        RoleData.setBuddyRole(byteBuddy, 2);
+    }
+
+    private void setHauler(ByteBuddyEntity byteBuddy) {
+        RoleData.setBuddyRole(byteBuddy, 5);
+    }
+
+    private void setFighter(ByteBuddyEntity byteBuddy) {
+        RoleData.setBuddyRole(byteBuddy, 3);
     }
 }

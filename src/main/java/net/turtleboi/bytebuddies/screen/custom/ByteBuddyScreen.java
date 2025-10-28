@@ -62,8 +62,6 @@ public class ByteBuddyScreen extends AbstractContainerScreen<ByteBuddyMenu> {
     private boolean debugHealthOverride = false;
     private double debugFillPct = 0.50;
 
-    private Button farmerButton, minerButton, haulerButton, fighterButton;
-
     public ByteBuddyScreen(ByteBuddyMenu buddyMenu, Inventory inventory, Component title) {
         super(buddyMenu, inventory, title);
         this.imageWidth = 202;
@@ -77,10 +75,10 @@ public class ByteBuddyScreen extends AbstractContainerScreen<ByteBuddyMenu> {
         int x = (width - this.imageWidth) / 2;
         int y = (height - this.imageHeight) / 2;
 
-        farmerButton = addRenderableWidget(
+        addRenderableWidget(
                 Button.builder(Component.empty(),
                                 button -> setFarmer(menu.byteBuddy))
-                        .bounds(x + 73, y + 124, 12, 12)
+                        .bounds(x + 72, y + 124, 12, 12)
                         .tooltip(Tooltip.create(
                                 Component.literal("Farmer")))
                         .build(TinyIconButton.buttonFactoryWithIcon(
@@ -89,15 +87,15 @@ public class ByteBuddyScreen extends AbstractContainerScreen<ByteBuddyMenu> {
                                 null,
                                 new TinyIconButton.MiniIcon(
                                         GUI_ADDONS_TEXTURE, 128, 128,
-                                        8, 112,8, 104, 2, 2
+                                        8, 112, 8, 104, 2, 2
                                 )
                         ))
         );
 
-        minerButton = addRenderableWidget(
+        addRenderableWidget(
                 Button.builder(Component.empty(),
                                 button -> setMiner(menu.byteBuddy))
-                        .bounds(x + 88, y + 124, 12, 12)
+                        .bounds(x + 87, y + 124, 12, 12)
                         .tooltip(Tooltip.create(
                                 Component.literal("Miner")))
                         .build(TinyIconButton.buttonFactoryWithIcon(
@@ -111,7 +109,7 @@ public class ByteBuddyScreen extends AbstractContainerScreen<ByteBuddyMenu> {
                         ))
         );
 
-        haulerButton = addRenderableWidget(
+        addRenderableWidget(
                 Button.builder(Component.empty(),
                                 button -> setHauler(menu.byteBuddy))
                         .bounds(x + 103, y + 124, 12, 12)
@@ -128,7 +126,7 @@ public class ByteBuddyScreen extends AbstractContainerScreen<ByteBuddyMenu> {
                         ))
         );
 
-        fighterButton = addRenderableWidget(
+        addRenderableWidget(
                 Button.builder(Component.empty(),
                                 button -> setFighter(menu.byteBuddy))
                         .bounds(x + 118, y + 124, 12, 12)

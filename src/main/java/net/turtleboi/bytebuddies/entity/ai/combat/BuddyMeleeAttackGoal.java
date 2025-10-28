@@ -362,6 +362,7 @@ public class BuddyMeleeAttackGoal extends Goal {
                         byteBuddy.swing(InteractionHand.MAIN_HAND, true);
                         byteBuddy.doHurtTarget(target);
                         ToolUtil.applyToolWear(byteBuddy, requiredTool, 1.0f);
+                        byteBuddy.onTaskSuccess(ByteBuddyEntity.TaskType.COMBAT, byteBuddy.getOnPos());
                         phase = Phase.KITE;
                         requireKiteRadius = true;
                     } else {
