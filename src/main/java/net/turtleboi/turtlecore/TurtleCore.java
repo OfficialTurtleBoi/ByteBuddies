@@ -5,10 +5,13 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.turtleboi.turtlecore.commands.InviteCommand;
+import net.turtleboi.turtlecore.config.TurtleCoreConfig;
 import net.turtleboi.turtlecore.effect.CoreEffects;
 import net.turtleboi.turtlecore.enchantment.CoreEnchantments;
 import net.turtleboi.turtlecore.entity.CoreEntities;
@@ -37,7 +40,7 @@ public class TurtleCore {
         CoreParticles.register(eventBus);
 
         eventBus.addListener(this::commonSetup);
-
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, TurtleCoreConfig.SPEC, "turtlecore-client.toml");
         MinecraftForge.EVENT_BUS.register(this);
 
         CoreAttributes.REGISTRY.register(eventBus);
