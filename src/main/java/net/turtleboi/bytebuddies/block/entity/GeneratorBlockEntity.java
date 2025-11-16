@@ -92,27 +92,40 @@ public class GeneratorBlockEntity extends BlockEntity implements IEnergyStorage,
     }
 
     public void tick(Level level, BlockPos blockPos, BlockState blockState) {
-        if (level != null) {
-            ItemStack fuelItemStack = getFuelSlot().getStackInSlot(0);
-            if (!fuelItemStack.isEmpty() && progress <= 0 && maxProgress == 0) {
-                this.maxProgress = fuelItemStack.getBurnTime(RecipeType.SMELTING);
-                this.progress++;
-                setChanged(level, blockPos, blockState);
-                fuelItemStack.shrink(1);
-            } else if (progress < maxProgress) {
-                this.progress++;
-                generateEnergy(16);
-            } else {
-                resetProgress();
-            }
+        if (level == null || level.isClientSide) {
+            return;
+        }
 
-            tickCount++;
-            if (tickCount % 20 == 0) {
-                pushEnergyToNeighbors();
-                giveBatteryEnergy();
+        ItemStack fuelItemStack = getFuelSlot().getStackInSlot(0);
+        if (!fuelItemStack.isEmpty() && progress <= 0 && maxProgress == 0) {
+            int burnTime = net.minecraftforge.common.ForgeHooks.getBurnTime(fuelItemStack, RecipeType.SMELTING);
+
+            if (burnTime > 0) {
+                this.maxProgress = burnTime;
+                this.progress = 1;
+                fuelItemStack.shrink(1);
+                setChanged(level, blockPos, blockState);
             }
         }
+
+        else if (progress > 0 && progress < maxProgress) {
+            this.progress++;
+            generateEnergy(16);
+            setChanged(level, blockPos, blockState);
+        }
+
+        else if (progress >= maxProgress && maxProgress > 0) {
+            resetProgress();
+            setChanged(level, blockPos, blockState);
+        }
+
+        tickCount++;
+        if (tickCount % 20 == 0) {
+            pushEnergyToNeighbors();
+            giveBatteryEnergy();
+        }
     }
+
 
     public int getProgress() {
         return progress;

@@ -152,7 +152,7 @@ public class ByteBuddyTripleScreen extends AbstractContainerScreen<ByteBuddyTrip
         int x = this.leftPos;
         int y = this.topPos;
 
-        guiGraphics.blit(GUI_TEXTURE, x, y, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
+        guiGraphics.blit(GUI_TEXTURE, x, y, 0, 0, this.imageWidth, this.imageHeight, 512, 256);
         drawBuddyPreview(guiGraphics,
                 x + buddyPreviewX,
                 y + buddyPreviewY,

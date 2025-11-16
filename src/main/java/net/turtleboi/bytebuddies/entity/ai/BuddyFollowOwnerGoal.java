@@ -4,58 +4,149 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 
 import javax.annotation.Nullable;
 import java.util.EnumSet;
 
 public class BuddyFollowOwnerGoal extends Goal {
+    public static final int teleportDistance = 32;
+    private static final int minHorizontalDistance = 2;
+    private static final int maxVerticalScan = 2;
+
     private final ByteBuddyEntity byteBuddy;
     private LivingEntity owner;
+
+    private final LevelReader level;
+    private final PathNavigation navigation;
+
     private final double speed;
-    private final double startDist;
-    private final double stopDist;
+    private final float startDist;
+    private final float stopDist;
+    private final boolean canFly;
     private final boolean teleportIfStuck;
 
-    public BuddyFollowOwnerGoal(ByteBuddyEntity byteBuddy, double speed, double startDist, double stopDist, boolean teleportIfStuck) {
+    private int timeToRecalculatePath;
+    private float oldWaterCost;
+
+    public BuddyFollowOwnerGoal(ByteBuddyEntity byteBuddy, double speed, float startDist, float stopDist, boolean teleportIfStuck) {
+        this(byteBuddy, speed, startDist, stopDist, teleportIfStuck, byteBuddy.getNavigation() instanceof FlyingPathNavigation);
+    }
+
+    public BuddyFollowOwnerGoal(ByteBuddyEntity byteBuddy, double speed, float startDist, float stopDist, boolean teleportIfStuck, boolean canFly) {
         this.byteBuddy = byteBuddy;
         this.speed = speed;
         this.startDist = startDist;
         this.stopDist = stopDist;
         this.teleportIfStuck = teleportIfStuck;
+        this.canFly = canFly;
+
+        this.level = byteBuddy.level();
+        this.navigation = byteBuddy.getNavigation();
+
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        if (!(this.navigation instanceof GroundPathNavigation) && !(this.navigation instanceof FlyingPathNavigation)) {
+            throw new IllegalArgumentException("Unsupported travel type for BuddyFollowOwnerGoal");
+        }
     }
 
-    @Override public boolean canUse() {
-        var owner = byteBuddy.getOwner(levelAsServer(byteBuddy));
-        if (owner == null) return false;
-        if (byteBuddy.getDock().isPresent()) return false;
-        if (byteBuddy.distanceToSqr(owner) < startDist * startDist) return false;
+    @Override
+    public boolean canUse() {
+        ServerLevel serverLevel = levelAsServer(byteBuddy);
+        if (serverLevel == null) {
+            return false;
+        }
+
+        LivingEntity owner = byteBuddy.getOwner(serverLevel);
+        if (owner == null) {
+            return false;
+        }
+        if (owner.isSpectator()) {
+            return false;
+        }
+        if (owner.level() != byteBuddy.level()) {
+            return false;
+        }
+        if (unableToMove()) {
+            return false;
+        }
+        if (byteBuddy.distanceToSqr(owner) < (double)(this.startDist * this.startDist)) {
+            return false;
+        }
+
         this.owner = owner;
         return true;
     }
 
-    @Override public boolean canContinueToUse() {
-        if (owner == null || !owner.isAlive()) return false;
-        return byteBuddy.distanceToSqr(owner) > stopDist * stopDist;
+    @Override
+    public boolean canContinueToUse() {
+        if (this.owner == null || !this.owner.isAlive()) {
+            return false;
+        }
+        if (this.navigation.isDone()) {
+            return false;
+        }
+        if (unableToMove()) {
+            return false;
+        }
+        if (this.owner.level() != this.byteBuddy.level()) {
+            return false;
+        }
+        return !(this.byteBuddy.distanceToSqr(this.owner) <= (double)(this.stopDist * this.stopDist));
     }
 
-    @Override public void tick() {
-        if (owner == null || !owner.isAlive() || owner.level() != byteBuddy.level()) return;
-        if (byteBuddy.level() instanceof ServerLevel) {
-            byteBuddy.getLookControl().setLookAt(owner, 15.0f, 15.0f);
-            if (!byteBuddy.getNavigation().isInProgress()) {
-                byteBuddy.getNavigation().moveTo(owner, speed);
+    private boolean unableToMove() {
+        if (byteBuddy.getDock().isPresent()) return true;
+        if (byteBuddy.isPassenger()) return true;
+        if (byteBuddy.isLeashed()) return true;
+        return byteBuddy.isSleeping();
+    }
+
+    @Override
+    public void start() {
+        this.timeToRecalculatePath = 0;
+        this.oldWaterCost = this.byteBuddy.getPathfindingMalus(BlockPathTypes.WATER);
+        this.byteBuddy.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
+    }
+
+    @Override
+    public void stop() {
+        this.owner = null;
+        this.navigation.stop();
+        this.byteBuddy.setPathfindingMalus(BlockPathTypes.WATER, this.oldWaterCost);
+    }
+
+    @Override
+    public void tick() {
+        if (this.owner == null) return;
+        if (this.owner.level() != this.byteBuddy.level()) return;
+
+        this.byteBuddy.getLookControl().setLookAt(this.owner, 10.0F, (float)this.byteBuddy.getMaxHeadXRot());
+
+        if (--this.timeToRecalculatePath > 0) {
+            return;
+        }
+
+        this.timeToRecalculatePath = this.adjustedTickDelay(10);
+        double distSq = this.byteBuddy.distanceToSqr(this.owner);
+        if (this.teleportIfStuck && distSq >= (double)(teleportDistance * teleportDistance)) {
+            if (tryTeleportNearOwner(this.owner, minHorizontalDistance,
+                    teleportDistance / 2)) {
+                this.navigation.stop();
+                return;
             }
 
-            final double maxDist = 32.0;
-            if (teleportIfStuck) {
-                if (byteBuddy.distanceToSqr(owner) > (maxDist * maxDist)) {
-                    if (tryTeleportNearOwner(owner, 2, 6)) {
-                        byteBuddy.getNavigation().stop();
-                    }
-                }
-            }
+            this.navigation.moveTo(this.owner, this.speed);
+        } else {
+            this.navigation.moveTo(this.owner, this.speed);
         }
     }
 
@@ -71,10 +162,18 @@ public class BuddyFollowOwnerGoal extends Goal {
             int dx = (int)Math.round(Math.cos(angle) * radius);
             int dz = (int)Math.round(Math.sin(angle) * radius);
 
-            BlockPos basePos = BlockPos.containing(ownerX, ownerY, ownerZ).offset(dx, 0, dz);
-            BlockPos safePos = findStandableColumnNear(basePos, 2);
-            if (safePos != null && ByteBuddyEntity.isStandableForMove(byteBuddy, byteBuddy.level(), safePos)) {
-                byteBuddy.teleportTo(safePos.getX() + 0.5, safePos.getY(), safePos.getZ() + 0.5);
+            int px = (int)Math.floor(ownerX) + dx;
+            int pz = (int)Math.floor(ownerZ) + dz;
+
+            if (Math.abs(px - owner.getX()) < minHorizontalDistance
+                    && Math.abs(pz - owner.getZ()) < minHorizontalDistance) {
+                continue;
+            }
+
+            BlockPos basePos = new BlockPos(px, (int)Math.floor(ownerY), pz);
+            BlockPos safePos = findStandableColumnNear(basePos, maxVerticalScan);
+            if (safePos != null && canTeleportTo(safePos)) {
+                this.byteBuddy.teleportTo(safePos.getX() + 0.5, safePos.getY(), safePos.getZ() + 0.5);
                 return true;
             }
         }
@@ -92,8 +191,22 @@ public class BuddyFollowOwnerGoal extends Goal {
         return null;
     }
 
+    private boolean canTeleportTo(BlockPos pos) {
+        BlockPathTypes pathType = WalkNodeEvaluator.getBlockPathTypeStatic(this.level, pos.mutable());
+        if (pathType != BlockPathTypes.WALKABLE) {
+            return false;
+        }
+
+        BlockState below = this.level.getBlockState(pos.below());
+        if (!this.canFly && below.getBlock() instanceof LeavesBlock) {
+            return false;
+        }
+
+        BlockPos offset = pos.subtract(this.byteBuddy.blockPosition());
+        return this.level.noCollision(this.byteBuddy, this.byteBuddy.getBoundingBox().move(offset));
+    }
+
     private @Nullable ServerLevel levelAsServer(ByteBuddyEntity byteBuddy) {
         return (byteBuddy.level() instanceof ServerLevel serverLevel) ? serverLevel : null;
     }
 }
-

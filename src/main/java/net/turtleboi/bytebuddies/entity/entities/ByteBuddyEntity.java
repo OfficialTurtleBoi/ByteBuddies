@@ -298,7 +298,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         this.goalSelector.addGoal(1, new GatedGoal(
                 this, () -> this.canAct() && this.canPanic(), new PanicGoal(this, 2.0D), 0));
         this.goalSelector.addGoal(2, new GatedGoal(
-                this, () -> this.canAct() && this.getDock().isEmpty(), new BuddyFollowOwnerGoal(this, 1.05, 4.0, 16.0, true), 0));
+                this, () -> this.canAct() && this.getDock().isEmpty(), new BuddyFollowOwnerGoal(this, 1.05, 4.0f, 16.0f, true), 0));
         this.goalSelector.addGoal(5, new GatedGoal(
                 this, this::canAct, new BuddyPickUpItemGoal(this, 1.2, 6.0, 0.9, 10), 8));
         this.goalSelector.addGoal(6, new GatedGoal(
@@ -2048,7 +2048,7 @@ public class ByteBuddyEntity extends PathfinderMob implements IEnergyStorage {
         boolean hasDock = getDock().isPresent();
         if (!(ableToFight && hasOwner && !hasDock)) return;
 
-        followOwnerGoal = new BuddyFollowOwnerGoal(this, 1.05, 4.0, 18.0, true);
+        followOwnerGoal = new BuddyFollowOwnerGoal(this, 1.05, 4.0f, 16.0f, true);
         goalSelector.addGoal(4, followOwnerGoal);
 
         meleeAttackGoal = new BuddyMeleeAttackGoal(this, 1.2, 2,true);
