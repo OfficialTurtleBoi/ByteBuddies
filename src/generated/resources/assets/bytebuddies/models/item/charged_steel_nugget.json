@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "bytebuddies:item/charged_steel_nugget"
+  }
+}

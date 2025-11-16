@@ -1,32 +1,55 @@
-[28Oct2025 21:02:04.400] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgedatauserdev, --assetIndex, 5, --assetsDir, C:\Users\Derp\.gradle\caches\forge_gradle\assets, --gameDir, ., --fml.forgeVersion, 47.3.7, --fml.mcVersion, 1.20.1, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20230612.114412, --mod, turtlecore, --all, --output, C:\Users\Derp\Desktop\Projects\TurtleBoi's Core Library 1.20.1\src\generated\resources, --existing, C:\Users\Derp\Desktop\Projects\TurtleBoi's Core Library 1.20.1\src\main\resources, --mixin.config, mixins.turtlecore.json]
-[28Oct2025 21:02:04.405] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 10.0.9+10.0.9+main.dcd20f30 starting: java version 17.0.12 by Eclipse Adoptium; OS Windows 11 arch amd64 version 10.0
-[28Oct2025 21:02:04.542] [main/WARN] [net.minecraftforge.fml.loading.FMLConfig/CORE]: Configuration file C:\Users\Derp\Desktop\Projects\TurtleBoi's Core Library 1.20.1\run-data\config\fml.toml is not correct. Correcting
-[28Oct2025 21:02:04.543] [main/INFO] [net.minecraftforge.fml.loading.FMLConfig/CORE]: Incorrect key [earlyWindowSkipGLVersions] was corrected from null to []
-[28Oct2025 21:02:04.543] [main/INFO] [net.minecraftforge.fml.loading.FMLConfig/CORE]: Incorrect key [earlyWindowLogHelpMessage] was corrected from null to true
-[28Oct2025 21:02:04.544] [main/INFO] [net.minecraftforge.fml.loading.FMLConfig/CORE]: Incorrect key [earlyWindowSquir] was corrected from null to false
-[28Oct2025 21:02:04.544] [main/INFO] [net.minecraftforge.fml.loading.FMLConfig/CORE]: Incorrect key [earlyWindowShowCPU] was corrected from null to false
-[28Oct2025 21:02:04.559] [main/INFO] [net.minecraftforge.fml.loading.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgedatauserdev
-[28Oct2025 21:02:04.606] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/C:/Users/Derp/.gradle/caches/modules-2/files-2.1/org.spongepowered/mixin/0.8.5/9d1c0c3a304ae6697ecd477218fa61b850bf57fc/mixin-0.8.5.jar%23128!/ Service=ModLauncher Env=CLIENT
-[28Oct2025 21:02:04.974] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\Derp\.gradle\caches\modules-2\files-2.1\net.minecraftforge\javafmllanguage\1.20.1-47.3.7\5d72a04334eea2494912f0d91216648462bb32c3\javafmllanguage-1.20.1-47.3.7.jar is missing mods.toml file
-[28Oct2025 21:02:04.977] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\Derp\.gradle\caches\modules-2\files-2.1\net.minecraftforge\lowcodelanguage\1.20.1-47.3.7\74fd0ee16e74766d45d2efe7c74b6d0e121677df\lowcodelanguage-1.20.1-47.3.7.jar is missing mods.toml file
-[28Oct2025 21:02:04.980] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\Derp\.gradle\caches\modules-2\files-2.1\net.minecraftforge\mclanguage\1.20.1-47.3.7\cf753f5bc19311c127ea07e1ee43d5f9477df22b\mclanguage-1.20.1-47.3.7.jar is missing mods.toml file
-[28Oct2025 21:02:04.984] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\Derp\.gradle\caches\modules-2\files-2.1\net.minecraftforge\fmlcore\1.20.1-47.3.7\b6a4840dfdc56e2ae2eccdd1bf233959493d11ea\fmlcore-1.20.1-47.3.7.jar is missing mods.toml file
-[28Oct2025 21:02:05.049] [main/INFO] [net.minecraftforge.fml.loading.moddiscovery.JarInJarDependencyLocator/]: No dependencies to load found. Skipping!
-[28Oct2025 21:02:06.393] [main/WARN] [mixin/]: Compatibility level JAVA_17 specified by mixins.turtlecore.json is higher than the maximum level supported by this version of mixin (JAVA_13).
-[28Oct2025 21:02:06.394] [main/INFO] [mixin/]: Compatibility level set to JAVA_17
-[28Oct2025 21:02:06.398] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgedatauserdev' with arguments [--gameDir, ., --assetsDir, C:\Users\Derp\.gradle\caches\forge_gradle\assets, --assetIndex, 5, --mod, turtlecore, --all, --output, C:\Users\Derp\Desktop\Projects\TurtleBoi's Core Library 1.20.1\src\generated\resources, --existing, C:\Users\Derp\Desktop\Projects\TurtleBoi's Core Library 1.20.1\src\main\resources]
-[28Oct2025 21:02:06.559] [main/INFO] [mixin/]: Attempting to load Fernflower decompiler (Threaded mode)
-[28Oct2025 21:02:06.561] [main/INFO] [mixin/]: Fernflower could not be loaded, exported classes will not be decompiled. NoClassDefFoundError: org/jetbrains/java/decompiler/main/extern/IResultSaver
-[28Oct2025 21:02:06.568] [main/INFO] [mixin/]: Preparing mixins for MixinEnvironment[DEFAULT]
-[28Oct2025 21:02:06.569] [main/INFO] [mixin/]: Selecting config mixins.turtlecore.json
-[28Oct2025 21:02:06.574] [main/WARN] [mixin/]: Reference map 'turtlecore.refmap.json' for mixins.turtlecore.json could not be read. If this is a development environment you can ignore this message
-[28Oct2025 21:02:06.576] [main/INFO] [mixin/]: Preparing mixins.turtlecore.json (2)
-[28Oct2025 21:02:07.033] [main/INFO] [net.minecraftforge.data.loading.DatagenModLoader/]: Initializing Data Gatherer for mods [turtlecore]
-[28Oct2025 21:02:08.402] [main/INFO] [mixin/]: Mixing MixinAbstractArrow from mixins.turtlecore.json into net.minecraft.world.entity.projectile.AbstractArrow
-[28Oct2025 21:02:09.921] [main/INFO] [mixin/]: Mixing MixinThrownTrident from mixins.turtlecore.json into net.minecraft.world.entity.projectile.ThrownTrident
-[28Oct2025 21:02:11.097] [modloading-worker-0/INFO] [net.minecraftforge.common.ForgeMod/FORGEMOD]: Forge mod loading, version 47.3.7, for MC 1.20.1 with MCP 20230612.114412
-[28Oct2025 21:02:11.099] [modloading-worker-0/INFO] [net.minecraftforge.common.MinecraftForge/FORGE]: MinecraftForge v47.3.7 Initialized
-[28Oct2025 21:02:11.519] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/Derp/.gradle/caches/forge_gradle/minecraft_user_repo/net/minecraftforge/forge/1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1/forge-1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1-recomp.jar%23191!/assets/.mcassetsroot' uses unexpected schema
-[28Oct2025 21:02:11.520] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/Derp/.gradle/caches/forge_gradle/minecraft_user_repo/net/minecraftforge/forge/1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1/forge-1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1-recomp.jar%23191!/data/.mcassetsroot' uses unexpected schema
-[28Oct2025 21:02:11.740] [main/INFO] [net.minecraft.data.DataGenerator/]: All providers took: 0 ms
-[28Oct2025 21:02:11.744] [main/INFO] [net.minecraft.data.HashCache/]: Caching: total files: 0, old count: 0, new count: 1, removed stale: 0, written: 0
+[15Nov2025 03:37:07.951] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgedatauserdev, --assetIndex, 5, --assetsDir, C:\Users\Derp\.gradle\caches\forge_gradle\assets, --gameDir, ., --fml.forgeVersion, 47.3.7, --fml.mcVersion, 1.20.1, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20230612.114412, --mod, bytebuddies, --all, --output, C:\Users\Derp\Desktop\Projects\ByteBuddies - 1.20.1 - Forge\src\generated\resources, --existing, C:\Users\Derp\Desktop\Projects\ByteBuddies - 1.20.1 - Forge\src\main\resources, --mixin.config, mixins.bytebuddies.json]
+[15Nov2025 03:37:07.958] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 10.0.9+10.0.9+main.dcd20f30 starting: java version 17.0.12 by Eclipse Adoptium; OS Windows 11 arch amd64 version 10.0
+[15Nov2025 03:37:08.112] [main/INFO] [net.minecraftforge.fml.loading.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgedatauserdev
+[15Nov2025 03:37:08.169] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/C:/Users/Derp/.gradle/caches/modules-2/files-2.1/org.spongepowered/mixin/0.8.5/9d1c0c3a304ae6697ecd477218fa61b850bf57fc/mixin-0.8.5.jar%23128!/ Service=ModLauncher Env=CLIENT
+[15Nov2025 03:37:08.578] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\Derp\.gradle\caches\modules-2\files-2.1\net.minecraftforge\javafmllanguage\1.20.1-47.3.7\5d72a04334eea2494912f0d91216648462bb32c3\javafmllanguage-1.20.1-47.3.7.jar is missing mods.toml file
+[15Nov2025 03:37:08.582] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\Derp\.gradle\caches\modules-2\files-2.1\net.minecraftforge\lowcodelanguage\1.20.1-47.3.7\74fd0ee16e74766d45d2efe7c74b6d0e121677df\lowcodelanguage-1.20.1-47.3.7.jar is missing mods.toml file
+[15Nov2025 03:37:08.585] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\Derp\.gradle\caches\modules-2\files-2.1\net.minecraftforge\mclanguage\1.20.1-47.3.7\cf753f5bc19311c127ea07e1ee43d5f9477df22b\mclanguage-1.20.1-47.3.7.jar is missing mods.toml file
+[15Nov2025 03:37:08.589] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\Derp\.gradle\caches\modules-2\files-2.1\net.minecraftforge\fmlcore\1.20.1-47.3.7\b6a4840dfdc56e2ae2eccdd1bf233959493d11ea\fmlcore-1.20.1-47.3.7.jar is missing mods.toml file
+[15Nov2025 03:37:08.702] [main/INFO] [net.minecraftforge.fml.loading.moddiscovery.JarInJarDependencyLocator/]: No dependencies to load found. Skipping!
+[15Nov2025 03:37:10.555] [main/WARN] [mixin/]: Compatibility level JAVA_17 specified by mixins.bytebuddies.json is higher than the maximum level supported by this version of mixin (JAVA_13).
+[15Nov2025 03:37:10.555] [main/INFO] [mixin/]: Compatibility level set to JAVA_17
+[15Nov2025 03:37:10.555] [main/ERROR] [mixin/]: Mixin config mixins.bytebuddies.json does not specify "minVersion" property
+[15Nov2025 03:37:10.561] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgedatauserdev' with arguments [--gameDir, ., --assetsDir, C:\Users\Derp\.gradle\caches\forge_gradle\assets, --assetIndex, 5, --mod, bytebuddies, --all, --output, C:\Users\Derp\Desktop\Projects\ByteBuddies - 1.20.1 - Forge\src\generated\resources, --existing, C:\Users\Derp\Desktop\Projects\ByteBuddies - 1.20.1 - Forge\src\main\resources]
+[15Nov2025 03:37:10.724] [main/INFO] [mixin/]: Attempting to load Fernflower decompiler (Threaded mode)
+[15Nov2025 03:37:10.726] [main/INFO] [mixin/]: Fernflower could not be loaded, exported classes will not be decompiled. NoClassDefFoundError: org/jetbrains/java/decompiler/main/extern/IResultSaver
+[15Nov2025 03:37:10.740] [main/INFO] [mixin/]: Preparing mixins for MixinEnvironment[DEFAULT]
+[15Nov2025 03:37:10.740] [main/INFO] [mixin/]: Selecting config mixins.bytebuddies.json
+[15Nov2025 03:37:10.746] [main/INFO] [mixin/]: Selecting config mixins.turtlecore.json
+[15Nov2025 03:37:10.991] [main/INFO] [mixin/]: Remapping refMap turtlecore.refmap.json using C:\Users\Derp\Desktop\Projects\ByteBuddies - 1.20.1 - Forge\build/createSrgToMcp/output.srg
+[15Nov2025 03:37:10.991] [main/INFO] [mixin/]: Preparing mixins.bytebuddies.json (2)
+[15Nov2025 03:37:11.048] [main/INFO] [mixin/]: Preparing mixins.turtlecore.json (2)
+[15Nov2025 03:37:11.086] [main/INFO] [mixin/]: Prepared 4 mixins in 0.346 sec (86.5ms avg) (0ms load, 0ms transform, 0ms plugin)
+[15Nov2025 03:37:11.461] [main/INFO] [net.minecraftforge.data.loading.DatagenModLoader/]: Initializing Data Gatherer for mods [bytebuddies]
+[15Nov2025 03:37:12.212] [main/INFO] [mixin/]: Mixing CropBlockAccessor from mixins.bytebuddies.json into net.minecraft.world.level.block.CropBlock
+[15Nov2025 03:37:12.921] [main/INFO] [mixin/]: Mixing MixinAbstractArrow from mixins.turtlecore.json into net.minecraft.world.entity.projectile.AbstractArrow
+[15Nov2025 03:37:14.655] [main/INFO] [mixin/]: Mixing MixinThrownTrident from mixins.turtlecore.json into net.minecraft.world.entity.projectile.ThrownTrident
+[15Nov2025 03:37:15.295] [main/INFO] [mixin/]: Mixing SlotAccessorMixin from mixins.bytebuddies.json into net.minecraft.world.inventory.Slot
+[15Nov2025 03:37:15.296] [main/WARN] [mixin/]: @Shadow target mixins.bytebuddies.json:SlotAccessorMixin::x is final but shadow is not decorated with @Final
+[15Nov2025 03:37:15.296] [main/WARN] [mixin/]: @Shadow target mixins.bytebuddies.json:SlotAccessorMixin::y is final but shadow is not decorated with @Final
+[15Nov2025 03:37:16.131] [modloading-worker-0/INFO] [net.minecraftforge.common.ForgeMod/FORGEMOD]: Forge mod loading, version 47.3.7, for MC 1.20.1 with MCP 20230612.114412
+[15Nov2025 03:37:16.133] [modloading-worker-0/INFO] [net.minecraftforge.common.MinecraftForge/FORGE]: MinecraftForge v47.3.7 Initialized
+[15Nov2025 03:37:16.513] [modloading-worker-0/INFO] [mezz.jei.library.load.PluginCaller/]: Sending ConfigManager...
+[15Nov2025 03:37:16.521] [modloading-worker-0/INFO] [mezz.jei.library.load.PluginCaller/]: Sending ConfigManager took 6.290 ms
+[15Nov2025 03:37:16.960] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/Derp/.gradle/caches/forge_gradle/minecraft_user_repo/net/minecraftforge/forge/1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1/forge-1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1-recomp.jar%23191!/assets/.mcassetsroot' uses unexpected schema
+[15Nov2025 03:37:16.960] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/Derp/.gradle/caches/forge_gradle/minecraft_user_repo/net/minecraftforge/forge/1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1/forge-1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1-recomp.jar%23191!/data/.mcassetsroot' uses unexpected schema
+[15Nov2025 03:37:17.259] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Loot Tables
+[15Nov2025 03:37:17.376] [main/INFO] [net.minecraft.data.DataGenerator/]: Loot Tables finished after 116 ms
+[15Nov2025 03:37:17.376] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Recipes
+[15Nov2025 03:37:17.474] [main/INFO] [net.minecraft.data.DataGenerator/]: Recipes finished after 97 ms
+[15Nov2025 03:37:17.474] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Tags for minecraft:block mod id bytebuddies
+[15Nov2025 03:37:17.566] [main/INFO] [net.minecraft.data.DataGenerator/]: Tags for minecraft:block mod id bytebuddies finished after 91 ms
+[15Nov2025 03:37:17.567] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Tags for minecraft:item mod id bytebuddies
+[15Nov2025 03:37:17.568] [main/INFO] [net.minecraft.data.DataGenerator/]: Tags for minecraft:item mod id bytebuddies finished after 1 ms
+[15Nov2025 03:37:17.568] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Item Models: bytebuddies
+[15Nov2025 03:37:17.640] [main/INFO] [net.minecraft.data.DataGenerator/]: Item Models: bytebuddies finished after 71 ms
+[15Nov2025 03:37:17.640] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Block States: bytebuddies
+[15Nov2025 03:37:17.767] [main/INFO] [net.minecraft.data.DataGenerator/]: Block States: bytebuddies finished after 127 ms
+[15Nov2025 03:37:17.767] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Global Loot Modifiers : bytebuddies
+[15Nov2025 03:37:17.769] [main/INFO] [net.minecraft.data.DataGenerator/]: Global Loot Modifiers : bytebuddies finished after 1 ms
+[15Nov2025 03:37:17.769] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Languages: en_us
+[15Nov2025 03:37:17.773] [main/INFO] [net.minecraft.data.DataGenerator/]: Languages: en_us finished after 3 ms
+[15Nov2025 03:37:17.773] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Registries
+[15Nov2025 03:37:17.787] [main/INFO] [net.minecraft.data.DataGenerator/]: Registries finished after 14 ms
+[15Nov2025 03:37:17.788] [main/INFO] [net.minecraft.data.DataGenerator/]: All providers took: 529 ms
+[15Nov2025 03:37:17.820] [main/INFO] [net.minecraft.data.HashCache/]: Caching: total files: 312, old count: 312, new count: 313, removed stale: 0, written: 0

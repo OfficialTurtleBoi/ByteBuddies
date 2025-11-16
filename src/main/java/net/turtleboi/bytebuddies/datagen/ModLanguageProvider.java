@@ -1,0 +1,119 @@
+package net.turtleboi.bytebuddies.datagen;
+
+import net.minecraft.data.PackOutput;
+import net.minecraft.world.item.Item;
+import net.minecraftforge.registries.RegistryObject;
+import net.turtleboi.bytebuddies.ByteBuddies;
+import net.turtleboi.bytebuddies.block.ModBlocks;
+import net.turtleboi.bytebuddies.effects.ModEffects;
+import net.turtleboi.bytebuddies.entity.ModEntities;
+import net.turtleboi.bytebuddies.item.ModItems;
+import net.turtleboi.turtlecore.util.CoreLanguageProvider;
+
+import java.util.Map;
+import java.util.Optional;
+
+public class ModLanguageProvider extends CoreLanguageProvider {
+    public ModLanguageProvider(PackOutput output) {
+        super(output, ByteBuddies.MOD_ID);
+    }
+
+    @Override
+    protected void addTranslations() {
+        add("creativetab.bytebuddies.bytebuddies_tab", "ByteBuddies");
+        addEntityType(ModEntities.BYTEBUDDY, "ByteBuddy");
+        addSimpleNameEffect(ModEffects.SUPERCHARGED);
+        addSimpleNameBlock(ModBlocks.BAUXITE_ORE);
+        addSimpleNameBlock(ModBlocks.DEEPSLATE_BAUXITE_ORE);
+        addSimpleNameBlock(ModBlocks.ALUMINUM_BLOCK);
+        addSimpleNameBlock(ModBlocks.STEEL_BLOCK);
+        addSimpleNameBlock(ModBlocks.CHARGED_STEEL_BLOCK);
+        addSimpleNameBlock(ModBlocks.BLUESTONE_ORE);
+        addSimpleNameBlock(ModBlocks.DEEPSLATE_BLUESTONE_ORE);
+        addSimpleNameBlock(ModBlocks.BLUESTONE_BLOCK);
+        addSimpleNameBlock(ModBlocks.DOCKING_STATION);
+        addSimpleNameBlock(ModBlocks.GENERATOR);
+        addSimpleNameBlock(ModBlocks.SOLAR_PANEL);
+        addItem(ModItems.BUSTER_SWORD, "Steel Breaker");
+        addItem(ModItems.TERRABLADE, "World Splitter");
+        addSimpleItemName(ModItems.RAW_BAUXITE);
+        addSimpleItemName(ModItems.ALUMINUM_INGOT);
+        addSimpleItemName(ModItems.ALUMINUM_NUGGET);
+        addSimpleItemName(ModItems.CARBON_ALLOY);
+        addSimpleItemName(ModItems.STEEL_INGOT);
+        addSimpleItemName(ModItems.STEEL_NUGGET);
+        addSimpleItemName(ModItems.CHARGED_STEEL_INGOT);
+        addSimpleItemName(ModItems.CHARGED_STEEL_NUGGET);
+        addSimpleItemName(ModItems.BLUESTONE_DUST);
+        addSimpleItemName(ModItems.COPPER_PLATING);
+        addSimpleItemName(ModItems.IRON_PLATING);
+        addSimpleItemName(ModItems.GOLD_PLATING);
+        addSimpleItemName(ModItems.ALUMINUM_PLATING);
+        addSimpleItemName(ModItems.STEEL_PLATING);
+        addSimpleItemName(ModItems.CHARGED_STEEL_PLATING);
+        addSimpleItemName(ModItems.CARBON_PASTE);
+        addSimpleItemName(ModItems.SIMPLE_BATTERY);
+        addSimpleItemName(ModItems.ADVANCED_BATTERY);
+        addSimpleItemName(ModItems.BIOCELL_BATTERY);
+        addSimpleItemName(ModItems.REINFORCED_BATTERY);
+        addSimpleItemName(ModItems.SUPER_CHARGED_BATTERY);
+        addSimpleItemName(ModItems.CHIP);
+        addSimpleItemName(ModItems.SUPER_CHIP);
+        addSimpleItemName(ModItems.WRENCH);
+        addSimpleItemName(ModItems.CLIPBOARD);
+        addSimpleItemName(ModItems.PROPELLER_UNIT);
+        addSimpleItemName(ModItems.AQUATIC_MOTOR);
+        addSimpleItemName(ModItems.SOLAR_ARRAY);
+        addSimpleItemName(ModItems.GYROSCOPIC_STABILIZER);
+        addSimpleItemName(ModItems.ARC_WELDER);
+        addSimpleItemName(ModItems.GEOTHERMAL_REGULATOR);
+        addSimpleItemName(ModItems.DYNAMO_COIL);
+        addSimpleItemName(ModItems.MAGNETIC_CRESCENT);
+        addSimpleItemName(ModItems.BASIC_STORAGE_CELL);
+        addSimpleItemName(ModItems.ADVANCED_STORAGE_CELL);
+        addSimpleItemName(ModItems.ENDERLINK_STORAGE_CELL);
+        addSimpleItemName(ModItems.REINFORCED_IRON_PLATING);
+        addSimpleItemName(ModItems.REINFORCED_STEEL_PLATING);
+        addSimpleItemName(ModItems.REINFORCED_NETHERITE_PLATING);
+        addSimpleItemName(ModItems.REINFORCED_CHARGED_STEEL_PLATING);
+        //add(ModItems.BYTEBUDDY_SPAWN_EGG.get(), "ByteBuddy Spawn Egg");
+        add(ModItems.BYTEBUDDY_SPAWN_EGG.get(), "ByteBuddy");
+
+        ModItems.FLOPPY_DISKS.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(entry -> {
+                    RegistryObject<Item> item = entry.getValue();
+                    String path = item.getId().getPath();
+                    String display = floppyDisplayName(path).orElseGet(() -> toName(path));
+                    add("item." + ByteBuddies.MOD_ID + "." + path, display);
+                });
+
+        add("tooltip.bytebuddies.floppy.tier_line", "Tier: %s");
+        add("tooltip." + ByteBuddies.MOD_ID + ".floppy_tier.copper", "Copper");
+        add("tooltip." + ByteBuddies.MOD_ID + ".floppy_tier.iron", "Iron");
+        add("tooltip." + ByteBuddies.MOD_ID + ".floppy_tier.gold", "Gold");
+
+        add("tooltip.bytebuddies.floppy.desc.black", "Reduces tool wear and increases bot's durability (Health)");
+        add("tooltip.bytebuddies.floppy.desc.blue", "Expands sensing and action radius around the bot’s station or active job.");
+        add("tooltip.bytebuddies.floppy.desc.cyan", "On a successful action, there’s a chance to spawn a short-lived hologram that performs parallel tasks");
+        add("tooltip.bytebuddies.floppy.desc.green", "Reduces battery drain and consumable use where applicable.");
+        add("tooltip.bytebuddies.floppy.desc.pink", "Supportive aura that buffs nearby allies and tasks.");
+        add("tooltip.bytebuddies.floppy.desc.purple", "Improves yield from actions the bot performs.");
+        add("tooltip.bytebuddies.floppy.desc.red", "Overclock for more power and speed at a higher energy cost.");
+        add("tooltip.bytebuddies.floppy.desc.yellow", "When a task succeeds, roll for a byproduct tied to that task’s context");
+    }
+
+    private static Optional<String> floppyDisplayName(String registryPath) {
+        if (!registryPath.endsWith("_floppy")) return Optional.empty();
+        String stem = registryPath.substring(0, registryPath.length() - "_floppy".length());
+        int ix = stem.indexOf('_');
+        if (ix <= 0 || ix >= stem.length() - 1) return Optional.empty();
+        String color = stem.substring(ix + 1);
+        return Optional.of(capitalize(color) + " Floppy Disk");
+    }
+
+    private static String capitalize(String string) {
+        if (string == null || string.isEmpty()) return string;
+        return Character.toUpperCase(string.charAt(0)) + (string.length() > 1 ? string.substring(1) : "");
+    }
+}

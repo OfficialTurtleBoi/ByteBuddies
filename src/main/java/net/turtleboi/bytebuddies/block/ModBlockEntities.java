@@ -1,0 +1,33 @@
+package net.turtleboi.bytebuddies.block;
+
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.turtleboi.bytebuddies.ByteBuddies;
+import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
+import net.turtleboi.bytebuddies.block.entity.GeneratorBlockEntity;
+import net.turtleboi.bytebuddies.block.entity.SolarPanelBlockEntity;
+
+import java.util.function.Supplier;
+
+public class ModBlockEntities{
+    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
+            DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, ByteBuddies.MOD_ID);
+
+    public static final Supplier<BlockEntityType<DockingStationBlockEntity>> DOCKING_STATION_BE =
+            BLOCK_ENTITIES.register("docking_station_be", () -> BlockEntityType.Builder.of(
+                    DockingStationBlockEntity::new, ModBlocks.DOCKING_STATION.get()).build(null));
+
+    public static final Supplier<BlockEntityType<GeneratorBlockEntity>> GENERATOR_BE =
+            BLOCK_ENTITIES.register("generator_be", () -> BlockEntityType.Builder.of(
+                    GeneratorBlockEntity::new, ModBlocks.GENERATOR.get()).build(null));
+
+    public static final Supplier<BlockEntityType<SolarPanelBlockEntity>> SOLAR_PANEL_BE =
+            BLOCK_ENTITIES.register("solar_panel_be", () -> BlockEntityType.Builder.of(
+                    SolarPanelBlockEntity::new, ModBlocks.SOLAR_PANEL.get()).build(null));
+
+    public static void register(IEventBus eventBus){
+        BLOCK_ENTITIES.register(eventBus);
+    }
+}

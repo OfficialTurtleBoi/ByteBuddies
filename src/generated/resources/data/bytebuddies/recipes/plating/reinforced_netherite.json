@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": {
+      "item": "minecraft:netherite_ingot"
+    },
+    "P": {
+      "item": "minecraft:netherite_scrap"
+    }
+  },
+  "pattern": [
+    " P ",
+    "PIP",
+    " P "
+  ],
+  "result": {
+    "item": "bytebuddies:reinforced_netherite_plating"
+  },
+  "show_notification": true
+}

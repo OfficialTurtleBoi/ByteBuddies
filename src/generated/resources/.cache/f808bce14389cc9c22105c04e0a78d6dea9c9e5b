@@ -1,0 +1,7 @@
+// 1.20.1	2025-11-15T03:22:38.4620531	Tags for minecraft:item mod id bytebuddies
+73cfab07a7dc2eb873ee2e15451d2973a47bfd6a data/bytebuddies/tags/items/augment.json
+2526758d92cfd980e8cf33db520b60dd074f797a data/bytebuddies/tags/items/battery.json
+4ce05034229d96f1c6d1a2cb696be4e9fc732aab data/bytebuddies/tags/items/plating.json
+5efe151419e4bd7cf2aeb60a56d648a8e69e8532 data/bytebuddies/tags/items/storage_cell.json
+39df8dd6e29c82bf84c672bc15edfd1ffcb24055 data/forge/tags/items/ores.json
+edb0f4586e72e75627efc85e2c5d391dc0fa6fa2 data/minecraft/tags/items/swords.json

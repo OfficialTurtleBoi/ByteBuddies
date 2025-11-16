@@ -1,0 +1,9 @@
+{
+  "values": [
+    "bytebuddies:simple_battery",
+    "bytebuddies:advanced_battery",
+    "bytebuddies:biocell_battery",
+    "bytebuddies:reinforced_battery",
+    "bytebuddies:super_charged_battery"
+  ]
+}

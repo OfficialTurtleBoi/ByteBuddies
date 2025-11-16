@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "bytebuddies:block/generator",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "bytebuddies:block/generator"
+    },
+    "facing=south": {
+      "model": "bytebuddies:block/generator",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bytebuddies:block/generator",
+      "y": 270
+    }
+  }
+}

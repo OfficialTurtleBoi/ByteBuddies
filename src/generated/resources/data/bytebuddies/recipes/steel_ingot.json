@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "cookingtime": 1000,
+  "experience": 3.5,
+  "ingredient": {
+    "item": "bytebuddies:carbon_alloy"
+  },
+  "result": "bytebuddies:steel_ingot"
+}

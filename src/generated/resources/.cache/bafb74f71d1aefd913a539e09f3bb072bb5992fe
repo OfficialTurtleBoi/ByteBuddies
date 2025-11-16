@@ -1,0 +1,5 @@
+// 1.20.1	2025-11-15T03:22:38.4660925	Tags for minecraft:block mod id bytebuddies
+bcc1002c4bc3f9ca3a170370fb40957fa45a6811 data/bytebuddies/tags/blocks/generators.json
+9db84bb64de1ad3f6cdd794d93a4854b8a6396bf data/minecraft/tags/blocks/mineable/pickaxe.json
+4b91dc02a6ab2e72c457d362e992b39c3079ab09 data/minecraft/tags/blocks/needs_iron_tool.json
+39132a4cb3eea5d3711a62dce4854403118ab420 data/minecraft/tags/blocks/needs_stone_tool.json

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "pattern": [
+    "II"
+  ],
+  "result": {
+    "count": 3,
+    "item": "bytebuddies:iron_plating"
+  },
+  "show_notification": true
+}

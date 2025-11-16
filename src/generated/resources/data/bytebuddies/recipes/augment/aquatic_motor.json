@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "A": {
+      "item": "bytebuddies:aluminum_ingot"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "K": {
+      "item": "minecraft:kelp"
+    }
+  },
+  "pattern": [
+    " K ",
+    "AIA",
+    " K "
+  ],
+  "result": {
+    "item": "bytebuddies:aquatic_motor"
+  },
+  "show_notification": true
+}

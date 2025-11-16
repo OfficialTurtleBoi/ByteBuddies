@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "minecraft:copper_ingot"
+    }
+  },
+  "pattern": [
+    "CC"
+  ],
+  "result": {
+    "count": 3,
+    "item": "bytebuddies:copper_plating"
+  },
+  "show_notification": true
+}
