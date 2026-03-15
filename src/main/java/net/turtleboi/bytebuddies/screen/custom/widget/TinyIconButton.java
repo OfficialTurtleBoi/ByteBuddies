@@ -27,8 +27,12 @@ public class TinyIconButton extends Button {
     @Nullable
     private MiniIcon miniIcon;
 
+    @Nullable
+    private final BooleanSupplier stateOn;
+
     public TinyIconButton(Builder buttonBuilder, ResourceLocation atlas, int atlasW, int atlasH,
-                          int tileU, int tileV, @Nullable BooleanSupplier lockedCond, @Nullable MiniIcon miniIcon) {
+                          int tileU, int tileV, @Nullable BooleanSupplier lockedCond, @Nullable MiniIcon miniIcon,
+                          @Nullable BooleanSupplier stateOn) {
         super(buttonBuilder);
         this.atlas = Objects.requireNonNull(atlas);
         this.atlasW = atlasW;
@@ -38,16 +42,23 @@ public class TinyIconButton extends Button {
         this.lockedCond = lockedCond == null ? () -> false : lockedCond;
         this.active = true;
         this.miniIcon = miniIcon;
+        this.stateOn = stateOn;
     }
 
     public static Function<Builder, Button> buttonFactory(ResourceLocation atlas, int atlasW, int atlasH,
                                                           int tileU, int tileV, @Nullable BooleanSupplier lockedCond) {
-        return builder -> new TinyIconButton(builder, atlas, atlasW, atlasH, tileU, tileV, lockedCond, null);
+        return builder -> new TinyIconButton(builder, atlas, atlasW, atlasH, tileU, tileV, lockedCond, null, null);
     }
 
     public static Function<Builder, Button> buttonFactoryWithIcon(ResourceLocation atlas, int atlasW, int atlasH,
                                                                   int tileU, int tileV, @Nullable BooleanSupplier lockedCond, @Nullable MiniIcon miniIcon) {
-        return builder -> new TinyIconButton(builder, atlas, atlasW, atlasH, tileU, tileV, lockedCond, miniIcon);
+        return builder -> new TinyIconButton(builder, atlas, atlasW, atlasH, tileU, tileV, lockedCond, miniIcon, null);
+    }
+
+    public static Function<Builder, Button> buttonFactoryToggle(ResourceLocation atlas, int atlasW, int atlasH,
+                                                                int tileU, int tileV, @Nullable BooleanSupplier lockedCond,
+                                                                @Nullable BooleanSupplier stateOn) {
+        return builder -> new TinyIconButton(builder, atlas, atlasW, atlasH, tileU, tileV, lockedCond, null, stateOn);
     }
 
     public static final class MiniIcon {
@@ -84,7 +95,8 @@ public class TinyIconButton extends Button {
         final boolean hovered = isMouseOver(mouseX, mouseY);
         final boolean enabled = this.active;
         final boolean locked  = isLocked();
-        final boolean showPressed = pressedVisual && hovered && enabled && !locked;
+        final boolean toggled = stateOn != null && stateOn.getAsBoolean();
+        final boolean showPressed = (pressedVisual && hovered && enabled && !locked) || toggled;
 
         int quadX = showPressed ? 12 : 0;
         int quadY = hovered ? 12 : 0;
@@ -108,7 +120,6 @@ public class TinyIconButton extends Button {
     public void onClick(double mouseX, double mouseY) {
         if (!this.active || isLocked()) return;
         this.pressedVisual = true;
-        super.onClick(mouseX, mouseY);
     }
 
     @Override

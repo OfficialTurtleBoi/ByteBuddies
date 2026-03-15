@@ -1,16 +1,22 @@
 package net.turtleboi.bytebuddies.network.packets;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.network.NetworkEvent;
+import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
+
+import java.util.Optional;
 
 import java.util.function.Supplier;
 
 public class TeleportDataC2SPacket {
+    public static final int TELEPORT_ENERGY_COST = 50;
+
     private final int entityId;
     private final double blockX;
     private final double blockY;
@@ -47,6 +53,14 @@ public class TeleportDataC2SPacket {
             Entity entity = serverLevel.getEntity(this.entityId);
             if (entity instanceof ByteBuddyEntity byteBuddyEntity) {
                 if (byteBuddyEntity.isOwnedBy(player)) {
+                    Optional<BlockPos> dockOpt = byteBuddyEntity.getDock();
+                    if (dockOpt.isPresent()) {
+                        BlockPos dockPos = dockOpt.get();
+                        if (serverLevel.getBlockEntity(dockPos) instanceof DockingStationBlockEntity dockBlock) {
+                            if (dockBlock.getEnergyStorage().getEnergyStored() < TELEPORT_ENERGY_COST) return;
+                            dockBlock.getEnergyStorage().extractEnergy(TELEPORT_ENERGY_COST, false);
+                        }
+                    }
                     byteBuddyEntity.lookAt(player, 15.0f, 15.0f);
                     entity.teleportTo(this.blockX, this.blockY, this.blockZ);
                 }

@@ -129,7 +129,6 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
 
             tickCount++;
             if (tickCount % 20 == 0) {
-                consumeEnergy(boundBuddies.size() * 25);
                 BatteryItem.dockBlockDrainBatteries(this);
             }
 
@@ -154,6 +153,14 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
 
     public ItemStack getClipboardStack() {
         return mainInv.getStackInSlot(clipboardSlot);
+    }
+
+    public void clearDockFromBoundBuddies(ServerLevel serverLevel) {
+        for (UUID buddyId : boundBuddies) {
+            if (serverLevel.getEntity(buddyId) instanceof ByteBuddyEntity buddy) {
+                buddy.clearDock();
+            }
+        }
     }
 
     @Nullable
@@ -236,6 +243,7 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
         }
     }
 
+    private static final int DISPATCH_ENERGY_COST = 200;
     private final Map<TaskKey, Reservation> reservations = new HashMap<>();
     private static long currentTime(ServerLevel serverLevel) {
         return serverLevel.getGameTime(); }
@@ -265,6 +273,8 @@ public class DockingStationBlockEntity extends BlockEntity implements IEnergySto
         TaskKey taskKey = new TaskKey(taskType, blockPos);
         Reservation reservation = reservations.get(taskKey);
         if (reservation != null && !reservation.buddyId.equals(buddyId)) return false;
+        boolean isNewDispatch = taskType != TaskType.MOVE && reservation == null;
+        if (isNewDispatch && !consumeEnergy(DISPATCH_ENERGY_COST)) return false;
         reservations.put(taskKey, new Reservation(buddyId, reservationTime(currentTime(serverLevel), reservationTicks)));
         return true;
     }

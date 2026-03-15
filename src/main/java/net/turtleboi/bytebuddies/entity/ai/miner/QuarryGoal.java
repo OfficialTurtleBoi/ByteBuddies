@@ -5,16 +5,15 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Containers;
-import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 import net.turtleboi.bytebuddies.block.entity.DockingStationBlockEntity;
+import net.turtleboi.bytebuddies.entity.ai.TaskGoal;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity;
 import net.turtleboi.bytebuddies.entity.entities.ByteBuddyEntity.TaskType;
 import net.turtleboi.bytebuddies.item.custom.ClipboardItem;
@@ -28,58 +27,90 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class QuarryGoal extends Goal {
-    private final ByteBuddyEntity byteBuddy;
-    @Nullable private BlockPos targetPos;
-    @Nullable private BlockPos approachPos;
-    private record Approach(BlockPos targetPos, Vec3 approachAnchor, double distSq, Path path) {}
-    private List<Approach> approachPlans = Collections.emptyList();
-    private int anchorIndex = 0;
-    @Nullable private Vec3 targetAnchor = null;
-    private boolean edgeAnchored = false;
-
-    private long nextActionTick = 0L;
-    private static final int baseActionCooldown = 20;
-
-    private GoalPhase currentPhase = GoalPhase.IDLE;
-    private BotDebug.FailReason lastFail = BotDebug.FailReason.NONE;
-    private long phaseStartedTick = 0L;
-    private long phaseProgressTick = 0L;
-    private int repathRetries = 0;
-    private int anchorRotateRetries = 0;
-    private int targetReselectRetries = 0;
-
-    private static final int seekingTimout = 20;
-    private static final int movingTimeout = 300;
-    private static final int actingTimeout = 60;
-
-    private double lastMoveDistSq = Double.POSITIVE_INFINITY;
-    private double lastAnchorDistSq = Double.POSITIVE_INFINITY;
-
-    private static final double reachDistanceMin = 0.95;
-    private static final double verticalTolerance = 1.5;
-
-    private static final double finalApproachDist = 1.5;
-    private static final double microDistMin = 0.08;
-    private static final double microDistMax = 0.18;
+public class QuarryGoal extends TaskGoal {
 
     @Nullable private BlockPos claimedMinePos = null;
-    @Nullable private BlockPos firePos = null;
-    @Nullable private BlockState firePreState = null;
-    private static final int claimTimeout = 120;
     private long nextClaimRenewMine = 0L;
-
-    private long animationStart = 0L;
-    private long animationEnd = 0L;
-    private boolean actionStarted = false;
-
     private static final int mineEnergyCost = 30;
 
     public QuarryGoal(ByteBuddyEntity byteBuddy) {
-        this.byteBuddy = byteBuddy;
+        super(byteBuddy, 300, 1.5, 0.08, 0.18, 1.5);
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
-        byteBuddy.setPathfindingMalus(BlockPathTypes.WATER, 8.0F);
-        byteBuddy.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 4.0F);
+    }
+
+    @Override
+    protected String goalLabel() { return "MINER"; }
+
+    @Override
+    protected void setActionActive(boolean active) { byteBuddy.setSlamming(active); }
+
+    @Override
+    protected void releaseClaim() {
+        DockingStationBlockEntity dockBlock = GoalUtil.dockBlockEntity(byteBuddy);
+        if (claimedMinePos != null && dockBlock != null) {
+            dockBlock.releaseClaim(TaskType.MINE, claimedMinePos, byteBuddy.getUUID());
+        }
+        claimedMinePos = null;
+    }
+
+    @Override
+    protected void renewClaim(ServerLevel serverLevel) {
+        GoalUtil.renewClaimIfNeeded(byteBuddy, serverLevel, TaskType.MINE,
+                claimedMinePos, targetPos,
+                serverLevel.getGameTime(), 5, claimTimeOut,
+                () -> nextClaimRenewMine, t -> nextClaimRenewMine = t);
+    }
+
+    @Override
+    protected boolean validateTarget(ServerLevel serverLevel, BlockState targetState) {
+        if (!GoalUtil.canMineAt(byteBuddy.level(), targetPos)) {
+            clearTarget();
+            enterPhase(GoalPhase.IDLE, "target invalid");
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    protected void onReadyToAct(ServerLevel serverLevel, BlockPos pos, BlockState state) {
+        if (!verifyClaimOrAbort(serverLevel, TaskType.MINE, claimedMinePos, pos)) return;
+
+        firePos = pos;
+        firePreState = state;
+
+        int totalTicks = GoalUtil.toTicks(2.0);
+        int startTicks = GoalUtil.toTicks(0.4);
+        startTimedAnimation(totalTicks, startTicks, pos, state);
+
+        BotDebug.log(byteBuddy, "MINE schedule: now=" + serverLevel.getGameTime() +
+                " start=" + (serverLevel.getGameTime() + startTicks) +
+                " end=" + (serverLevel.getGameTime() + totalTicks) +
+                " firePos=" + firePos + " pre=" + state.getBlock().getName().getString());
+    }
+
+    @Override
+    protected void performAction(BlockPos pos, BlockState pre) {
+        performMine(pos, pre);
+    }
+
+    @Override
+    protected void handleSeeking() {
+        if (!timedOut(seekingTimeout)) return;
+
+        if (targetReselectRetries++ < 2) {
+            var plan = findMinePlan();
+            if (plan.isPresent()) {
+                targetPos = plan.get().breakPos();
+                approachPos = plan.get().standPos();
+                targetAnchor = GoalUtil.getEdgeAnchor(targetPos, approachPos);
+                resetProgress();
+                enterPhase(GoalPhase.MOVING, "retry seek -> moving");
+            } else {
+                enterPhase(GoalPhase.IDLE, "seek exhausted");
+            }
+        } else {
+            enterPhase(GoalPhase.IDLE, "seek timeout");
+        }
     }
 
     @Override
@@ -103,9 +134,7 @@ public class QuarryGoal extends Goal {
             return false;
         }
 
-        if (!GoalUtil.ensureUse(byteBuddy, ToolUtil.ToolType.PICKAXE, mineEnergyCost, 1)) {
-            return false;
-        }
+        if (!GoalUtil.ensureUse(byteBuddy, ToolUtil.ToolType.PICKAXE, mineEnergyCost, 1)) return false;
 
         var plan = findMinePlan();
         if (plan.isEmpty()) return false;
@@ -114,7 +143,6 @@ public class QuarryGoal extends Goal {
         this.approachPos = plan.get().standPos();
         this.targetAnchor = GoalUtil.getEdgeAnchor(targetPos, approachPos);
         this.edgeAnchored = false;
-
         resetProgress();
         enterPhase(GoalPhase.MOVING, "to mine " + targetPos.toShortString());
         return true;
@@ -128,248 +156,8 @@ public class QuarryGoal extends Goal {
             }
             return true;
         }
-
         if (targetPos == null) return false;
-
         return GoalUtil.ensureUse(byteBuddy, ToolUtil.ToolType.PICKAXE, mineEnergyCost, 1);
-    }
-
-    @Override
-    public void stop() {
-        clearTimedAnimation();
-        releaseMineClaim();
-        targetPos = null;
-        approachPos = null;
-        targetAnchor = null;
-        edgeAnchored = false;
-        approachPlans = Collections.emptyList();
-        anchorIndex = 0;
-        super.stop();
-    }
-
-    @Override
-    public boolean isInterruptable() {
-        return false;
-    }
-
-    @Override
-    public void tick() {
-        if (byteBuddy.level() instanceof ServerLevel serverLevel) {
-            tickTimedAnimation();
-
-            if (targetPos == null || approachPos == null) return;
-
-            GoalUtil.renewClaimIfNeeded(
-                    byteBuddy, serverLevel, TaskType.MINE,
-                    claimedMinePos, targetPos,
-                    serverLevel.getGameTime(), 5, claimTimeout,
-                    () -> nextClaimRenewMine, t -> nextClaimRenewMine = t
-            );
-
-            BlockState targetState = byteBuddy.level().getBlockState(targetPos);
-            if (currentPhase != GoalPhase.ACTING && !GoalUtil.canMineAt(byteBuddy.level(), targetPos)) {
-                clearTarget();
-                enterPhase(GoalPhase.IDLE, "target invalid");
-                return;
-            }
-
-            Vec3 targetCenter = targetPos.getCenter();
-
-            navigatePhases(serverLevel);
-
-            if (targetAnchor != null) {
-                double distToTarget = byteBuddy.position().distanceTo(targetAnchor);
-
-                if (distToTarget > finalApproachDist) {
-                    if (byteBuddy.getNavigation() instanceof GroundPathNavigation pathNavigation) {
-                        Path currentPath = pathNavigation.getPath();
-                        boolean needsNewPath = currentPath == null || currentPath.isDone() || approachPos == null || !currentPath.getTarget().equals(approachPos);
-                        if (needsNewPath) {
-                            GoalUtil.releaseCurrentPathIfAny(byteBuddy);
-                            Path path = (approachPos != null) ? pathNavigation.createPath(approachPos, 0) : null;
-                            if (path != null) {
-                                pathNavigation.moveTo(path, byteBuddy.actionSpeedMultiplier());
-                                GoalUtil.reserveCurrentPathIfAny(serverLevel, byteBuddy,5);
-                            } else {
-                                byteBuddy.getNavigation().moveTo(targetAnchor.x, targetAnchor.y, targetAnchor.z, byteBuddy.actionSpeedMultiplier());
-                            }
-                        }
-                    } else {
-                        byteBuddy.getNavigation().moveTo(targetAnchor.x, targetAnchor.y, targetAnchor.z, byteBuddy.actionSpeedMultiplier());
-                    }
-                    return;
-                }
-
-                if (!edgeAnchored) {
-                    GoalUtil.releaseCurrentPathIfAny(byteBuddy);
-                    if (distToTarget <= microDistMin) {
-                        GoalUtil.lockToAnchor(byteBuddy, targetAnchor);
-                        edgeAnchored = true;
-                        markProgress();
-                        BotDebug.log(byteBuddy, "HARVEST: locked anchor");
-                    } else {
-                        byteBuddy.getNavigation().stop();
-                        byteBuddy.getMoveControl().setWantedPosition(targetAnchor.x, targetAnchor.y, targetAnchor.z, byteBuddy.actionSpeedMultiplier());
-                        if (distToTarget + 1.0e-3 < lastAnchorDistSq) {
-                            lastAnchorDistSq = distToTarget;
-                            markProgress();
-                        }
-                        BotDebug.log(byteBuddy, String.format("final-targetPos dH=%.3f to edge %s",
-                                distToTarget, approachPos.toShortString()));
-                    }
-                } else {
-                    double distSq = Math.sqrt(GoalUtil.hDistSq(byteBuddy.position(), targetAnchor));
-                    if (distSq > microDistMax) edgeAnchored = false;
-                }
-            } else {
-                if (approachPos != null && byteBuddy.getNavigation() instanceof GroundPathNavigation pathNavigation) {
-                    GoalUtil.releaseCurrentPathIfAny(byteBuddy);
-                    Path path = pathNavigation.createPath(approachPos, 0);
-                    pathNavigation.moveTo(path, byteBuddy.actionSpeedMultiplier());
-                    GoalUtil.reserveCurrentPathIfAny(serverLevel, byteBuddy, 5);
-                    return;
-                }
-            }
-
-            Vec3 buddyPos = byteBuddy.position();
-            boolean withinReach = GoalUtil.hDistSq(buddyPos, targetCenter) <= (reachDistanceMin * reachDistanceMin)
-                    && Math.abs(buddyPos.y - targetCenter.y) <= verticalTolerance;
-
-            if (withinReach) {
-                if (animationEnd > 0 || currentPhase == GoalPhase.ACTING) {
-                    byteBuddy.getLookControl().setLookAt(targetCenter.x, targetPos.getY(), targetCenter.z, 15f, 15f);
-                } else {
-                    if (!GoalUtil.actionReady(serverLevel, nextActionTick)) return;
-                    if (!verifyClaimOrAbort(serverLevel, TaskType.MINE, claimedMinePos, targetPos)) return;
-
-                    firePos = targetPos;
-                    firePreState = targetState;
-
-                    int totalTicks = GoalUtil.toTicks(2.0);
-                    int startTicks = GoalUtil.toTicks(0.4);
-                    startTimedAnimation(totalTicks, startTicks, targetPos, targetState);
-
-                    BotDebug.log(byteBuddy, "MINE schedule: now=" + serverLevel.getGameTime() +
-                            " start=" + (serverLevel.getGameTime() + startTicks) +
-                            " end=" + (serverLevel.getGameTime() + totalTicks) +
-                            " firePos=" + firePos + " pre=" + targetState.getBlock().getName().getString());
-                    return;
-                }
-            }
-
-            if (targetAnchor != null && !edgeAnchored) {
-                byteBuddy.getMoveControl().setWantedPosition(targetAnchor.x, targetAnchor.y, targetAnchor.z, byteBuddy.actionSpeedMultiplier());
-            }
-        }
-    }
-
-    private void navigatePhases(ServerLevel serverLevel) {
-        switch (currentPhase) {
-            case MOVING -> handleMoving(serverLevel);
-            case ACTING -> handleActing();
-            case SEEKING -> handleSeeking();
-            default -> {}
-        }
-    }
-
-    private void handleMoving(ServerLevel serverLevel) {
-        if (isWithinFinalApproach()) {
-            renewPathAheadIfNeeded(serverLevel, 5);
-            markProgress();
-            return;
-        }
-
-        updateApproachProgress();
-        renewPathAheadIfNeeded(serverLevel, 5);
-
-        if (stalledFor(movingTimeout / 10)) {
-            if (tryRecoverFromStall(serverLevel)) {
-                markProgress();
-            } else {
-                GoalUtil.releaseCurrentPathIfAny(byteBuddy);
-                clearTarget();
-                enterPhase(GoalPhase.IDLE, "MOVING stalled, rescan");
-            }
-            return;
-        }
-
-        if (timedOut(movingTimeout)) {
-            GoalUtil.releaseCurrentPathIfAny(byteBuddy);
-            clearTarget();
-            enterPhase(GoalPhase.IDLE, "MOVING timeout, rescan");
-        }
-    }
-
-    private boolean isWithinFinalApproach() {
-        if (edgeAnchored) return true;
-        if (targetAnchor == null) return false;
-        return Math.sqrt(GoalUtil.hDistSq(byteBuddy.position(), targetAnchor)) <= finalApproachDist;
-    }
-
-    private void updateApproachProgress() {
-        if (approachPos != null) {
-            final Vec3 progressToTarget = (targetAnchor != null) ? targetAnchor : approachPos.getCenter();
-            final double distSq = GoalUtil.hDistSq(byteBuddy.position(), progressToTarget);
-            if (distSq + 1.0e-3 < lastMoveDistSq) {
-                lastMoveDistSq = distSq;
-                markProgress();
-            }
-        }
-    }
-
-    private void renewPathAheadIfNeeded(ServerLevel serverLevel, int lookahead) {
-        if (!(byteBuddy.getNavigation() instanceof GroundPathNavigation pathNavigation)) return;
-        Path path = pathNavigation.getPath();
-        if (path == null) return;
-        if ((serverLevel.getGameTime() % 5L) != 0L) return;
-        byteBuddy.renewPathAhead(serverLevel, path, lookahead);
-    }
-
-    private boolean tryRecoverFromStall(ServerLevel serverLevel) {
-        GoalUtil.releaseCurrentPathIfAny(byteBuddy);
-
-        if (repath()) {
-            GoalUtil.reserveCurrentPathIfAny(serverLevel, byteBuddy, 5);
-            BotDebug.log(byteBuddy, "MOVING: repath");
-            return true;
-        }
-
-        if (rotateAnchor()) {
-            GoalUtil.reserveCurrentPathIfAny(serverLevel, byteBuddy, 5);
-            BotDebug.log(byteBuddy, "MOVING: rotate targetPos side");
-            return true;
-        }
-
-        return false;
-    }
-
-    private void handleActing() {
-        if (animationEnd > 0) {
-            markProgress();
-            return;
-        }
-        if (timedOut(actingTimeout)) {
-            BotDebug.log(byteBuddy, "ACTING timeout; abort");
-            clearTarget();
-            enterPhase(GoalPhase.IDLE, "abort act");
-        }
-    }
-
-    private void handleSeeking() {
-        if (!timedOut(seekingTimout)) return;
-
-        if (anchorRotateRetries++ < 2) {
-            var plan = findMinePlan();
-            if (plan.isPresent()) {
-                targetPos = plan.get().breakPos();
-                approachPos = plan.get().standPos();
-                targetAnchor = GoalUtil.getEdgeAnchor(targetPos, approachPos);
-                resetProgress();
-                enterPhase(GoalPhase.MOVING, "retry seek -> moving");
-            } else {
-                enterPhase(GoalPhase.IDLE, "seek exhausted");
-            }
-        } else enterPhase(GoalPhase.IDLE, "seek timeout");
     }
 
     private record MinePlan(BlockPos breakPos, BlockPos standPos, @Nullable Path path, double score) {}
@@ -408,7 +196,6 @@ public class QuarryGoal extends Goal {
                 final BlockPos origin = box.origin;
                 final Direction back = box.backDir;
                 final Direction left = box.leftDir;
-
                 for (int depth = 1; depth <= box.depth; depth++) {
                     for (int side = -half; side <= half; side++) {
                         int x = origin.getX() + back.getStepX() * depth + left.getStepX() * side;
@@ -424,13 +211,12 @@ public class QuarryGoal extends Goal {
         candidates.sort(Comparator.comparingDouble(MinePlan::score));
         MinePlan pick = candidates.get(0);
 
-        if (!dockBlock.tryClaim(serverLevel, TaskType.MINE, pick.breakPos(), byteBuddy.getUUID(), claimTimeout))
+        if (!dockBlock.tryClaim(serverLevel, TaskType.MINE, pick.breakPos(), byteBuddy.getUUID(), claimTimeOut))
             return Optional.empty();
 
         this.claimedMinePos = pick.breakPos();
         this.nextClaimRenewMine = serverLevel.getGameTime() + 5;
-
-        this.approachPlans = buildMineEdgeApproachPlans(level, pick.breakPos());
+        this.approachPlans = buildApproachPlans(level, pick.breakPos());
         this.anchorIndex = 0;
         this.approachPos = pick.standPos();
         this.targetAnchor = GoalUtil.getEdgeAnchor(pick.breakPos(), pick.standPos());
@@ -439,36 +225,24 @@ public class QuarryGoal extends Goal {
         return Optional.of(pick);
     }
 
-    private List<Approach> buildMineEdgeApproachPlans(Level level, BlockPos blockPos) {
-        ArrayList<Approach> list = new ArrayList<>(8);
-        BlockPos[] horizontal = new BlockPos[] {
-                blockPos.east(), blockPos.west(), blockPos.north(), blockPos.south()
-        };
-        BlockPos[] horizontalPlusOne = new BlockPos[] {
-                blockPos.east().above(), blockPos.west().above(), blockPos.north().above(), blockPos.south().above()
-        };
-        BlockPos[] horizontalMinusOne = new BlockPos[] {
-                blockPos.east().below(), blockPos.west().below(), blockPos.north().below(), blockPos.south().below()
-        };
+    private List<Approach> buildApproachPlans(Level level, BlockPos blockPos) {
+        ArrayList<Approach> list = new ArrayList<>(12);
+        BlockPos[] horizontal = { blockPos.east(), blockPos.west(), blockPos.north(), blockPos.south() };
+        BlockPos[] above = { blockPos.east().above(), blockPos.west().above(), blockPos.north().above(), blockPos.south().above() };
+        BlockPos[] below = { blockPos.east().below(), blockPos.west().below(), blockPos.north().below(), blockPos.south().below() };
 
-        Consumer<BlockPos> addIfGood = standable -> {
-            if (!ByteBuddyEntity.isStandableForMove(byteBuddy, level, standable)) return;
-            Vec3 edgeAnchor = GoalUtil.getEdgeAnchor(blockPos, standable);
-            if (edgeAnchor == null) return;
-
-            Path path = (byteBuddy.getNavigation() instanceof GroundPathNavigation pathNavigation)
-                    ? pathNavigation.createPath(standable, 0)
-                    : null;
+        Consumer<BlockPos> addIfGood = stand -> {
+            if (!ByteBuddyEntity.isStandableForMove(byteBuddy, level, stand)) return;
+            Vec3 anchor = GoalUtil.getEdgeAnchor(blockPos, stand);
+            if (anchor == null) return;
+            Path path = (byteBuddy.getNavigation() instanceof GroundPathNavigation nav) ? nav.createPath(stand, 0) : null;
             if (path == null) return;
-
-            double horizontalDist = GoalUtil.hDistSq(byteBuddy.position(), edgeAnchor);
-            list.add(new Approach(standable, edgeAnchor, horizontalDist, path));
+            list.add(new Approach(stand, anchor, GoalUtil.hDistSq(byteBuddy.position(), anchor), path));
         };
 
-        for (BlockPos blockPositions : horizontal) addIfGood.accept(blockPositions);
-        for (BlockPos blockPositionsPlusOne : horizontalPlusOne) addIfGood.accept(blockPositionsPlusOne);
-        for (BlockPos blockPositionsMinusOne : horizontalMinusOne) addIfGood.accept(blockPositionsMinusOne);
-
+        for (BlockPos pos : horizontal) addIfGood.accept(pos);
+        for (BlockPos pos : above) addIfGood.accept(pos);
+        for (BlockPos pos : below) addIfGood.accept(pos);
         list.sort(Comparator.comparingDouble(Approach::distSq));
         return list;
     }
@@ -477,12 +251,15 @@ public class QuarryGoal extends Goal {
         Level level = byteBuddy.level();
         if (!GoalUtil.canMineAt(level, pos)) {
             BotDebug.log(byteBuddy, "MINE invalid at " + pos.toShortString());
-            releaseMineClaim(); return;
+            releaseClaim();
+            return;
         }
 
         if (!byteBuddy.consumeEnergy(mineEnergyCost)) {
-            releaseMineClaim(); return;
+            releaseClaim();
+            return;
         }
+
         ToolUtil.applyToolWear(byteBuddy, ToolUtil.ToolType.PICKAXE, byteBuddy.toolWearMultiplier());
 
         if (level instanceof ServerLevel serverLevel) {
@@ -495,238 +272,35 @@ public class QuarryGoal extends Goal {
                 else inserted += stack.getCount();
             }
             level.destroyBlock(pos, false);
-            BuddyDebugLog(pos, inserted, dropped);
+            BotDebug.log(byteBuddy, "MINE at " + pos.toShortString() + " inserted=" + inserted + " dropped=" + dropped);
+            BotDebug.mark(level, pos);
         }
 
         byteBuddy.onTaskSuccess(TaskType.MINE, pos);
-        releaseMineClaim();
+        releaseClaim();
     }
 
-    private void BuddyDebugLog(BlockPos pos, int inserted, int dropped) {
-        BotDebug.log(byteBuddy, "MINE at " + pos.toShortString() + " inserted=" + inserted + " dropped=" + dropped);
-        BotDebug.mark(byteBuddy.level(), pos);
-    }
+    private void tryAddCandidate(Level level, ServerLevel serverLevel, DockingStationBlockEntity dockBlock, BlockPos dock,
+                                  int y, int x, int z, BlockPos.MutableBlockPos cursor, ArrayList<MinePlan> out) {
+        cursor.set(x, y, z);
+        if (!byteBuddy.isBlockWithinTether(cursor.immutable())) return;
+        if (!GoalUtil.canMineAt(level, cursor)) return;
+        if (dockBlock.isReserved(serverLevel, TaskType.MINE, cursor)) return;
+        if (!level.getBlockState(cursor.above()).getCollisionShape(level, cursor.above()).isEmpty()) return;
 
-    private boolean repath() {
-        if (byteBuddy.getNavigation() instanceof GroundPathNavigation pathNavigation) {
-            if (repathRetries++ >= 2) return false;
-            if (approachPos == null) return false;
+        var plans = buildApproachPlans(level, cursor.immutable());
+        if (plans.isEmpty()) return;
 
-            if (byteBuddy.level() instanceof ServerLevel serverLevel) {
-                GoalUtil.releaseCurrentPathIfAny(byteBuddy);
-            }
+        Approach best = plans.get(0);
+        double score = GoalUtil.hDistSq(byteBuddy.position(), best.approachAnchor());
+        score += (dock.getY() - cursor.getY()) * 4.0;
+        if (!level.getFluidState(cursor).isEmpty()) score += 1e6;
 
-            Path path = pathNavigation.createPath(approachPos, 0);
-            if (path == null) return false;
-
-            pathNavigation.moveTo(path, byteBuddy.actionSpeedMultiplier());
-            if (byteBuddy.level() instanceof ServerLevel serverLevel) {
-                GoalUtil.reserveCurrentPathIfAny(serverLevel, byteBuddy, 5);
-            }
-            return true;
-        }
-        return false;
-    }
-
-
-    private boolean rotateAnchor() {
-        if (approachPlans.isEmpty() || targetPos == null) return false;
-        if (anchorRotateRetries >= 3) return false;
-
-        final int approaches = approachPlans.size();
-        for (int tries = 0; tries < approaches; tries++) {
-            anchorIndex = (anchorIndex + 1) % approaches;
-            Approach approachCandidates = approachPlans.get(anchorIndex);
-            BlockPos standPos = approachCandidates.targetPos();
-            if (!ByteBuddyEntity.isStandableForMove(byteBuddy, byteBuddy.level(), standPos)) {
-                continue;
-            }
-
-            Vec3 anchor = approachCandidates.approachAnchor();
-            if (anchor == null) {
-                continue;
-            }
-
-            Path path = null;
-            if (byteBuddy.getNavigation() instanceof GroundPathNavigation pathNavigation) {
-                path = pathNavigation.createPath(standPos, 0);
-            }
-            if (path == null) {
-                continue;
-            }
-
-            approachPos  = standPos;
-            targetAnchor = anchor;
-            edgeAnchored = false;
-
-            if (byteBuddy.level() instanceof ServerLevel serverLevel) {
-                GoalUtil.releaseCurrentPathIfAny(byteBuddy);
-            }
-
-            byteBuddy.getNavigation().moveTo(path, byteBuddy.actionSpeedMultiplier());
-
-            if (byteBuddy.level() instanceof ServerLevel serverLevel) {
-                GoalUtil.reserveCurrentPathIfAny(serverLevel, byteBuddy, 5);
-            }
-
-            anchorRotateRetries++;
-            markProgress();
-            lastMoveDistSq = Double.POSITIVE_INFINITY;
-            lastAnchorDistSq = Double.POSITIVE_INFINITY;
-            return true;
-        }
-        return false;
-    }
-
-    private void startTimedAnimation(int totalTicks, int startTick, @Nullable BlockPos fireAt, @Nullable BlockState preState) {
-        if (byteBuddy.level() instanceof ServerLevel serverLevel) {
-            byteBuddy.getNavigation().stop();
-            Vec3 deltaMovement = byteBuddy.getDeltaMovement();
-            byteBuddy.setDeltaMovement(
-                    deltaMovement.x * 0.1,
-                    deltaMovement.y * 0.1,
-                    deltaMovement.z * 0.1
-            );
-
-            byteBuddy.setSlamming(true);
-
-            this.actionStarted = false;
-            long currentTime = serverLevel.getGameTime();
-            this.animationStart = currentTime + Math.max(0, startTick);
-            this.animationEnd = currentTime + Math.max(1, totalTicks);
-
-            this.firePos = fireAt;
-            this.firePreState = preState;
-
-            float speedMultiplier = Math.max(0.25f, byteBuddy.actionSpeedMultiplier());
-            this.nextActionTick = currentTime + Math.max(4, Math.round(baseActionCooldown / speedMultiplier));
-
-            enterPhase(GoalPhase.ACTING, "animation: MINE fire@" + startTick + " end@" + totalTicks);
-        }
-    }
-
-    private void tickTimedAnimation() {
-        if (byteBuddy.level() instanceof ServerLevel serverLevel) {
-            long currentTime = serverLevel.getGameTime();
-            if (!actionStarted && currentTime >= animationStart && firePos != null && firePreState != null) {
-                actionStarted = true;
-                BotDebug.log(byteBuddy, "MINE anim: now=" + currentTime +
-                        " start=" + animationStart + " end=" + animationEnd +
-                        " fired=" + actionStarted + " firePos=" + (firePos != null));
-
-                performMine(firePos, firePreState);
-            }
-
-            if (currentPhase == GoalPhase.ACTING && animationEnd > 0 && currentTime >= animationEnd) {
-                clearTimedAnimation();
-                clearTarget();
-                enterPhase(GoalPhase.IDLE, "MINE: complete");
-            }
-        }
-    }
-
-    private void clearTimedAnimation() {
-        actionStarted = false;
-        animationStart = animationEnd = 0L;
-        byteBuddy.setSlamming(false);
-    }
-
-    private boolean verifyClaimOrAbort(ServerLevel serverLevel, TaskType taskType, @Nullable BlockPos claimedPos, @Nullable BlockPos currentTaskPos) {
-        if (claimedPos == null) return false;
-        if (currentTaskPos != null && !currentTaskPos.equals(claimedPos)) return false;
-
-        DockingStationBlockEntity dockBlock = GoalUtil.dockBlockEntity(byteBuddy);
-        if (dockBlock == null) return false;
-
-        boolean buddyReserved = dockBlock.isReservedBy(serverLevel, taskType, claimedPos, byteBuddy.getUUID());
-        if (!buddyReserved) {
-            BotDebug.log(byteBuddy, "lost " + taskType + " claim at " + claimedPos.toShortString() + " — aborting");
-            clearTarget();
-
-            enterPhase(GoalPhase.IDLE, "claim lost; rescan");
-        }
-        return buddyReserved;
-    }
-
-    private void releaseMineClaim() {
-        DockingStationBlockEntity dockBlock = GoalUtil.dockBlockEntity(byteBuddy);
-        if (claimedMinePos != null && dockBlock != null) {
-            dockBlock.releaseClaim(TaskType.MINE, claimedMinePos, byteBuddy.getUUID());
-        }
-        claimedMinePos = null;
-    }
-
-    private void enterPhase(GoalPhase phase, String context) {
-        currentPhase = phase; lastFail = BotDebug.FailReason.NONE;
-        phaseStartedTick = phaseProgressTick = GoalUtil.getCurrentTime(byteBuddy);
-
-        if (phase == GoalPhase.MOVING) {
-            repathRetries = 0;
-            anchorRotateRetries = 0;
-            lastMoveDistSq = Double.POSITIVE_INFINITY;
-            lastAnchorDistSq = Double.POSITIVE_INFINITY;
-        }
-
-        if (phase == GoalPhase.SEEKING) {
-            repathRetries = 0;
-            anchorRotateRetries = 0;
-            targetReselectRetries = 0;
-        }
-
-        if (phase == GoalPhase.ACTING && byteBuddy.level() instanceof ServerLevel serverLevel) {
-            GoalUtil.releaseCurrentPathIfAny(byteBuddy);
-        }
-
-        BotDebug.log(byteBuddy, "MINER: " + phase + (context.isEmpty() ? "" : " -> " + context));
-    }
-
-    private void clearTarget() {
-        if (byteBuddy.level() instanceof ServerLevel serverLevel) {
-            GoalUtil.releaseCurrentPathIfAny(byteBuddy);
-        }
-        releaseMineClaim();
-        targetPos = null;
-        approachPos = null;
-        targetAnchor = null;
-        edgeAnchored = false;
-        firePos = null;
-        firePreState = null;
-        approachPlans = Collections.emptyList();
-        anchorIndex = 0;
-        lastMoveDistSq = Double.POSITIVE_INFINITY;
-        lastAnchorDistSq = Double.POSITIVE_INFINITY;
-    }
-
-    private void failTask(BotDebug.FailReason reason, String context) {
-        lastFail = reason;
-        currentPhase = GoalPhase.IDLE;
-        BotDebug.log(byteBuddy, "MINER cannot start: " + reason + (context.isEmpty() ? "" : " (" + context + ")"));
-        resetProgress();
-        stop();
-    }
-
-    private void resetProgress() {
-        lastMoveDistSq = Double.POSITIVE_INFINITY;
-        lastAnchorDistSq = Double.POSITIVE_INFINITY;
-        repathRetries = 0;
-        anchorRotateRetries = 0;
-        targetReselectRetries = 0;
-        phaseStartedTick = phaseProgressTick = GoalUtil.getCurrentTime(byteBuddy);
-    }
-
-    private void markProgress() {
-        phaseProgressTick = GoalUtil.getCurrentTime(byteBuddy);
-    }
-
-    private boolean stalledFor(int stallTime) {
-        return GoalUtil.getCurrentTime(byteBuddy) - phaseProgressTick > stallTime;
-    }
-
-    private boolean timedOut(int timeLimit) {
-        return GoalUtil.getCurrentTime(byteBuddy) - phaseStartedTick > timeLimit;
+        out.add(new MinePlan(cursor.immutable(), best.targetPos(), best.path(), score));
     }
 
     private enum ScanMode { REGION, BAND }
+
     private static final class ScanBox {
         final ScanMode mode;
         final int xMin, xMax, zMin, zMax, yMin, yMax;
@@ -734,8 +308,8 @@ public class QuarryGoal extends Goal {
         final Direction backDir, leftDir;
         final int depth, bandHalfWidth;
 
-        private ScanBox(ScanMode mode, int xMin, int xMax, int zMin, int zMax, int yMin, int yMax,
-                        BlockPos origin, Direction backDir, Direction leftDir, int depth, int bandHalfWidth) {
+        ScanBox(ScanMode mode, int xMin, int xMax, int zMin, int zMax, int yMin, int yMax,
+                BlockPos origin, Direction backDir, Direction leftDir, int depth, int bandHalfWidth) {
             this.mode = mode;
             this.xMin = xMin; this.xMax = xMax;
             this.zMin = zMin; this.zMax = zMax;
@@ -749,50 +323,22 @@ public class QuarryGoal extends Goal {
     }
 
     private ScanBox makeRegionBox(ServerLevel level, BlockPos a, BlockPos b) {
-        int xMin = Math.min(a.getX(), b.getX());
-        int xMax = Math.max(a.getX(), b.getX());
-        int yMin = clampY(level, Math.min(a.getY(), b.getY()));
-        int yMax = clampY(level, Math.max(a.getY(), b.getY()));
-        int zMin = Math.min(a.getZ(), b.getZ());
-        int zMax = Math.max(a.getZ(), b.getZ());
-        return new ScanBox(ScanMode.REGION, xMin, xMax, zMin, zMax, yMin, yMax,
+        return new ScanBox(ScanMode.REGION,
+                Math.min(a.getX(), b.getX()), Math.max(a.getX(), b.getX()),
+                Math.min(a.getZ(), b.getZ()), Math.max(a.getZ(), b.getZ()),
+                clampY(level, Math.min(a.getY(), b.getY())), clampY(level, Math.max(a.getY(), b.getY())),
                 null, null, null, 0, 0);
     }
 
     private ScanBox makeBehindDockBox(ServerLevel level, BlockPos dock, int radius, DockingStationBlockEntity dockBlock) {
         Direction back = GoalUtil.backOfDock(dockBlock);
         Direction left = back.getClockWise();
-        int yMin = clampY(level, level.getMinBuildHeight());
-        int yMax = clampY(level, dock.getY() + 2);
-        int depth = Math.max(1, radius * 2);
-        int half = Math.max(0, radius);
-        return new ScanBox(ScanMode.BAND, 0, 0, 0, 0, yMin, yMax,
-                dock, back, left, depth, half);
+        return new ScanBox(ScanMode.BAND, 0, 0, 0, 0,
+                clampY(level, level.getMinBuildHeight()), clampY(level, dock.getY() + 2),
+                dock, back, left, Math.max(1, radius * 2), Math.max(0, radius));
     }
 
     private int clampY(ServerLevel level, int y) {
         return Mth.clamp(y, level.getMinBuildHeight(), level.getMaxBuildHeight() - 1);
     }
-
-    private void tryAddCandidate(Level level, ServerLevel serverLevel, DockingStationBlockEntity dockBlock, BlockPos dock,
-                                 int y, int x, int z, BlockPos.MutableBlockPos cursor, ArrayList<MinePlan> out) {
-        cursor.set(x, y, z);
-
-        if (!GoalUtil.canMineAt(level, cursor)) return;
-        if (dockBlock.isReserved(serverLevel, TaskType.MINE, cursor)) return;
-        if (!level.getBlockState(cursor.above()).getCollisionShape(level, cursor.above()).isEmpty()) return;
-
-        var approaches = buildMineEdgeApproachPlans(level, cursor.immutable());
-        if (approaches.isEmpty()) return;
-
-        Approach best = approaches.get(0);
-        double score = 0.0;
-        score += GoalUtil.hDistSq(byteBuddy.position(), best.approachAnchor());
-        score += (dock.getY() - cursor.getY()) * 4.0;
-        if (!level.getFluidState(cursor).isEmpty()) score += 1e6;
-
-        out.add(new MinePlan(cursor.immutable(), best.targetPos(), best.path(), score));
-    }
-
 }
-

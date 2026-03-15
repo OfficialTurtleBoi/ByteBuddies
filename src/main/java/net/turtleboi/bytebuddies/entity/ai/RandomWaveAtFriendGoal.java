@@ -86,9 +86,7 @@ public class RandomWaveAtFriendGoal extends Goal {
             byteBuddy.getLookControl().setLookAt(target, 30, 30);
         }
 
-        if (--remaining <= 0) {
-
-        }
+        --remaining;
     }
 
     @Override

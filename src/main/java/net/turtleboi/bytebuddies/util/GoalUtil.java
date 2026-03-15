@@ -30,8 +30,8 @@ import java.util.function.LongSupplier;
 import static net.turtleboi.bytebuddies.util.ToolUtil.matchesToolType;
 
 public class GoalUtil {
-    public static void lockToAnchor(ByteBuddyEntity byteBuddy, Vec3 targetAnchor) {
-        if (targetAnchor == null) return;
+    public static boolean lockToAnchor(ByteBuddyEntity byteBuddy, Vec3 targetAnchor) {
+        if (targetAnchor == null) return false;
         byteBuddy.getNavigation().stop();
 
         var bb = byteBuddy.getBoundingBox();
@@ -43,7 +43,7 @@ public class GoalUtil {
             var upBB = movedBB.move(0.0, 0.0625, 0.0);
             if (!byteBuddy.level().noCollision(upBB)) {
 
-                return;
+                return false;
             }
 
             targetAnchor = targetAnchor.add(0.0, 0.0625, 0.0);
@@ -53,6 +53,7 @@ public class GoalUtil {
         byteBuddy.setPos(targetAnchor.x, targetAnchor.y, targetAnchor.z);
         byteBuddy.setDeltaMovement(0.0, 0.0, 0.0);
         byteBuddy.resetFallDistance();
+        return true;
     }
 
     public static boolean actionReady(ServerLevel serverLevel, long nextActionTick) {

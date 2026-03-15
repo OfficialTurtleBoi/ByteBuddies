@@ -3,6 +3,7 @@ package net.turtleboi.bytebuddies.screen.custom;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.GameRenderer;
@@ -23,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.NumberFormat;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 public class DockingStationScreen extends AbstractContainerScreen<DockingStationMenu> {
@@ -87,24 +87,27 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
         );
 
         sleepButton = addRenderableWidget(
-                Button.builder(Component.empty(),
-                                b -> setSleepStatus(Objects.requireNonNull(this.menu.getBuddyByIndexClient(selected))))
+                Button.builder(Component.empty(), b -> {
+                            ByteBuddyEntity buddy = this.menu.getBuddyByIndexClient(selected);
+                            if (buddy != null) setSleepStatus(buddy);
+                        })
                         .bounds(bx + 44, by + 26, 12, 12)
-                        .tooltip(net.minecraft.client.gui.components.Tooltip.create(
-                                Component.literal("Sleep Buddy")))
-                        .build(TinyIconButton.buttonFactory(
+                        .tooltip(Tooltip.create(Component.literal("Sleep Buddy")))
+                        .build(TinyIconButton.buttonFactoryToggle(
                                 GUI_ADDONS_TEXTURE, 128, 128,
                                 32, 24,
-                                this::isSleepLocked
+                                this::isSleepLocked,
+                                this::isBuddySleeping
                         ))
         );
 
         restartButton = addRenderableWidget(
-                Button.builder(Component.empty(),
-                                b -> reloadBuddy(Objects.requireNonNull(this.menu.getBuddyByIndexClient(selected))))
+                Button.builder(Component.empty(), b -> {
+                            ByteBuddyEntity buddy = this.menu.getBuddyByIndexClient(selected);
+                            if (buddy != null) reloadBuddy(buddy);
+                        })
                         .bounds(bx + 64, by + 26, 12, 12)
-                        .tooltip(net.minecraft.client.gui.components.Tooltip.create(
-                                Component.literal("Reset Job")))
+                        .tooltip(Tooltip.create(Component.literal("Reset Job")))
                         .build(TinyIconButton.buttonFactory(
                                 GUI_ADDONS_TEXTURE, 128, 128,
                                 32, 72,
@@ -113,11 +116,12 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
         );
 
         teleportButton = addRenderableWidget(
-                Button.builder(Component.empty(),
-                                b -> teleportBuddy(Objects.requireNonNull(this.menu.getBuddyByIndexClient(selected))))
+                Button.builder(Component.empty(), b -> {
+                            ByteBuddyEntity buddy = this.menu.getBuddyByIndexClient(selected);
+                            if (buddy != null) teleportBuddy(buddy);
+                        })
                         .bounds(bx + 84, by + 26, 12, 12)
-                        .tooltip(net.minecraft.client.gui.components.Tooltip.create(
-                                Component.literal("Teleport to Dock")))
+                        .tooltip(Tooltip.create(Component.literal("Teleport to Dock")))
                         .build(TinyIconButton.buttonFactory(
                                 GUI_ADDONS_TEXTURE, 128, 128,
                                 32, 96,
@@ -126,8 +130,12 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
         );
 
         updateNavState();
+    }
 
-
+    @Override
+    public void containerTick() {
+        super.containerTick();
+        updateNavState();
     }
 
     @Override
@@ -299,14 +307,30 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
 
     private void updateNavState() {
         int count = this.menu.getBuddyCount();
+        if (count == 0) selected = 0;
+        else if (selected >= count) selected = count - 1;
+
         boolean enable = count > 1;
         if (previousButton != null) previousButton.active = enable;
         if (nextButton != null) nextButton.active = enable;
-        sleepButton.active = count > 0;
-        restartButton.active = count > 0;
-        teleportButton.active = count > 0;
-        if (count == 0) selected = 0;
-        else if (selected >= count) selected = count - 1;
+
+        ByteBuddyEntity buddy = this.menu.getBuddyByIndexClient(selected);
+        boolean hasValidBuddy = buddy != null;
+
+        sleepButton.active = hasValidBuddy;
+        restartButton.active = hasValidBuddy;
+        teleportButton.active = hasValidBuddy;
+
+        if (hasValidBuddy && buddy.isSleeping()) {
+            sleepButton.setTooltip(Tooltip.create(Component.literal("Wake Buddy")));
+        } else {
+            sleepButton.setTooltip(Tooltip.create(Component.literal("Sleep Buddy")));
+        }
+    }
+
+    private boolean isBuddySleeping() {
+        ByteBuddyEntity buddy = menu.getBuddyByIndexClient(selected);
+        return buddy != null && buddy.isSleeping();
     }
 
     private boolean isSleepLocked() {
@@ -318,7 +342,7 @@ public class DockingStationScreen extends AbstractContainerScreen<DockingStation
     }
 
     private boolean isTeleportLocked() {
-        return menu.getBuddyByIndexClient(selected) == null || getEnergyStoredSafe() < 50;
+        return menu.getBuddyByIndexClient(selected) == null
+                || getEnergyStoredSafe() < TeleportDataC2SPacket.TELEPORT_ENERGY_COST;
     }
-
 }

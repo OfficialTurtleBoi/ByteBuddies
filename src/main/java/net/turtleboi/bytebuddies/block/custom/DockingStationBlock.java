@@ -67,10 +67,13 @@ public class DockingStationBlock extends BaseEntityBlock {
 
     @Override
     public void onRemove(BlockState blockState, Level level, BlockPos blockPos, BlockState newState, boolean movedByPiston) {
-        if (blockState.getBlock() != newState.getBlock()){
+        if (blockState.getBlock() != newState.getBlock()) {
             BlockEntity blockEntity = level.getBlockEntity(blockPos);
             if (blockEntity instanceof DockingStationBlockEntity dockingStation) {
                 dockingStation.drops();
+                if (level instanceof ServerLevel serverLevel) {
+                    dockingStation.clearDockFromBoundBuddies(serverLevel);
+                }
             }
         }
         super.onRemove(blockState, level, blockPos, newState, movedByPiston);

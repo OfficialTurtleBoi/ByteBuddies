@@ -37,7 +37,7 @@ public final class AccessInventoryGoal extends Goal {
         if (player != null && player.isAlive()) {
             byteBuddy.getNavigation().stop();
             byteBuddy.getLookControl().setLookAt(player, 30.0f, 30.0f);
-            byteBuddy.setDeltaMovement(0.0, byteBuddy.getDeltaMovement().y * 0.0, 0.0);
+            byteBuddy.setDeltaMovement(0.0, 0.0, 0.0);
             byteBuddy.setJumping(false);
         }
     }

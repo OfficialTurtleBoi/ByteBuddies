@@ -71,35 +71,21 @@ public class BuddyMeleeAttackGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        boolean result;
         target = byteBuddy.getTarget();
-        if (target == null || !target.isAlive()) {
-            result = false;
-        } else {
-            if (!GoalUtil.ensureUse(byteBuddy, requiredTool, energyPerHit, 1)) {
-                result = false;
-            } else {
-                result = byteBuddy.getDock().isEmpty();
-            }
-        }
-        return result;
+        if (target == null || !target.isAlive()) return false;
+        if (!GoalUtil.ensureUse(byteBuddy, requiredTool, energyPerHit, 1)) return false;
+        return byteBuddy.getDock().isEmpty();
     }
 
     @Override
     public boolean canContinueToUse() {
-        boolean result;
-        if (target == null || !target.isAlive()) {
-            result = false;
-        } else {
-            if (rememberTarget) {
-                boolean farOrNavigating = byteBuddy.distanceToSqr(target) > 3.0 || byteBuddy.getNavigation().isInProgress();
-                boolean notKiting = phase != Phase.KITE || currentServerTime() < nextAttackTick;
-                result = farOrNavigating || notKiting;
-            } else {
-                result = canUse();
-            }
+        if (target == null || !target.isAlive()) return false;
+        if (rememberTarget) {
+            boolean farOrNavigating = byteBuddy.distanceToSqr(target) > 3.0 || byteBuddy.getNavigation().isInProgress();
+            boolean notKiting = phase != Phase.KITE || currentServerTime() < nextAttackTick;
+            return farOrNavigating || notKiting;
         }
-        return result;
+        return canUse();
     }
 
     @Override
@@ -166,7 +152,6 @@ public class BuddyMeleeAttackGoal extends Goal {
                             if (byteBuddy.getEnergyStorage().getEnergyStored() >= energyPerHit) {
                                 startWindup(currentTick);
                                 phase = Phase.WINDUP;
-                                //byteBuddy.getNavigation().stop();
                             } else {
                                 strafeAround(target, Math.max(1.0, speed), currentTick);
                             }
@@ -189,36 +174,33 @@ public class BuddyMeleeAttackGoal extends Goal {
     }
 
     private boolean handleCreeper(long currentTick) {
-        boolean result;
         if (!(target instanceof Creeper creeper)) {
             fleeingFromCreeper = false;
-            result = false;
-        } else {
-            double distanceSquared = byteBuddy.distanceToSqr(target);
-            float swelling = creeper.getSwelling(0.0F);
-            boolean dangerousNow = creeper.isIgnited() || swelling >= swellProgress;
+            return false;
+        }
 
-            if (!fleeingFromCreeper) {
-                if (dangerousNow && distanceSquared < safeDistance) {
-                    fleeingFromCreeper = true;
-                    byteBuddy.getNavigation().stop();
-                }
-            } else {
-                boolean calmed = !creeper.isIgnited() && swelling <= 0.35f;
-                if (calmed && distanceSquared >= safeDistance) {
-                    fleeingFromCreeper = false;
-                }
+        double distanceSquared = byteBuddy.distanceToSqr(target);
+        float swelling = creeper.getSwelling(0.0F);
+        boolean dangerousNow = creeper.isIgnited() || swelling >= swellProgress;
+
+        if (!fleeingFromCreeper) {
+            if (dangerousNow && distanceSquared < safeDistance) {
+                fleeingFromCreeper = true;
+                byteBuddy.getNavigation().stop();
             }
-
-            if (fleeingFromCreeper) {
-                fleeFrom(target, Math.max(1.0, speed * 1.66));
-                ensureKiteUntil(currentTick + 10);
-                result = true;
-            } else {
-                result = false;
+        } else {
+            boolean calmed = !creeper.isIgnited() && swelling <= 0.35f;
+            if (calmed && distanceSquared >= safeDistance) {
+                fleeingFromCreeper = false;
             }
         }
-        return result;
+
+        if (fleeingFromCreeper) {
+            fleeFrom(target, Math.max(1.0, speed * 1.66));
+            ensureKiteUntil(currentTick + 10);
+            return true;
+        }
+        return false;
     }
 
     private void lowHealthFlee(ByteBuddyEntity byteBuddy, long currentTick) {
@@ -289,12 +271,10 @@ public class BuddyMeleeAttackGoal extends Goal {
     }
 
     private boolean justGotHit() {
-        boolean result;
         int hurtTime = byteBuddy.hurtTime;
         boolean edge = (hurtTime > 0 && lastHurtTime <= 0);
         lastHurtTime = hurtTime;
-        result = edge;
-        return result;
+        return edge;
     }
 
     private double toolReachBonus() {

@@ -118,7 +118,7 @@ public class FloppyDiskItem extends Item {
         switch (colorKey) {
             case "blue" -> {
                 float multiplier = switch (tier) {
-                    case COPPER -> 1.20f; case IRON -> 1.35f; case GOLD -> 1.50f;
+                    case COPPER -> 1.50f; case IRON -> 2.00f; case GOLD -> 3.00f;
                 };
                 tooltip.add(bonusLine("+", percentFromMultiplier(multiplier) + " task radius"));
             }
@@ -246,7 +246,7 @@ public class FloppyDiskItem extends Item {
                 switch (disk.colorKey) {
                     case "blue" -> {
                         radiusMultiplier *= switch (tier) {
-                            case COPPER -> 1.20f; case IRON -> 1.35f; case GOLD -> 1.50f;
+                            case COPPER -> 1.50f; case IRON -> 2.00f; case GOLD -> 3.00f;
                         };
                     }
                     case "green" -> {

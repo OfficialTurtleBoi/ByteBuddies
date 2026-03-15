@@ -23,8 +23,8 @@ public class BuddyOwnerHurtByTargetGoal extends TargetGoal {
     @Override public boolean canUse() {
         LivingEntity owner = byteBuddy.getOwner(levelAsServer());
         if (owner != null && byteBuddy.getDock().isEmpty()) {
-            this.ownerLastHurtBy = owner.getLastHurtMob();
-            int i = owner.getLastHurtMobTimestamp();
+            this.ownerLastHurtBy = owner.getLastHurtByMob();
+            int i = owner.getLastHurtByMobTimestamp();
             return i != this.timestamp
                     && this.canAttack(this.ownerLastHurtBy, TargetingConditions.DEFAULT);
         }
@@ -35,7 +35,7 @@ public class BuddyOwnerHurtByTargetGoal extends TargetGoal {
         this.mob.setTarget(this.ownerLastHurtBy);
         LivingEntity livingentity = byteBuddy.getOwner(levelAsServer());
         if (livingentity != null) {
-            this.timestamp = livingentity.getLastHurtMobTimestamp();
+            this.timestamp = livingentity.getLastHurtByMobTimestamp();
         }
         super.start();
     }

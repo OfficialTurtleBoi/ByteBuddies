@@ -8,7 +8,7 @@ import net.turtleboi.bytebuddies.block.ModBlocks;
 import net.turtleboi.bytebuddies.effects.ModEffects;
 import net.turtleboi.bytebuddies.entity.ModEntities;
 import net.turtleboi.bytebuddies.item.ModItems;
-import net.turtleboi.turtlecore.util.CoreLanguageProvider;
+import net.turtleboi.turtlecore.datagen.CoreLanguageProvider;
 
 import java.util.Map;
 import java.util.Optional;

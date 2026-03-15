@@ -38,12 +38,7 @@ public final class HueShiftTextureCache {
             return originalTexture;
         }
 
-        if (baseTexture.getWidth() != 64 || baseTexture.getHeight() != 64) {
-
-        }
-
-        NativeImage newTexture = new NativeImage(
-                baseTexture.format(), baseTexture.getWidth(), baseTexture.getHeight(), false);
+        NativeImage newTexture = new NativeImage(baseTexture.format(), baseTexture.getWidth(), baseTexture.getHeight(), false);
         for (int y = 0; y < baseTexture.getHeight(); y++) {
             for (int x = 0; x < baseTexture.getWidth(); x++) {
                 int abgr = baseTexture.getPixelRGBA(x, y);
@@ -96,75 +91,11 @@ public final class HueShiftTextureCache {
             return (alpha << 24);
         }
 
-        boolean targetIsGray = (Math.abs(targetRed - targetGreen) <= 1) && (Math.abs(targetGreen - targetBlue) <= 1);
-        float[] sourceHsv = rgbToHsv(red, green, blue);
-        float sourceSaturation = sourceHsv[1];
-        float sourceValue = sourceHsv[2];
-
-        if (targetIsGray) {
-            float targetValue = Math.max(targetRed, Math.max(targetGreen, targetBlue)) / 255f;
-            float outputValue = clamp(sourceValue * targetValue);
-            int outputRgb = hsvToRgb(0f, 0f, outputValue);
-            return (alpha << 24) | outputRgb;
-        }
-
-        float[] targetHsv = rgbToHsv(targetRed, targetGreen, targetBlue);
-        float outputHue = targetHsv[0];
-        int outputRgb = hsvToRgb(outputHue, sourceSaturation, sourceValue);
-        return (alpha << 24) | outputRgb;
-    }
-
-    private static float clamp(float x) {
-        return x < 0f ? 0f : (Math.min(x, 1f));
-    }
-
-    private static float[] rgbToHsv(int red, int green, int blue) {
-        float redFloat = red / 255f;
-        float greenFloat = green / 255f;
-        float blueFloat = blue / 255f;
-        float maximum = Math.max(redFloat, Math.max(greenFloat, blueFloat));
-        float minimum = Math.min(redFloat, Math.min(greenFloat, blueFloat));
-        float delta = maximum - minimum;
-        float hue;
-        if (delta == 0f) hue = 0f;
-        else if (maximum == redFloat) hue = ((greenFloat - blueFloat) / delta) % 6f;
-        else if (maximum == greenFloat) hue = ((blueFloat - redFloat) / delta) + 2f;
-        else hue = ((redFloat - greenFloat) / delta) + 4f;
-        hue /= 6f;
-        if (hue < 0f) hue += 1f;
-        float saturation = (maximum == 0f) ? 0f : (delta / maximum);
-        return new float[]{hue, saturation, maximum};
-    }
-
-    private static int hsvToRgb(float hue, float saturation, float value) {
-        float chroma = value * saturation;
-        float xComponent = chroma * (1f - Math.abs(((hue * 6f) % 2f) - 1f));
-        float match = value - chroma;
-        float redPrime = 0f;
-        float greenPrime = 0f;
-        float bluePrime = 0f;
-        float hueSector = hue * 6f;
-        if (hueSector < 1f) {
-            redPrime = chroma; greenPrime = xComponent;
-        }
-        else if (hueSector < 2f) {
-            redPrime = xComponent; greenPrime = chroma;
-        }
-        else if (hueSector < 3f) {
-            greenPrime = chroma; bluePrime = xComponent;
-        }
-        else if (hueSector < 4f) {
-            greenPrime = xComponent; bluePrime = chroma;
-        }
-        else if (hueSector < 5f) {
-            redPrime = xComponent; bluePrime = chroma;
-        }
-        else { redPrime = chroma; bluePrime = xComponent;
-        }
-        int redOut = Math.round((redPrime + match) * 255f);
-        int greenOut = Math.round((greenPrime + match) * 255f);
-        int blueOut = Math.round((bluePrime + match) * 255f);
-        return (redOut << 16) | (greenOut << 8) | blueOut;
+        float sourceValue = Math.max(red, Math.max(green, blue)) / 255f;
+        int redOut = Math.round(targetRed * sourceValue);
+        int greenOut = Math.round(targetGreen * sourceValue);
+        int blueOut = Math.round(targetBlue * sourceValue);
+        return (alpha << 24) | (redOut << 16) | (greenOut << 8) | blueOut;
     }
 
     static int abgrToArgb(int abgr) {
@@ -182,5 +113,4 @@ public final class HueShiftTextureCache {
         int blue = argb & 0xFF;
         return (alpha << 24) | (blue << 16) | (green << 8) | red;
     }
-
 }

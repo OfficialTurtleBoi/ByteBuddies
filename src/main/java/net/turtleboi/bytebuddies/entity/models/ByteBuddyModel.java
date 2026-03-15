@@ -80,6 +80,17 @@ public class ByteBuddyModel <T extends Entity> extends HierarchicalModel<T> impl
 
         ByteBuddyEntity byteBuddy = (ByteBuddyEntity) entity;
 
+        if (byteBuddy.getSyncedEnergy() <= 0) {
+            this.animate(byteBuddy.idleAnimationState, ByteBuddyAnimations.IDLE_ANIMATION, ageInTicks, 1f);
+            this.animate(byteBuddy.sleepPoseState, ByteBuddyAnimations.INACTIVE_ANIMATION, ageInTicks, 1f);
+            this.animate(byteBuddy.workingState, ByteBuddyAnimations.WORK_ANIMATION, ageInTicks, 1f);
+            this.animate(byteBuddy.slamState, ByteBuddyAnimations.SLAM_ANIMATION, ageInTicks, 1f);
+            this.animate(byteBuddy.sliceState, ByteBuddyAnimations.SLICE_ANIMATION, ageInTicks, 1f);
+            this.animate(byteBuddy.waveState, ByteBuddyAnimations.WAVING_ANIMATION, ageInTicks, 1f);
+            this.animate(byteBuddy.wakeUpState, ByteBuddyAnimations.WAKE_UP_ANIMATION, ageInTicks, 1f);
+            return;
+        }
+
         if (!byteBuddy.isSleeping()) {
             if (byteBuddy.isWaking()) {
                 this.animate(byteBuddy.wakeUpState, ByteBuddyAnimations.WAKE_UP_ANIMATION, ageInTicks, 1f);
