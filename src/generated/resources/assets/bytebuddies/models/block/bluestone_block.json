@@ -1,6 +1,8 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube_bottom_top",
   "textures": {
-    "all": "bytebuddies:block/bluestone_block"
+    "bottom": "bytebuddies:block/bluestone_block_bottom",
+    "side": "bytebuddies:block/bluestone_block_side",
+    "top": "bytebuddies:block/bluestone_block_top"
   }
 }
