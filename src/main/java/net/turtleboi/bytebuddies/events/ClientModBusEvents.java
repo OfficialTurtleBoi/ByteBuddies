@@ -21,9 +21,11 @@ import net.turtleboi.bytebuddies.init.ModItemProperties;
 public class ClientModBusEvents {
     @SubscribeEvent
     public static void onClientSetupEvent(FMLClientSetupEvent event) {
-        EntityRenderers.register(ModEntities.BYTEBUDDY.get(), ByteBuddyRenderer::new);
-        EntityRenderers.register(ModEntities.HOLOBUDDY.get(), HologramBuddyRenderer::new);
-        EntityRenderers.register(ModEntities.SWORD_SWEEP.get(), SwordSweepRenderer::new);
+        event.enqueueWork(() -> {
+            EntityRenderers.register(ModEntities.BYTEBUDDY.get(), ByteBuddyRenderer::new);
+            EntityRenderers.register(ModEntities.HOLOBUDDY.get(), HologramBuddyRenderer::new);
+            EntityRenderers.register(ModEntities.SWORD_SWEEP.get(), SwordSweepRenderer::new);
+        });
         ModItemProperties.addCustomItemProperties();
     }
 
